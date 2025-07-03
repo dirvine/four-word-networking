@@ -340,6 +340,28 @@ impl ParsedMultiaddr {
 }
 
 impl IpType {
+    /// Convert IP type to string representation
+    pub fn to_string(&self) -> String {
+        match self {
+            IpType::IPv4 => "ipv4".to_string(),
+            IpType::IPv6 => "ipv6".to_string(),
+            IpType::DNS4 => "dns4".to_string(),
+            IpType::DNS6 => "dns6".to_string(),
+            IpType::DNS => "dns".to_string(),
+            IpType::Unix => "unix".to_string(),
+            IpType::P2P => "p2p".to_string(),
+            IpType::Onion => "onion".to_string(),
+            IpType::Onion3 => "onion3".to_string(),
+            IpType::Garlic64 => "garlic64".to_string(),
+            IpType::Garlic32 => "garlic32".to_string(),
+            IpType::Memory => "memory".to_string(),
+            IpType::CIDv1 => "cid".to_string(),
+            IpType::SCTP => "sctp".to_string(),
+            IpType::UTP => "utp".to_string(),
+            IpType::Unknown(name) => name.clone(),
+        }
+    }
+    
     /// Get word index for this IP type (for context words)
     pub fn word_index(&self) -> usize {
         match self {

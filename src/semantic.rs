@@ -7,23 +7,41 @@
 use crate::multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
 use serde::{Deserialize, Serialize};
 
-/// Represents the semantic purpose of a network address
+/// Represents the semantic purpose of a network address (2024 comprehensive classification)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum NetworkPurpose {
-    /// Web services (HTTP/HTTPS servers, APIs)
+    /// Web services (HTTP/HTTPS servers, REST APIs)
     WebService,
-    /// Peer-to-peer networking (libp2p, IPFS nodes)
+    /// Peer-to-peer networking (libp2p, IPFS nodes, blockchain)
     P2P,
-    /// Content delivery (IPFS gateways, CDN)
+    /// Content delivery (CDN, IPFS gateways, media streaming)
     Content,
     /// Relay/proxy services (circuit relays, signaling servers)
     Relay,
-    /// Development/testing environments
+    /// Development/testing environments (all dev lifecycle stages)
     Development,
-    /// Database/storage services
+    /// Database/storage services (SQL, NoSQL, object storage)
     Database,
-    /// Messaging/communication services
+    /// Messaging/communication services (pub/sub, queues, real-time)
     Messaging,
+    /// Microservices (containerized services, service mesh)
+    Microservice,
+    /// API Gateway (centralized API management, routing)
+    APIGateway,
+    /// Load Balancer (traffic distribution, high availability)
+    LoadBalancer,
+    /// Service Discovery (registry, health checks, routing)
+    ServiceDiscovery,
+    /// Monitoring/Observability (metrics, logs, tracing)
+    Monitoring,
+    /// Security services (authentication, authorization, firewall)
+    Security,
+    /// CI/CD services (build, test, deployment automation)
+    CICD,
+    /// IoT/Edge computing (sensors, edge gateways, telemetry)
+    IoT,
+    /// Machine Learning (model serving, training, inference)
+    ML,
     /// Unknown or mixed purpose
     Generic,
 }
@@ -64,27 +82,33 @@ pub enum NetworkScope {
     Relayed,
 }
 
-/// Represents the transport mechanism
+/// Represents the transport mechanism (2024 comprehensive protocols)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TransportType {
-    /// TCP connection
+    /// TCP connection (reliable, ordered)
     TCP,
-    /// UDP connection  
+    /// UDP connection (fast, unreliable)
     UDP,
-    /// QUIC protocol
+    /// QUIC protocol (modern, fast, secure)
     QUIC,
-    /// HTTP/HTTPS
+    /// HTTP/HTTPS (web standard)
     HTTP,
-    /// WebSocket
+    /// WebSocket (bidirectional, real-time)
     WebSocket,
-    /// Circuit relay
+    /// Circuit relay (NAT traversal)
     Circuit,
-    /// WebRTC
+    /// WebRTC (peer-to-peer media)
     WebRTC,
-    /// Unix domain socket
+    /// WebTransport (HTTP/3 based, 2024 standard)
+    WebTransport,
+    /// gRPC (high-performance RPC)
+    GRPC,
+    /// Unix domain socket (local IPC)
     Unix,
-    /// Memory transport (testing)
+    /// Memory transport (testing, high-speed)
     Memory,
+    /// Message Queue (async communication)
+    MessageQueue,
     /// Complex/layered transport
     Complex,
 }
@@ -198,17 +222,25 @@ pub enum GatewayType {
     API,
 }
 
-/// Development environment types
+/// Development environment types (based on 2024 industry standards)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DevEnvironment {
-    /// Local development server
+    /// Local development server (developer workstation)
     LocalDev,
-    /// Testing environment
+    /// Testing environment (unit/integration tests)
     Testing,
-    /// Staging environment
+    /// QA environment (quality assurance testing)
+    QA,
+    /// Staging environment (pre-production mirror)
     Staging,
-    /// Debug/profiling
+    /// Pre-production environment (final validation)
+    PreProd,
+    /// Sandbox environment (isolated testing)
+    Sandbox,
+    /// Debug/profiling environment
     Debug,
+    /// Preview environment (feature branch testing)
+    Preview,
 }
 
 /// Protocol layer in complex addresses
@@ -338,20 +370,56 @@ impl SemanticClassifier {
             },
             
             MultiaddrPattern::Development { env_type, service, .. } => {
-                let desc = match env_type {
-                    DevEnvironment::LocalDev => format!("Local development {}", service),
-                    DevEnvironment::Testing => format!("Test environment {}", service),
-                    DevEnvironment::Staging => format!("Staging {}", service),
-                    DevEnvironment::Debug => format!("Debug {}", service),
+                let (desc, scope, hints) = match env_type {
+                    DevEnvironment::LocalDev => (
+                        format!("Local development {}", service),
+                        NetworkScope::Local,
+                        vec!["Development only".to_string(), "Safe to modify".to_string()]
+                    ),
+                    DevEnvironment::Testing => (
+                        format!("Test environment {}", service),
+                        NetworkScope::Private,
+                        vec!["Testing only".to_string(), "Automated tests".to_string()]
+                    ),
+                    DevEnvironment::QA => (
+                        format!("QA environment {}", service),
+                        NetworkScope::Private,
+                        vec!["Quality assurance".to_string(), "Manual testing".to_string()]
+                    ),
+                    DevEnvironment::Staging => (
+                        format!("Staging {}", service),
+                        NetworkScope::Private,
+                        vec!["Pre-production mirror".to_string(), "Final validation".to_string()]
+                    ),
+                    DevEnvironment::PreProd => (
+                        format!("Pre-production {}", service),
+                        NetworkScope::Regional,
+                        vec!["Production-like".to_string(), "Final checks".to_string()]
+                    ),
+                    DevEnvironment::Sandbox => (
+                        format!("Sandbox {}", service),
+                        NetworkScope::Private,
+                        vec!["Isolated testing".to_string(), "Experimentation".to_string()]
+                    ),
+                    DevEnvironment::Debug => (
+                        format!("Debug {}", service),
+                        NetworkScope::Local,
+                        vec!["Debugging only".to_string(), "Performance profiling".to_string()]
+                    ),
+                    DevEnvironment::Preview => (
+                        format!("Preview {}", service),
+                        NetworkScope::Private,
+                        vec!["Feature branch".to_string(), "Review deployment".to_string()]
+                    ),
                 };
                 
                 SemanticInfo {
                     purpose: NetworkPurpose::Development,
                     security: SecurityLevel::Plain,
-                    scope: NetworkScope::Local,
+                    scope,
                     transport: TransportType::TCP,
                     description: desc,
-                    context_hints: vec!["Development only".to_string(), "Not production".to_string()],
+                    context_hints: hints,
                 }
             },
             
@@ -400,17 +468,48 @@ impl SemanticClassifier {
     
     fn classify_development(parsed: &ParsedMultiaddr) -> MultiaddrPattern {
         let env_type = match parsed.port {
-            3000 => DevEnvironment::LocalDev,
-            8080 => DevEnvironment::LocalDev,
-            5000..=5999 => DevEnvironment::Testing,
-            9000..=9999 => DevEnvironment::Debug,
-            _ => DevEnvironment::LocalDev,
+            3000 => DevEnvironment::LocalDev,          // React/Node.js dev server
+            8080 => DevEnvironment::LocalDev,          // Common dev server
+            4000..=4999 => DevEnvironment::LocalDev,   // Dev server range
+            5000..=5999 => DevEnvironment::Testing,    // Test environment range
+            6000..=6499 => DevEnvironment::QA,         // QA environment range
+            6500..=6999 => DevEnvironment::Staging,    // Staging environment range
+            7000..=7499 => DevEnvironment::PreProd,    // Pre-production range
+            7500..=7999 => DevEnvironment::Sandbox,    // Sandbox environment
+            8000..=8999 => DevEnvironment::Preview,    // Preview/feature branch
+            9000..=9999 => DevEnvironment::Debug,      // Debug/profiling range
+            _ => {
+                // Classify by address patterns
+                if parsed.address.contains("dev") || parsed.address.contains("local") {
+                    DevEnvironment::LocalDev
+                } else if parsed.address.contains("test") {
+                    DevEnvironment::Testing
+                } else if parsed.address.contains("qa") {
+                    DevEnvironment::QA
+                } else if parsed.address.contains("staging") || parsed.address.contains("stage") {
+                    DevEnvironment::Staging
+                } else if parsed.address.contains("preprod") || parsed.address.contains("pre-prod") {
+                    DevEnvironment::PreProd
+                } else if parsed.address.contains("sandbox") {
+                    DevEnvironment::Sandbox
+                } else if parsed.address.contains("preview") {
+                    DevEnvironment::Preview
+                } else {
+                    DevEnvironment::LocalDev
+                }
+            }
         };
         
         let service = match parsed.port {
-            3000 => "webapp".to_string(),
-            8080 => "server".to_string(),
-            5432 => "database".to_string(),
+            3000 => "webapp".to_string(),               // React/Vue/Angular
+            8080 => "server".to_string(),               // Generic server
+            4000 => "api".to_string(),                  // API server
+            5432 => "database".to_string(),             // PostgreSQL
+            3306 => "database".to_string(),             // MySQL
+            27017 => "database".to_string(),            // MongoDB
+            6379 => "cache".to_string(),                // Redis
+            9200 => "search".to_string(),               // Elasticsearch
+            8000 => "admin".to_string(),                // Django admin
             _ => "service".to_string(),
         };
         
@@ -517,9 +616,12 @@ impl SemanticClassifier {
             TransportType::HTTP => "HTTP",
             TransportType::WebSocket => "WebSocket",
             TransportType::WebRTC => "WebRTC",
+            TransportType::WebTransport => "WebTransport",
+            TransportType::GRPC => "gRPC",
             TransportType::Circuit => "Circuit",
             TransportType::Unix => "Unix",
             TransportType::Memory => "Memory",
+            TransportType::MessageQueue => "MessageQueue",
             TransportType::Complex => "Complex",
         }
     }

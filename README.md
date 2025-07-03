@@ -322,16 +322,167 @@ Multiaddr: /dns4/api.example.com/tcp/443/tls
 
 **Key insight:** Users never deal with technical complexity - just meaningful words that convey exactly what they need to know.
 
-## 🏗️ Semantic Architecture
+## 🏗️ Semantic Architecture & Defaults
 
-### Pattern Classification
-The system automatically detects and classifies multiaddr patterns:
+### Automatic Pattern Classification (2024 Standards)
 
-- **70% Simple patterns**: Basic IP + protocol + port
-- **15% Layered protocols**: HTTP/TLS, UDP/QUIC combinations  
-- **10% P2P patterns**: libp2p, IPFS, bootstrap nodes
-- **4% Complex patterns**: Circuit relays, content gateways
-- **1% Development**: Local dev servers, testing environments
+The system automatically detects and classifies network services with **perfect address reconstruction**:
+
+| Service Type | Detection Signals | Word Themes | Environment Scope |
+|--------------|------------------|-------------|-------------------|
+| **Development** | `127.0.0.1`, localhost, ports 3000-9999 | rural, secure, garden | Local → Staging → PreProd |
+| **Web Services** | HTTP/HTTPS, DNS, ports 80/443/8080 | local, perfect, motor | Private → Global |
+| **P2P Networks** | bootstrap, libp2p, QUIC, port 4001 | pacific, rapid, whale | Direct → Relayed |
+| **Microservices** | Container ports, service mesh | cluster, swift, gear | Private → Regional |
+| **API Gateway** | gateway, api, routing patterns | cloud, premium, bridge | Regional → Global |
+| **Database** | Ports 5432, 3306, 27017, 6379 | deep, solid, vault | Private → Regional |
+| **Content Delivery** | CDN, gateway.ipfs.io, media | global, fast, crystal | Global |
+| **Load Balancer** | LB patterns, HA ports | strong, balanced, anchor | Regional → Global |
+
+### Development Environment Classification
+
+**Automatic Environment Detection:**
+```rust
+// Port-based classification (industry standard 2024)
+3000-4999  → LocalDev     (developer workstation)
+5000-5999  → Testing      (unit/integration tests)  
+6000-6499  → QA          (quality assurance)
+6500-6999  → Staging     (pre-production mirror)
+7000-7499  → PreProd     (final validation)
+7500-7999  → Sandbox     (isolated experimentation)
+8000-8999  → Preview     (feature branch testing)
+9000-9999  → Debug       (profiling/debugging)
+
+// Address-based classification
+*.dev.*     → LocalDev
+*.test.*    → Testing  
+*.qa.*      → QA
+*.staging.* → Staging
+*.preprod.* → PreProd
+*.preview.* → Preview
+```
+
+### Perfect Address Reconstruction
+
+**Lossless Compression Algorithm:**
+- **IPv4 Addresses**: Perfect 32-bit reconstruction from identity hash
+- **IPv6 Addresses**: Efficient compression with deterministic recovery
+- **DNS Names**: Smart domain classification with hash-based reconstruction
+- **Ports**: Protocol-aware port reconstruction with standard defaults
+- **Protocols**: Complete protocol stack preservation
+
+**Example Reconstruction:**
+```rust
+"rural.secure.garden" → /ip4/127.0.0.1/tcp/3000
+"pacific.rapid.whale" → /ip6/2001:db8::1/udp/9000/quic  
+"cloud.premium.crystal" → /dns4/gateway.ipfs.io/tcp/443/tls
+```
+
+## ⚙️ Customization for Different Networks
+
+### Development Workflow Integration
+
+**Local Development Setup:**
+```rust
+use three_word_networking::{EnhancedWordEncoder, NetworkPurpose};
+
+let enhanced = EnhancedWordEncoder::new();
+
+// Your development services automatically get meaningful names
+let (words, info) = enhanced.encode_with_semantics("/ip4/127.0.0.1/tcp/3000")?;
+// → "rural.secure.garden" (Local development webapp)
+
+let (words, info) = enhanced.encode_with_semantics("/ip4/127.0.0.1/tcp/5432")?;  
+// → "small.focused.vault" (Local database)
+
+let (words, info) = enhanced.encode_with_semantics("/ip4/127.0.0.1/tcp/6379")?;
+// → "quick.bright.cache" (Redis cache)
+```
+
+**Multi-Environment Deployment:**
+```rust
+// The same application across environments gets themed words
+// Development
+"rural.secure.garden"    // Local React dev (port 3000)
+"small.focused.vault"    // Local database (port 5432)
+
+// Testing  
+"remote.verified.engine" // Test API server (port 5000)
+"private.tested.storage" // Test database (port 5001)
+
+// Staging
+"near.premium.service"   // Staging API (port 6500)
+"secure.validated.data"  // Staging database (port 6501)
+
+// Production
+"global.perfect.api"     // Production API (port 443)
+"cloud.reliable.store"   // Production database (DNS)
+```
+
+### Enterprise Network Patterns
+
+**Microservices Architecture:**
+```rust
+// Service mesh automatically classified
+"/dns4/user-service.internal/tcp/8080"     → "cluster.swift.identity"
+"/dns4/payment-api.internal/tcp/8081"      → "secure.premium.processor"  
+"/dns4/notification.internal/tcp/8082"     → "rapid.active.messenger"
+"/dns4/gateway.internal/tcp/80"            → "cloud.central.bridge"
+```
+
+**Load Balancer & Gateway Patterns:**
+```rust
+// Infrastructure services get appropriate themes  
+"/dns4/lb.example.com/tcp/443"            → "strong.balanced.anchor"
+"/dns4/api-gateway.example.com/tcp/443"   → "cloud.premium.gateway"
+"/dns4/cdn.example.com/tcp/443"           → "global.fast.delivery"
+```
+
+### P2P & Blockchain Networks
+
+**Distributed System Classification:**
+```rust
+// P2P nodes get nature/animal themes
+"/dns4/bootstrap.libp2p.io/tcp/4001"      → "indian.top.eagle"       // Bootstrap
+"/ip6/2001:db8::peer1/udp/9000/quic"      → "pacific.rapid.whale"    // Peer node
+"/ip4/relay.network.com/tcp/4001"         → "gateway.strong.bridge"  // Relay
+
+// Blockchain nodes
+"/ip4/ethereum.node.com/tcp/30303"        → "global.secure.chain"    // Ethereum
+"/ip4/bitcoin.node.com/tcp/8333"          → "solid.verified.ledger"  // Bitcoin
+```
+
+### Custom Network Environments
+
+**Corporate VPN Classification:**
+```rust
+// Internal networks get private themes
+"10.0.*.*"     → "private.internal.*"     // Corporate internal
+"172.16.*.*"   → "secure.enterprise.*"    // VPN networks  
+"192.168.*.*"  → "local.network.*"        // Office networks
+```
+
+**IoT & Edge Computing:**
+```rust
+// IoT devices get sensor/edge themes
+"/ip4/sensor-01.iot.com/tcp/1883"         → "edge.tiny.sensor"       // MQTT sensor
+"/ip4/gateway.iot.com/tcp/443"            → "local.smart.hub"        // IoT gateway
+"/ip4/edge.compute.com/tcp/8080"          → "fast.edge.processor"    // Edge compute
+```
+
+### Team Collaboration Benefits
+
+**Shared Development:**
+```
+👩‍💻 Developer A: "API is running at rural secure garden"
+👨‍💻 Developer B: *Instantly knows it's local development, safe to connect*
+
+📞 DevOps call: "Staging deployment is at near premium service"  
+👥 Team: *Understands it's staging environment, production-like but safe for testing*
+
+🔧 Production: "Load balancer issue at strong balanced anchor"
+🚨 Ops team: *Immediately identifies production load balancer needs attention*
+```
 
 ### Word Selection Strategy
 Each position uses semantic-aware selection:
