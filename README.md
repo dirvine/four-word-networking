@@ -1,18 +1,84 @@
 # Three-Word Networking
 
-Convert complex network multiaddresses into memorable three-word combinations with **semantic awareness** for human-friendly networking.
+Convert complex network multiaddresses into memorable three-word combinations with **semantic awareness** for human-friendly networking and intelligent network classification.
 
 ## 🌟 What is Three-Word Networking?
 
-Three-Word Networking transforms complex network addresses like `/ip6/2001:db8::1/udp/9000/quic` into meaningful combinations like `pacific.rapid.whale`. It uses **semantic analysis** to produce contextually appropriate words that match the network service type.
+Three-Word Networking transforms complex network addresses like `/ip6/2001:db8::1/udp/9000/quic` into meaningful combinations like `pacific.rapid.whale`. But it goes far beyond simple conversion - it uses **semantic analysis** to automatically identify, classify, and meaningfully represent different types of network services and their capabilities.
+
+### 🧠 The Power of Semantic Network Intelligence
+
+Traditional network addresses tell you **where** something is, but not **what** it is or **what it does**. Three-Word Networking changes this by embedding semantic intelligence that instantly reveals:
+
+- **🏠 Network Purpose**: Development server, production API, P2P node, content gateway
+- **🔒 Security Profile**: Plain text, TLS encrypted, P2P encrypted, multi-layered security
+- **🌐 Network Scope**: Local development, private network, global internet, direct P2P
+- **⚡ Transport Capabilities**: TCP reliable, UDP fast, QUIC modern, HTTP web-compatible
+- **🎯 Usage Context**: Safe for voice sharing, production-ready, development-only
+
+### Real Network Intelligence in Action
+
+**Development Server Recognition:**
+```
+/ip4/127.0.0.1/tcp/3000 → rural.secure.garden
+Instantly recognized as: Local development webapp, safe scope, not production
+```
+
+**Production API Classification:**
+```
+/dns4/api.example.com/tcp/443/tls → local.perfect.motor  
+Instantly recognized as: Secure web service, TLS encrypted, global scope
+```
+
+**P2P Network Identification:**
+```
+/dns4/bootstrap.libp2p.io/tcp/4001 → indian.top.eagle
+Instantly recognized as: P2P bootstrap node, direct connection, network leadership
+```
 
 ### Why Three Words + Semantics?
 
-**Before:** "Connect to `/dns4/bootstrap.libp2p.io/tcp/4001`"  
-**After:** "Connect to `indian top eagle`" *(meaningful: regional/premium/P2P-themed)*
+**Traditional Approach:**
+- "Connect to `/dns4/bootstrap.libp2p.io/tcp/4001`" *(What is this? Safe to share? Production ready?)*
 
-**Before:** "SSH to `/ip4/127.0.0.1/tcp/22`"  
-**After:** "SSH to `rural secure anchor`" *(meaningful: local/secure/stable)*
+**Semantic Three-Word Approach:**
+- "Connect to `indian top eagle`" *(Instantly conveys: Regional P2P bootstrap node with premium capabilities)*
+
+**The difference:** You immediately understand the **nature, purpose, and capabilities** of the network service, not just its location.
+
+### 🎯 Practical Benefits of Semantic Network Classification
+
+**For Developers:**
+- Instantly identify safe development endpoints vs production services
+- Recognize local testing environments to avoid accidental exposure
+- Classify API security levels before connecting
+
+**For Network Operations:**
+- Quickly categorize network services by purpose and capabilities
+- Identify bootstrap nodes, content gateways, and relay services at a glance
+- Understand transport protocols and security profiles without deep inspection
+
+**For P2P Applications:**
+- Distinguish between bootstrap nodes, peer nodes, and relay services
+- Recognize network capabilities (QUIC-enabled, WebRTC-capable, etc.)
+- Share network information with built-in context about service type
+
+**For Voice Communication:**
+- Share network addresses with implicit understanding of what they do
+- Avoid confusion between development and production endpoints
+- Communicate security requirements through word selection
+
+### 🔍 Automatic Network Service Discovery
+
+The semantic system automatically recognizes and classifies:
+
+| Pattern Type | Recognition Signals | Generated Words | Instant Understanding |
+|--------------|-------------------|-----------------|----------------------|
+| **Development** | `127.0.0.1`, `localhost`, dev ports | `rural.secure.garden` | Local development, safe to modify |
+| **Web Services** | HTTP/HTTPS, DNS domains, standard ports | `local.perfect.motor` | Web API, browser-compatible |
+| **P2P Networks** | `bootstrap`, `libp2p`, QUIC, port 4001 | `indian.top.eagle` | P2P node, direct connection |
+| **Content Delivery** | `gateway`, `ipfs`, `cdn` domains | `cloud.premium.crystal` | Content access, public available |
+| **Secure Services** | TLS, WSS, encrypted protocols | `secure.premium.*` | Encrypted, production-grade |
 
 ## ✨ Key Features
 
