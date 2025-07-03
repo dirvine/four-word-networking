@@ -34,12 +34,10 @@
 pub mod words;
 pub mod error;
 pub mod multiaddr_parser;
-pub mod semantic;
 
-pub use words::{ThreeWordAddress, WordDictionary, WordEncoder, EnhancedWordEncoder};
+pub use words::{ThreeWordAddress, WordDictionary, WordEncoder};
 pub use error::{ThreeWordError, Result};
 pub use multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
-pub use semantic::{SemanticClassifier, SemanticInfo, MultiaddrPattern, NetworkPurpose};
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
