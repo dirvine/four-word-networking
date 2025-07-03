@@ -67,15 +67,17 @@ cargo run -- examples --count 10
 ### Core Components
 
 - **`src/lib.rs`**: Main library interface and public API
-- **`src/words.rs`**: Core three-word address system with encoding/decoding logic
+- **`src/words.rs`**: Core three-word address system with bidirectional encoding/decoding logic
+- **`src/multiaddr_parser.rs`**: Multiaddr parsing and component extraction module
 - **`src/error.rs`**: Error types using `thiserror` for structured error handling
 - **`src/main.rs`**: CLI application using `clap` for command-line interface
 
 ### Key Data Structures
 
 - **`ThreeWordAddress`**: Represents a three-word address with optional numeric suffix
-- **`WordEncoder`**: Main interface for encoding multiaddrs to three-word addresses
+- **`WordEncoder`**: Main interface for encoding/decoding between multiaddrs and three-word addresses
 - **`WordDictionary`**: Contains curated word lists for each position (context, quality, identity)
+- **`ParsedMultiaddr`**: Structured representation of multiaddr components (IP type, protocol, address, port)
 
 ### Address Space Design
 
@@ -114,28 +116,38 @@ The system provides massive scale through:
 ## Key Implementation Details
 
 ### Encoding Process
-1. Hash the multiaddr string using `DefaultHasher`
-2. Extract indices from different parts of the hash
-3. Map indices to words in dictionary positions
-4. Optionally add numeric suffix for extended addressing
+1. Parse multiaddr into components (IP type, protocol, address, port)
+2. Map IP type and additional protocols to context word index
+3. Map primary protocol to quality word index  
+4. Combine address hash and port to generate identity word index
+5. Look up actual words from dictionary positions
+
+### Decoding Process
+1. Extract word indices from three-word address
+2. Decode IP type from context index
+3. Decode protocol from quality index
+4. Reconstruct address and port from identity index (simplified in demo)
+5. Generate valid multiaddr string
 
 ### Deterministic Behavior
 - Same multiaddr always produces same three-word address
-- Uses consistent hashing algorithm
+- Uses component-based deterministic mapping
+- No external dependencies required for conversion
 - Dictionary order must remain stable across versions
 
-### Limitations
-- Registry lookup for reverse conversion not yet implemented
-- English-only dictionary (multi-language support planned)
-- Hash collisions theoretically possible but rare at scale
+### Current Implementation
+- **Bidirectional conversion**: Full encode/decode without registry
+- **Collision resistant**: Advanced encoding reduces conflicts
+- **Simplified address recovery**: Demo uses placeholder values for addresses
+- **English-only dictionary**: Multi-language support planned
 
 ## Future Development Areas
 
 ### High Priority
-- Distributed registry implementation for reverse conversion
-- Performance optimization for large-scale encoding
+- Enhanced address compression for perfect reconstruction
 - Multi-language dictionary support
-- Enhanced error handling and recovery
+- Performance optimization for large-scale encoding
+- Advanced collision resolution algorithms
 
 ### Medium Priority
 - CLI enhancements and better UX

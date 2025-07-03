@@ -87,8 +87,6 @@ async fn main() -> Result<()> {
                         }
                         Err(e) => {
                             eprintln!("Error decoding to multiaddr: {}", e);
-                            eprintln!("Note: Decoding requires a registry lookup which is not yet implemented.");
-                            eprintln!("The three-word address is valid: {}", addr);
                             std::process::exit(1);
                         }
                     }

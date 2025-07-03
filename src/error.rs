@@ -23,8 +23,6 @@ pub enum ThreeWordError {
     #[error("Numeric suffix out of range: {0}")]
     NumericSuffixOutOfRange(u32),
     
-    #[error("Registry lookup not yet implemented: {0}")]
-    RegistryLookupNotImplemented(String),
     
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
