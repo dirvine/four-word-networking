@@ -1,0 +1,31 @@
+[workspace]
+
+[package]
+name = "three-word-networking"
+version = "0.1.0"
+edition = "2021"
+authors = ["David Irvine <david.irvine@autonomi.com>"]
+description = "Human-friendly three-word addresses for network multiaddresses"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/davidrusu/three-word-networking"
+readme = "README.md"
+keywords = ["networking", "multiaddr", "human-readable", "addressing", "p2p"]
+categories = ["network-programming", "command-line-utilities"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[[bin]]
+name = "three-word-networking"
+path = "src/main.rs"
+
+[lib]
+name = "three_word_networking"
+path = "src/lib.rs"
