@@ -1069,8 +1069,8 @@ mod tests {
         // Test development patterns
         let dev_multiaddrs = vec![
             ("/ip4/127.0.0.1/tcp/3000", crate::semantic::NetworkScope::Local),      // Local webapp (LocalDev)
-            ("/ip4/127.0.0.1/tcp/8080", crate::semantic::NetworkScope::Local),      // Local server (LocalDev)
-            ("/ip4/127.0.0.1/tcp/5432", crate::semantic::NetworkScope::Private),    // Test database (Testing)
+            ("/ip4/127.0.0.1/tcp/8080", crate::semantic::NetworkScope::Local),      // Local server (LocalDev) 
+            ("/ip4/127.0.0.1/tcp/5432", crate::semantic::NetworkScope::Local),      // Local database (LocalDev - fixed!)
         ];
         
         println!("=== Testing Enhanced Encoder with Development Patterns ===");

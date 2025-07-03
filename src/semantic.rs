@@ -467,50 +467,69 @@ impl SemanticClassifier {
     }
     
     fn classify_development(parsed: &ParsedMultiaddr) -> MultiaddrPattern {
-        let env_type = match parsed.port {
-            3000 => DevEnvironment::LocalDev,          // React/Node.js dev server
-            8080 => DevEnvironment::LocalDev,          // Common dev server
-            4000..=4999 => DevEnvironment::LocalDev,   // Dev server range
-            5000..=5999 => DevEnvironment::Testing,    // Test environment range
-            6000..=6499 => DevEnvironment::QA,         // QA environment range
-            6500..=6999 => DevEnvironment::Staging,    // Staging environment range
-            7000..=7499 => DevEnvironment::PreProd,    // Pre-production range
-            7500..=7999 => DevEnvironment::Sandbox,    // Sandbox environment
-            8000..=8999 => DevEnvironment::Preview,    // Preview/feature branch
-            9000..=9999 => DevEnvironment::Debug,      // Debug/profiling range
-            _ => {
-                // Classify by address patterns
-                if parsed.address.contains("dev") || parsed.address.contains("local") {
-                    DevEnvironment::LocalDev
-                } else if parsed.address.contains("test") {
-                    DevEnvironment::Testing
-                } else if parsed.address.contains("qa") {
-                    DevEnvironment::QA
-                } else if parsed.address.contains("staging") || parsed.address.contains("stage") {
-                    DevEnvironment::Staging
-                } else if parsed.address.contains("preprod") || parsed.address.contains("pre-prod") {
-                    DevEnvironment::PreProd
-                } else if parsed.address.contains("sandbox") {
-                    DevEnvironment::Sandbox
-                } else if parsed.address.contains("preview") {
-                    DevEnvironment::Preview
-                } else {
-                    DevEnvironment::LocalDev
-                }
-            }
+        // Environment detection based on address patterns only - no port prescriptions
+        let env_type = if parsed.address == "127.0.0.1" || parsed.address == "localhost" || parsed.address == "::1" {
+            // Only localhost addresses are automatically classified as LocalDev
+            DevEnvironment::LocalDev
+        } else if parsed.address.contains("dev") || parsed.address.contains(".dev.") {
+            DevEnvironment::LocalDev
+        } else if parsed.address.contains("test") || parsed.address.contains(".test.") {
+            DevEnvironment::Testing
+        } else if parsed.address.contains("qa") || parsed.address.contains(".qa.") {
+            DevEnvironment::QA
+        } else if parsed.address.contains("staging") || parsed.address.contains("stage") || parsed.address.contains(".staging.") {
+            DevEnvironment::Staging
+        } else if parsed.address.contains("preprod") || parsed.address.contains("pre-prod") || parsed.address.contains(".preprod.") {
+            DevEnvironment::PreProd
+        } else if parsed.address.contains("sandbox") || parsed.address.contains(".sandbox.") {
+            DevEnvironment::Sandbox
+        } else if parsed.address.contains("preview") || parsed.address.contains(".preview.") {
+            DevEnvironment::Preview
+        } else {
+            // Default to LocalDev for unknown addresses - conservative approach
+            DevEnvironment::LocalDev
         };
         
+        // Service type based on IANA well-known ports (not environment)
         let service = match parsed.port {
-            3000 => "webapp".to_string(),               // React/Vue/Angular
-            8080 => "server".to_string(),               // Generic server
-            4000 => "api".to_string(),                  // API server
-            5432 => "database".to_string(),             // PostgreSQL
-            3306 => "database".to_string(),             // MySQL
-            27017 => "database".to_string(),            // MongoDB
-            6379 => "cache".to_string(),                // Redis
-            9200 => "search".to_string(),               // Elasticsearch
-            8000 => "admin".to_string(),                // Django admin
-            _ => "service".to_string(),
+            // Web services
+            80 => "http-server".to_string(),            // HTTP
+            443 => "https-server".to_string(),          // HTTPS
+            8080 => "http-proxy".to_string(),           // HTTP alternate
+            3000 => "webapp".to_string(),               // Common dev webapp
+            
+            // Database services (IANA registered)
+            5432 => "postgresql".to_string(),           // PostgreSQL
+            3306 => "mysql".to_string(),                // MySQL
+            27017 => "mongodb".to_string(),             // MongoDB
+            6379 => "redis".to_string(),                // Redis
+            1521 => "oracle".to_string(),               // Oracle
+            1433 => "mssql".to_string(),                // Microsoft SQL Server
+            
+            // Email services
+            25 => "smtp".to_string(),                   // SMTP
+            110 => "pop3".to_string(),                  // POP3
+            143 => "imap".to_string(),                  // IMAP
+            587 => "submission".to_string(),            // Mail submission
+            
+            // File services
+            21 => "ftp".to_string(),                    // FTP
+            22 => "ssh".to_string(),                    // SSH/SFTP
+            2049 => "nfs".to_string(),                  // NFS
+            445 => "smb".to_string(),                   // SMB/CIFS
+            
+            // Directory services
+            389 => "ldap".to_string(),                  // LDAP
+            636 => "ldaps".to_string(),                 // LDAPS
+            88 => "kerberos".to_string(),               // Kerberos
+            
+            // Other common services
+            53 => "dns".to_string(),                    // DNS
+            123 => "ntp".to_string(),                   // NTP
+            161 => "snmp".to_string(),                  // SNMP
+            514 => "syslog".to_string(),                // Syslog
+            
+            _ => "service".to_string(),                 // Generic service
         };
         
         MultiaddrPattern::Development {

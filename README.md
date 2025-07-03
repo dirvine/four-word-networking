@@ -341,25 +341,23 @@ The system automatically detects and classifies network services with **perfect 
 
 ### Development Environment Classification
 
-**Automatic Environment Detection:**
+**Address-Based Environment Detection:**
 ```rust
-// Port-based classification (industry standard 2024)
-3000-4999  → LocalDev     (developer workstation)
-5000-5999  → Testing      (unit/integration tests)  
-6000-6499  → QA          (quality assurance)
-6500-6999  → Staging     (pre-production mirror)
-7000-7499  → PreProd     (final validation)
-7500-7999  → Sandbox     (isolated experimentation)
-8000-8999  → Preview     (feature branch testing)
-9000-9999  → Debug       (profiling/debugging)
+// Environment detection based on hostname patterns (respects existing conventions)
+127.0.0.1, localhost, ::1  → LocalDev     (local development)
+*.dev.*, *dev*              → LocalDev     (development hostnames)
+*.test.*, *test*            → Testing      (testing hostnames)  
+*.qa.*, *qa*                → QA           (quality assurance)
+*.staging.*, *staging*      → Staging      (staging hostnames)
+*.preprod.*, *preprod*      → PreProd      (pre-production)
+*.sandbox.*, *sandbox*      → Sandbox      (sandbox environments)
+*.preview.*, *preview*      → Preview      (preview deployments)
 
-// Address-based classification
-*.dev.*     → LocalDev
-*.test.*    → Testing  
-*.qa.*      → QA
-*.staging.* → Staging
-*.preprod.* → PreProd
-*.preview.* → Preview
+// Service type detection based on IANA well-known ports
+5432  → postgresql    (any environment - PostgreSQL database)
+3306  → mysql         (any environment - MySQL database)  
+443   → https-server  (any environment - HTTPS web server)
+80    → http-server   (any environment - HTTP web server)
 ```
 
 ### Semantic Address Reconstruction
