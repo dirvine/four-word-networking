@@ -67,6 +67,20 @@ impl NetworkAddressGenerator {
         bytes
     }
 
+    /// Generate random IPv4 multiaddress string for ultra-compact encoder
+    pub fn generate_ipv4_multiaddr(&mut self) -> String {
+        let ip = Ipv4Addr::new(
+            self.rng.gen::<u8>(),
+            self.rng.gen::<u8>(),
+            self.rng.gen::<u8>(),
+            self.rng.gen::<u8>(),
+        );
+        let port: u16 = self.rng.gen_range(1..=65535);
+        let protocol = if self.rng.gen_bool(0.8) { "tcp" } else { "udp" };
+        
+        format!("/ip4/{}/{}/{}", ip, protocol, port)
+    }
+
     /// Generate random IPv6 address (16 bytes, will use Fractal encoding)
     pub fn generate_ipv6_address(&mut self) -> Vec<u8> {
         let mut segments = [0u16; 8];
@@ -80,6 +94,23 @@ impl NetworkAddressGenerator {
         );
         
         ip.octets().to_vec()
+    }
+
+    /// Generate random IPv6 multiaddress string for ultra-compact encoder
+    pub fn generate_ipv6_multiaddr(&mut self) -> String {
+        let mut segments = [0u16; 8];
+        for segment in &mut segments {
+            *segment = self.rng.gen::<u16>();
+        }
+        
+        let ip = Ipv6Addr::new(
+            segments[0], segments[1], segments[2], segments[3],
+            segments[4], segments[5], segments[6], segments[7]
+        );
+        let port: u16 = self.rng.gen_range(1..=65535);
+        let protocol = if self.rng.gen_bool(0.8) { "tcp" } else { "udp" };
+        
+        format!("/ip6/{}/{}/{}", ip, protocol, port)
     }
 
     /// Generate random multiaddr-style address
@@ -196,14 +227,14 @@ impl HashGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::balanced_encoder::BalancedEncoder;
+    use crate::ultra_compact_encoder::UltraCompactEncoder;
 
     #[test]
     fn test_10_million_network_addresses() {
         println!("\n🌐 Testing 10 Million Network Addresses");
         println!("======================================");
         
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         let mut generator = NetworkAddressGenerator::new();
         let mut seen_encodings = HashSet::new();
         let mut summary = TestSummary::default();
@@ -217,13 +248,13 @@ mod tests {
             
             // Measure encoding time
             let encode_start = Instant::now();
-            match encoder.encode(&addr) {
+            match encoder.encode_bytes(&addr) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     // Check for collisions
                     if seen_encodings.contains(&encoded_str) {
@@ -264,13 +295,13 @@ mod tests {
             let addr = generator.generate_ipv6_address();
             
             let encode_start = Instant::now();
-            match encoder.encode(&addr) {
+            match encoder.encode_bytes(&addr) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -296,13 +327,13 @@ mod tests {
             let addr = generator.generate_multiaddr();
             
             let encode_start = Instant::now();
-            match encoder.encode(&addr) {
+            match encoder.encode_bytes(&addr) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -352,7 +383,7 @@ mod tests {
         println!("\n💰 Testing 1 Million Cryptocurrency Addresses");
         println!("==============================================");
         
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         let mut bitcoin_gen = BitcoinAddressGenerator::new();
         let mut ethereum_gen = EthereumAddressGenerator::new();
         let mut seen_encodings = HashSet::new();
@@ -370,13 +401,13 @@ mod tests {
             };
             
             let encode_start = Instant::now();
-            match encoder.encode(&addr) {
+            match encoder.encode_bytes(&addr) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -406,13 +437,13 @@ mod tests {
             };
             
             let encode_start = Instant::now();
-            match encoder.encode(&addr) {
+            match encoder.encode_bytes(&addr) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -460,7 +491,7 @@ mod tests {
         println!("\n🔐 Testing 100,000 SHA-256 Hashes");
         println!("==================================");
         
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         let mut hash_gen = HashGenerator::new();
         let mut seen_encodings = HashSet::new();
         let mut summary = TestSummary::default();
@@ -473,13 +504,13 @@ mod tests {
             let hash = hash_gen.generate_random_hash();
             
             let encode_start = Instant::now();
-            match encoder.encode(&hash) {
+            match encoder.encode_bytes(&hash) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -526,13 +557,13 @@ mod tests {
             let hash = hash_gen.generate_known_hash(input);
             
             let encode_start = Instant::now();
-            match encoder.encode(&hash) {
+            match encoder.encode_bytes(&hash) {
                 Ok(encoded) => {
                     summary.successful_encodings += 1;
                     let encode_duration = encode_start.elapsed();
                     summary.average_encoding_time_us += encode_duration.as_micros() as f64;
                     
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     if seen_encodings.contains(&encoded_str) {
                         summary.collisions_found += 1;
@@ -580,7 +611,7 @@ mod tests {
         println!("\n🔍 Testing All Edge Cases");
         println!("=========================");
         
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         let mut input_to_output = std::collections::HashMap::new();
         let mut output_to_input = std::collections::HashMap::new();
         let mut test_count = 0;
@@ -590,9 +621,9 @@ mod tests {
         println!("Testing single byte inputs...");
         for i in 0..=255u8 {
             let data = vec![i];
-            match encoder.encode(&data) {
+            match encoder.encode_bytes(&data) {
                 Ok(encoded) => {
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     // Check if this input already has a different output
                     if let Some(existing_output) = input_to_output.get(&data) {
@@ -630,9 +661,9 @@ mod tests {
                     *byte = ((i + j) % 256) as u8;
                 }
                 
-                match encoder.encode(&data) {
+                match encoder.encode_bytes(&data) {
                     Ok(encoded) => {
-                        let encoded_str = encoded.to_string();
+                        let encoded_str = encoded.to_words();
                         
                         // Check for true collisions
                         if let Some(existing_output) = input_to_output.get(&data) {
@@ -672,9 +703,9 @@ mod tests {
         ];
         
         for pattern in patterns.iter() {
-            match encoder.encode(pattern) {
+            match encoder.encode_bytes(pattern) {
                 Ok(encoded) => {
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     
                     // Check for true collisions
                     if let Some(existing_output) = input_to_output.get(pattern) {
@@ -720,7 +751,7 @@ mod tests {
         println!("\n🛡️ Exhaustive Collision Detection");
         println!("==================================");
         
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         let mut global_encodings = HashSet::new();
         let mut total_tests = 0;
         let mut collisions = 0;
@@ -731,9 +762,9 @@ mod tests {
         // Test all 2-byte combinations (65536 total)
         for i in 0..=65535u16 {
             let data = i.to_be_bytes().to_vec();
-            match encoder.encode(&data) {
+            match encoder.encode_bytes(&data) {
                 Ok(encoded) => {
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     if global_encodings.contains(&encoded_str) {
                         collisions += 1;
                         println!("🚨 COLLISION: {} -> {}", i, encoded_str);
@@ -754,9 +785,9 @@ mod tests {
         println!("Testing 3-byte combination sample...");
         for i in 0..100000u32 {
             let data = [(i >> 16) as u8, (i >> 8) as u8, i as u8].to_vec();
-            match encoder.encode(&data) {
+            match encoder.encode_bytes(&data) {
                 Ok(encoded) => {
-                    let encoded_str = encoded.to_string();
+                    let encoded_str = encoded.to_words();
                     if global_encodings.contains(&encoded_str) {
                         collisions += 1;
                         println!("🚨 COLLISION: {} -> {}", i, encoded_str);
@@ -790,7 +821,7 @@ mod tests {
         println!("===========================");
         
         // Check memory usage before encoder creation
-        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
+        let encoder = UltraCompactEncoder::new().expect("Failed to create encoder");
         
         // Estimate memory usage
         let dictionaries_size = 4 * 4096 * 8; // 4 dicts * 4096 words * ~8 bytes per word
@@ -812,7 +843,7 @@ mod tests {
                 (i >> 8) as u8, i as u8
             ];
             
-            match encoder.encode(&data) {
+            match encoder.encode_bytes(&data) {
                 Ok(_) => total_encodings += 1,
                 Err(_) => {}
             }

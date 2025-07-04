@@ -39,12 +39,15 @@ pub mod dictionary16k;
 pub mod encoder16k;
 pub mod compression;
 pub mod balanced_encoder;
+pub mod ultra_compression;
+pub mod ultra_compact_encoder;
 
 pub use words::{ThreeWordAddress, WordDictionary, WordEncoder};
 pub use error::{ThreeWordError, Result};
 pub use multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
 pub use universal::{UniversalEncoder, UniversalEncoding, EncodingStrategy};
 pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
+pub use ultra_compact_encoder::{UltraCompactEncoder, UltraCompactEncoding};
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
