@@ -34,10 +34,12 @@
 pub mod words;
 pub mod error;
 pub mod multiaddr_parser;
+pub mod universal;
 
 pub use words::{ThreeWordAddress, WordDictionary, WordEncoder};
 pub use error::{ThreeWordError, Result};
 pub use multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
+pub use universal::{UniversalEncoder, UniversalEncoding, EncodingStrategy};
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
