@@ -9,9 +9,9 @@
 **An experimental system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
 
 ```
-/ip4/192.168.1.1/tcp/4001  →  slightly wahl bal
-/ip6/::1/tcp/4001          →  zoa enid afar  
-/ip4/127.0.0.1/tcp/8080    →  magnitude yon band
+/ip4/192.168.1.1/tcp/4001  →  upcoming gar tlo
+/ip6/::1/tcp/4001          →  pa norway little  
+/ip4/127.0.0.1/tcp/8080    →  reprimand weave alexei
 ```
 
 ## Overview
@@ -22,7 +22,8 @@ Three-Word Networking implements an ultra-compact encoding system that transform
 
 - **Perfect 3-Word Encoding**: 100% of common multiaddresses achieve exactly 3 words
 - **Ultra-High Compression**: 75-87% size reduction with intelligent pattern recognition
-- **Voice-Friendly**: Perfect for verbal communication - "spinout manly aim" vs long technical strings
+- **Voice-Friendly Words**: Clear, recognizable English words like "reprimand weave alexei" vs technical strings
+- **Professional Quality**: Common words (upcoming, norway, sequester) suitable for business communication
 - **Industry-Leading Collision Resistance**: <0.00005% collision rate across millions of addresses
 - **Lightning Performance**: Sub-3μs encoding times with <1MB memory footprint
 - **Comprehensive Testing**: Extensive validation with deterministic behavior
@@ -50,13 +51,18 @@ Ultra-compression achieves 75-87% size reduction, enabling perfect 3-word encodi
 
 ### Word Dictionary Structure
 
-The system utilizes a carefully curated 16,384-word dictionary organized into semantic categories:
+The system utilizes a carefully curated 16,384-word dictionary prioritizing common, voice-friendly English words:
 
-- **Position 1 (Context)**: Geographic, network, and scale descriptors
-- **Position 2 (Quality)**: Performance, purpose, and status indicators  
-- **Position 3 (Identity)**: Objects, concepts, and distinguishing features
+- **297 Very Common Words**: Everyday words everyone knows (book, city, game, norway, number)
+- **10,453 Common Words**: Recognizable English words (upcoming, sequester, reflector, diagnosis)
+- **Remaining Words**: Valid English words for complete coverage
 
-All words are 2-9 characters, pronunciation-friendly, and selected for memorability.
+**Quality Examples:**
+- Business-appropriate: "reprimand weave alexei"
+- Clear pronunciation: "upcoming held abode" 
+- Memorable phrases: "reflector unlocked purple"
+
+All words are optimized for voice communication with preference for longer, familiar terms over short abbreviations.
 
 ## Performance Characteristics
 
@@ -97,11 +103,11 @@ let encoder = UltraCompactEncoder::new()?;
 
 // Encode multiaddress with ultra-compression
 let encoding = encoder.encode("/ip4/192.168.1.1/tcp/4001")?;
-println!("{}", encoding); // "slightly wahl bal"
+println!("{}", encoding); // "upcoming gar tlo"
 
 // Perfect 3-word encoding for common patterns
 let localhost = encoder.encode("/ip4/127.0.0.1/tcp/8080")?;
-println!("{}", localhost); // "magnitude yon band"
+println!("{}", localhost); // "reprimand weave alexei"
 
 // Check compression achievements  
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 83.0%
@@ -116,7 +122,7 @@ cargo install three-word-networking
 
 # Encode multiaddress with ultra-compression
 three-word-networking ultra "/ip4/192.168.1.1/tcp/4001"
-# Output: slightly wahl bal
+# Output: upcoming gar tlo
 # Compression: 83.0%, Perfect 3-word encoding!
 
 # Encode hash data
@@ -137,13 +143,13 @@ let encoder = UltraCompactEncoder::new()?;
 let multiaddr = "/ip6/::1/tcp/4001";
 let encoding = encoder.encode(multiaddr)?;
 
-println!("Encoded: {}", encoding); // "zoa enid afar"
+println!("Encoded: {}", encoding); // "pa norway little"
 println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 82.4%
 println!("Efficiency: {}", encoding.efficiency_rating()); // Perfect (82.4% compression, 3 words)
 
 // Voice-friendly - already perfect
-println!("Voice: {}", encoding.to_words()); // "zoa enid afar"
+println!("Voice: {}", encoding.to_words()); // "pa norway little"
 ```
 
 ## Data Type Detection
@@ -161,12 +167,17 @@ Encoded addresses are optimized for verbal communication:
 
 ```
 Technical: /ip4/192.168.1.1/tcp/4001
-Voice: "slightly wahl bal"
+Voice: "upcoming gar tlo"
 
 Support scenarios:
 "What's your server address?"
-"slightly wahl bal"
+"upcoming gar tlo"
 "Got it, connecting now..."
+
+More examples:
+"The database server is at reflector unlocked purple"
+"Connect to the API at demeanor leggy antiques"
+"Backup server: upcoming held abode"
 ```
 
 ## Scientific Validation
@@ -194,8 +205,8 @@ The system has undergone comprehensive empirical validation:
 
 ```rust
 // Server configuration becomes human-readable
-"/ip4/10.0.1.100/tcp/22" → "slightly lome aide"
-"/ip6/::1/tcp/8080" → "magnitude yon band"
+"/ip4/10.0.1.100/tcp/22" → "upcoming lair number"
+"/ip6/::1/tcp/8080" → "reprimand weave alexei"
 ```
 
 ### Cryptocurrency Integration
