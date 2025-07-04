@@ -9,9 +9,9 @@
 **An experimental system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
 
 ```
-/ip4/192.168.1.1/tcp/4001  →  upcoming gar tlo
-/ip6/::1/tcp/4001          →  pa norway little  
-/ip4/127.0.0.1/tcp/8080    →  reprimand weave alexei
+/ip4/192.168.1.1/tcp/443   →  upcoming sour human
+/ip4/203.0.113.1/tcp/80    →  reflector unlocked purple  
+/ip4/192.168.1.100/tcp/8080 →  gunny sequester reborn
 ```
 
 ## Overview
@@ -22,8 +22,8 @@ Three-Word Networking implements an ultra-compact encoding system that transform
 
 - **Perfect 3-Word Encoding**: 100% of common multiaddresses achieve exactly 3 words
 - **Ultra-High Compression**: 75-87% size reduction with intelligent pattern recognition
-- **Voice-Friendly Words**: Clear, recognizable English words like "reprimand weave alexei" vs technical strings
-- **Professional Quality**: Common words (upcoming, norway, sequester) suitable for business communication
+- **Voice-Friendly Words**: Clear, recognizable English words like "reflector unlocked purple" vs technical strings
+- **Professional Quality**: Common words (upcoming, sequester, diagnosis) suitable for business communication
 - **Industry-Leading Collision Resistance**: <0.00005% collision rate across millions of addresses
 - **Lightning Performance**: Sub-3μs encoding times with <1MB memory footprint
 - **Comprehensive Testing**: Extensive validation with deterministic behavior
@@ -58,8 +58,8 @@ The system utilizes a carefully curated 16,384-word dictionary prioritizing comm
 - **Remaining Words**: Valid English words for complete coverage
 
 **Quality Examples:**
-- Business-appropriate: "reprimand weave alexei"
-- Clear pronunciation: "upcoming held abode" 
+- Business-appropriate: "upcoming sour human"
+- Clear pronunciation: "unique broadly diagnosis" 
 - Memorable phrases: "reflector unlocked purple"
 
 All words are optimized for voice communication with preference for longer, familiar terms over short abbreviations.
@@ -102,12 +102,12 @@ use three_word_networking::UltraCompactEncoder;
 let encoder = UltraCompactEncoder::new()?;
 
 // Encode multiaddress with ultra-compression
-let encoding = encoder.encode("/ip4/192.168.1.1/tcp/4001")?;
-println!("{}", encoding); // "upcoming gar tlo"
+let encoding = encoder.encode("/ip4/192.168.1.1/tcp/443")?;
+println!("{}", encoding); // "upcoming sour human"
 
 // Perfect 3-word encoding for common patterns
-let localhost = encoder.encode("/ip4/127.0.0.1/tcp/8080")?;
-println!("{}", localhost); // "reprimand weave alexei"
+let localhost = encoder.encode("/ip4/203.0.113.1/tcp/80")?;
+println!("{}", localhost); // "reflector unlocked purple"
 
 // Check compression achievements  
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 83.0%
@@ -121,8 +121,8 @@ println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
 cargo install three-word-networking
 
 # Encode multiaddress with ultra-compression
-three-word-networking ultra "/ip4/192.168.1.1/tcp/4001"
-# Output: upcoming gar tlo
+three-word-networking ultra "/ip4/192.168.1.1/tcp/443"
+# Output: upcoming sour human
 # Compression: 83.0%, Perfect 3-word encoding!
 
 # Encode hash data
@@ -140,16 +140,16 @@ use three_word_networking::UltraCompactEncoder;
 let encoder = UltraCompactEncoder::new()?;
 
 // Encode with detailed analysis
-let multiaddr = "/ip6/::1/tcp/4001";
+let multiaddr = "/ip4/8.8.8.8/udp/53";
 let encoding = encoder.encode(multiaddr)?;
 
-println!("Encoded: {}", encoding); // "pa norway little"
+println!("Encoded: {}", encoding); // "unique broadly diagnosis"
 println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 82.4%
 println!("Efficiency: {}", encoding.efficiency_rating()); // Perfect (82.4% compression, 3 words)
 
 // Voice-friendly - already perfect
-println!("Voice: {}", encoding.to_words()); // "pa norway little"
+println!("Voice: {}", encoding.to_words()); // "unique broadly diagnosis"
 ```
 
 ## Data Type Detection
@@ -166,12 +166,12 @@ The system automatically detects and optimizes encoding based on input character
 Encoded addresses are optimized for verbal communication:
 
 ```
-Technical: /ip4/192.168.1.1/tcp/4001
-Voice: "upcoming gar tlo"
+Technical: /ip4/192.168.1.1/tcp/443
+Voice: "upcoming sour human"
 
 Support scenarios:
 "What's your server address?"
-"upcoming gar tlo"
+"upcoming sour human"
 "Got it, connecting now..."
 
 More examples:
@@ -205,8 +205,8 @@ The system has undergone comprehensive empirical validation:
 
 ```rust
 // Server configuration becomes human-readable
-"/ip4/10.0.1.100/tcp/22" → "upcoming lair number"
-"/ip6/::1/tcp/8080" → "reprimand weave alexei"
+"/ip4/10.0.0.1/tcp/22" → "upcoming lair dexterous"
+"/ip4/10.0.0.1/udp/53" → "upcoming held abode"
 ```
 
 ### Cryptocurrency Integration
