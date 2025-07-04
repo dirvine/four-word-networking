@@ -6,7 +6,7 @@
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 [![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
 
-**A production-ready system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
+**An experimental system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
 
 ```
 /ip4/192.168.1.1/tcp/4001  →  collide cliff grew · groin skulk consumer · aptitude clumsily office
@@ -24,7 +24,7 @@ Three-Word Networking implements a balanced encoding system that transforms comp
 - **Voice-Friendly**: Optimized for verbal communication over phone, radio, or voice chat
 - **Industry-Leading Collision Resistance**: <0.00005% collision rate across 10 million addresses
 - **High Performance**: Sub-3μs encoding times with <1MB memory footprint
-- **Production-Ready**: Comprehensive test coverage with deterministic behavior
+- **Comprehensive Testing**: Extensive test coverage with deterministic behavior
 
 ## Technical Architecture
 
@@ -241,7 +241,7 @@ This implementation provides a foundation for research in:
 
 ## Implementation Status
 
-**Current Version**: Production-ready with comprehensive validation
+**Current Version**: Experimental with comprehensive validation
 
 - ✅ **Core Algorithm**: Balanced encoding with compression
 - ✅ **Performance Validation**: Large-scale testing completed
