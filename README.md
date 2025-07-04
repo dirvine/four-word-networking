@@ -9,9 +9,9 @@
 **An experimental system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
 
 ```
-/ip4/192.168.1.1/tcp/4001  →  spinout manly aim
-/ip6/::1/tcp/4001          →  zap snagged aim  
-/ip4/127.0.0.1/tcp/8080    →  acid yip aim
+/ip4/192.168.1.1/tcp/4001  →  slightly wahl bal
+/ip6/::1/tcp/4001          →  zoa enid afar  
+/ip4/127.0.0.1/tcp/8080    →  magnitude yon band
 ```
 
 ## Overview
@@ -97,11 +97,11 @@ let encoder = UltraCompactEncoder::new()?;
 
 // Encode multiaddress with ultra-compression
 let encoding = encoder.encode("/ip4/192.168.1.1/tcp/4001")?;
-println!("{}", encoding); // "spinout manly aim"
+println!("{}", encoding); // "slightly wahl bal"
 
 // Perfect 3-word encoding for common patterns
 let localhost = encoder.encode("/ip4/127.0.0.1/tcp/8080")?;
-println!("{}", localhost); // "acid yip aim"
+println!("{}", localhost); // "magnitude yon band"
 
 // Check compression achievements  
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 83.0%
@@ -116,7 +116,7 @@ cargo install three-word-networking
 
 # Encode multiaddress with ultra-compression
 three-word-networking ultra "/ip4/192.168.1.1/tcp/4001"
-# Output: spinout manly aim
+# Output: slightly wahl bal
 # Compression: 83.0%, Perfect 3-word encoding!
 
 # Encode hash data
@@ -137,13 +137,13 @@ let encoder = UltraCompactEncoder::new()?;
 let multiaddr = "/ip6/::1/tcp/4001";
 let encoding = encoder.encode(multiaddr)?;
 
-println!("Encoded: {}", encoding); // "zap snagged aim"
+println!("Encoded: {}", encoding); // "zoa enid afar"
 println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 82.4%
 println!("Efficiency: {}", encoding.efficiency_rating()); // Perfect (82.4% compression, 3 words)
 
 // Voice-friendly - already perfect
-println!("Voice: {}", encoding.to_words()); // "zap snagged aim"
+println!("Voice: {}", encoding.to_words()); // "zoa enid afar"
 ```
 
 ## Data Type Detection
@@ -161,11 +161,11 @@ Encoded addresses are optimized for verbal communication:
 
 ```
 Technical: /ip4/192.168.1.1/tcp/4001
-Voice: "spinout manly aim"
+Voice: "slightly wahl bal"
 
 Support scenarios:
 "What's your server address?"
-"spinout manly aim"
+"slightly wahl bal"
 "Got it, connecting now..."
 ```
 
@@ -194,8 +194,8 @@ The system has undergone comprehensive empirical validation:
 
 ```rust
 // Server configuration becomes human-readable
-"/ip4/10.0.1.100/tcp/22" → "creeks hurler aim"
-"/ip6/::1/tcp/8080" → "acid yip aim"
+"/ip4/10.0.1.100/tcp/22" → "slightly lome aide"
+"/ip6/::1/tcp/8080" → "magnitude yon band"
 ```
 
 ### Cryptocurrency Integration
