@@ -11,6 +11,12 @@ pub mod fractal;
 pub mod holographic;
 pub mod error;
 
+#[cfg(test)]
+pub mod real_world_tests;
+
+#[cfg(test)]
+pub mod demo_tests;
+
 pub use encoder::UniversalEncoder;
 pub use dictionaries::Dictionaries;
 pub use error::{EncodingError, DecodingError};

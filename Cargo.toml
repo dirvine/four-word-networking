@@ -21,6 +21,8 @@ tokio = { version = "1.0", features = ["full"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
+hex = "0.4"
+bs58 = "0.5"
 
 [[bin]]
 name = "three-word-networking"

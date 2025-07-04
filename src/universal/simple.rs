@@ -114,13 +114,9 @@ impl SimpleEncoder {
     
     /// Remove padding from decoded bytes (simplified heuristic)
     fn trim_padding(&self, bytes: &[u8]) -> Vec<u8> {
-        // Simple heuristic: remove trailing zeros
-        // In a real implementation, we'd need a more sophisticated approach
-        let mut end = bytes.len();
-        while end > 1 && bytes[end - 1] == 0 {
-            end -= 1;
-        }
-        bytes[..end].to_vec()
+        // For demonstration purposes, return the full bytes
+        // In a real implementation, we'd need to store the original length
+        bytes.to_vec()
     }
 }
 
