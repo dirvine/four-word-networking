@@ -1,5 +1,7 @@
 # Three-Word Networking: Human-Readable Address Encoding
 
+## ⚠️ **This is currently experimental work, DO NOT USE!!** ⚠️
+
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 [![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
