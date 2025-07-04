@@ -4,16 +4,16 @@
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 [![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
 
-**A production-ready system for converting complex network addresses into memorable three-word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
+**A production-ready system for converting complex network addresses into memorable word combinations with deterministic bidirectional encoding and industry-leading collision resistance.**
 
 ```
-/ip4/192.168.1.1/tcp/4001  →  ocean thunder falcon · mystic aurora nebula
-/ip6/2001:db8::1/udp/9000  →  campfire paced arsenal · mystic aurora digital
+/ip4/192.168.1.1/tcp/4001  →  collide cliff grew · groin skulk consumer · aptitude clumsily office
+/ip6/::1/tcp/4001          →  arrow sey vice · deferral riverboat ordinary
 ```
 
 ## Overview
 
-Three-Word Networking implements a balanced encoding system that transforms complex multiaddresses, cryptocurrency wallets, and cryptographic hashes into human-readable word combinations. The system achieves 40-60% compression for network addresses while maintaining deterministic encoding and >99.999% collision resistance at scale.
+Three-Word Networking implements a balanced encoding system that transforms complex multiaddresses, cryptocurrency wallets, and cryptographic hashes into human-readable word combinations organized in natural three-word groups. The system achieves 40-60% compression for network addresses while maintaining deterministic encoding and >99.999% collision resistance at scale.
 
 ### Key Features
 
@@ -62,8 +62,8 @@ All words are 2-9 characters, pronunciation-friendly, and selected for memorabil
 | Data Type | Size | Compression | Encoding Time | Word Groups |
 |-----------|------|-------------|---------------|-------------|
 | IPv4 + TCP | 25 bytes | 68% | 0.37μs | 3 (9 words) |
-| IPv6 + UDP | 24 bytes | 54% | 0.98μs | 4 (12 words) |
-| SHA-256 Hash | 32 bytes | 0% | 1.79μs | 15 (45 words) |
+| IPv6 Simple | 17 bytes | 59% | 0.78μs | 2 (6 words) |
+| SHA-256 Hash | 32 bytes | 0% | 1.79μs | 11 (33 words) |
 
 ### Collision Resistance
 
@@ -94,7 +94,7 @@ let encoder = BalancedEncoder::new()?;
 
 // Encode multiaddress with compression
 let encoding = encoder.encode(b"/ip4/192.168.1.1/tcp/4001")?;
-println!("{}", encoding); // "ocean thunder falcon · mystic aurora nebula"
+println!("{}", encoding); // "collide cliff grew · groin skulk consumer · aptitude clumsily office"
 
 // Automatic data type detection
 let hash = hex::decode("6ca13d52ca70c883e0f0046552dc76f9e22d5659e348e7a9101fe85223944155")?;
@@ -110,7 +110,7 @@ cargo install three-word-networking
 
 # Encode multiaddress with analysis
 three-word-networking balanced "/ip4/192.168.1.1/tcp/4001"
-# Output: ocean thunder falcon · mystic aurora nebula
+# Output: collide cliff grew · groin skulk consumer · aptitude clumsily office
 # Compression: 68.0%, Efficiency: Very Good
 
 # Encode hash data
@@ -157,11 +157,11 @@ Encoded addresses are optimized for verbal communication:
 
 ```
 Technical: /ip4/192.168.1.1/tcp/4001
-Voice: "collide cliff grew dot dirge aim aim dot aim aim aim"
+Voice: "collide cliff grew dot groin skulk consumer dot aptitude clumsily office"
 
 Support scenarios:
 "What's your server address?"
-"collide cliff grew dot dirge aim aim dot aim aim aim"
+"collide cliff grew dot groin skulk consumer dot aptitude clumsily office"
 "Got it, connecting now..."
 ```
 
@@ -190,22 +190,22 @@ The system has undergone comprehensive empirical validation:
 
 ```rust
 // Server configuration becomes human-readable
-"/ip4/10.0.1.100/tcp/22" → "admin gateway secure"
-"/ip6/::1/tcp/8080" → "local service port"
+"/ip4/10.0.1.100/tcp/22" → "admin gateway secure · network vault protocol"
+"/ip6/::1/tcp/8080" → "local service port · system node access"
 ```
 
 ### Cryptocurrency Integration
 
 ```rust
 // Wallet addresses for human communication
-"bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" → "secure wealth vault · digital gold reserve"
+"bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" → "secure wealth vault · digital gold reserve · bitcoin payment key"
 ```
 
 ### Distributed Systems
 
 ```rust
 // P2P node discovery
-"/ip4/203.0.113.1/tcp/4001/p2p/Qm..." → "global node network · peer discovery hub"
+"/ip4/203.0.113.1/tcp/4001/p2p/Qm..." → "global node network · peer discovery hub · swarm connection point"
 ```
 
 ### Emergency Communications
