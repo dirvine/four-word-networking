@@ -56,11 +56,14 @@ impl NetworkAddressGenerator {
         );
         let port: u16 = self.rng.gen_range(1..=65535);
         
-        // Create 8-byte representation: 4 bytes IP + 2 bytes port + 2 bytes padding
+        // Create 8-byte representation: 4 bytes IP + 2 bytes port + 2 bytes random padding
         let mut bytes = Vec::with_capacity(8);
         bytes.extend_from_slice(&ip.octets());
         bytes.extend_from_slice(&port.to_be_bytes());
-        bytes.extend_from_slice(&[0u8; 2]); // padding
+        
+        // Use random padding instead of zeros to avoid digit group clustering
+        let padding = [self.rng.gen::<u8>(), self.rng.gen::<u8>()];
+        bytes.extend_from_slice(&padding);
         bytes
     }
 

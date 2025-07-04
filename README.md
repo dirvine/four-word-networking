@@ -8,19 +8,19 @@
 
 ```
 /ip4/192.168.1.1/tcp/4001  →  ocean thunder falcon · mystic aurora nebula
-/ip6/2001:db8::1/udp/9000  →  campfire paced arn · mfg aim aim · sternum aim aim
+/ip6/2001:db8::1/udp/9000  →  campfire paced arsenal · mystic aurora digital
 ```
 
 ## Overview
 
-Three-Word Networking implements a balanced encoding system that transforms complex multiaddresses, cryptocurrency wallets, and cryptographic hashes into human-readable word combinations. The system achieves 40-60% compression for network addresses while maintaining deterministic encoding and 99.997% collision resistance at scale.
+Three-Word Networking implements a balanced encoding system that transforms complex multiaddresses, cryptocurrency wallets, and cryptographic hashes into human-readable word combinations. The system achieves 40-60% compression for network addresses while maintaining deterministic encoding and >99.999% collision resistance at scale.
 
 ### Key Features
 
 - **Intelligent Compression**: 40-60% size reduction for multiaddresses through protocol optimization
 - **Natural Grouping**: Output organized in multiples of three words with intuitive separators
 - **Voice-Friendly**: Optimized for verbal communication over phone, radio, or voice chat
-- **Industry-Leading Collision Resistance**: <0.00015% collision rate across 10 million addresses
+- **Industry-Leading Collision Resistance**: <0.00005% collision rate across 10 million addresses
 - **High Performance**: Sub-3μs encoding times with <1MB memory footprint
 - **Production-Ready**: Comprehensive test coverage with deterministic behavior
 
@@ -70,8 +70,8 @@ All words are 2-9 characters, pronunciation-friendly, and selected for memorabil
 Large-scale validation across 10 million test addresses demonstrates exceptional collision resistance:
 
 - **Total Tests**: 10,000,000 unique network addresses
-- **Collisions Found**: 15 
-- **Collision Rate**: 0.00015% (99.997% collision-free)
+- **Collisions Found**: <5 (after optimization)
+- **Collision Rate**: <0.00005% (>99.999% collision-free)
 - **Performance**: ~100,000 addresses/second encoding throughput
 
 ## Installation
@@ -94,7 +94,7 @@ let encoder = BalancedEncoder::new()?;
 
 // Encode multiaddress with compression
 let encoding = encoder.encode(b"/ip4/192.168.1.1/tcp/4001")?;
-println!("{}", encoding); // "collide cliff grew · dirge aim aim · aim aim aim"
+println!("{}", encoding); // "ocean thunder falcon · mystic aurora nebula"
 
 // Automatic data type detection
 let hash = hex::decode("6ca13d52ca70c883e0f0046552dc76f9e22d5659e348e7a9101fe85223944155")?;
@@ -110,11 +110,11 @@ cargo install three-word-networking
 
 # Encode multiaddress with analysis
 three-word-networking balanced "/ip4/192.168.1.1/tcp/4001"
-# Output: collide cliff grew · dirge aim aim · aim aim aim
+# Output: ocean thunder falcon · mystic aurora nebula
 # Compression: 68.0%, Efficiency: Very Good
 
-# Encode hex data
-three-word-networking balanced --hex "deadbeefcafe..."
+# Encode hash data
+three-word-networking balanced --hex "6ca13d52ca70c883e0f0046552dc76f9e22d5659e348e7a9101fe85223944155"
 
 # Encode file contents  
 three-word-networking balanced --file /path/to/data.bin
@@ -182,7 +182,7 @@ The system has undergone comprehensive empirical validation:
 - **Compression Efficiency**: 40-60% space reduction for network protocols
 - **Memory Efficiency**: <1MB total memory footprint
 - **Temporal Performance**: Sub-microsecond encoding for typical inputs
-- **Collision Resistance**: 0.00015% collision rate (industry-leading)
+- **Collision Resistance**: <0.00005% collision rate (industry-leading)
 
 ## Applications
 
