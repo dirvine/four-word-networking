@@ -18,11 +18,16 @@ serde_json = "1.0"
 thiserror = "1.0"
 clap = { version = "4.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
+hex = "0.4"
+bs58 = "0.5"
+bitvec = "1.0"
 
 [dev-dependencies]
 tokio-test = "0.4"
 hex = "0.4"
 bs58 = "0.5"
+rand = "0.8"
+sha2 = "0.10"
 
 [[bin]]
 name = "three-word-networking"

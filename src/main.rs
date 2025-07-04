@@ -4,7 +4,7 @@
 //! three-word addresses and vice versa.
 
 use clap::{Parser, Subcommand};
-use three_word_networking::{WordEncoder, ThreeWordAddress, AddressSpace, Result};
+use three_word_networking::{WordEncoder, ThreeWordAddress, AddressSpace, BalancedEncoder, Result};
 
 #[derive(Parser)]
 #[command(name = "three-word-networking")]
@@ -47,6 +47,20 @@ enum Commands {
         /// Number of examples to generate
         #[arg(short, long, default_value = "5")]
         count: usize,
+    },
+    
+    /// Use balanced encoding with compression (recommended)
+    Balanced {
+        /// The data to encode (multiaddr, hex string, or file path)
+        input: String,
+        
+        /// Treat input as hex string
+        #[arg(long)]
+        hex: bool,
+        
+        /// Treat input as file path
+        #[arg(long)]
+        file: bool,
     },
 }
 
@@ -198,6 +212,56 @@ async fn main() -> Result<()> {
             println!("• User-friendly network configuration");
             println!("• Simplified peer discovery");
             println!("• Voice-activated network connections");
+        }
+        
+        Commands::Balanced { input, hex, file } => {
+            let balanced_encoder = BalancedEncoder::new()?;
+            
+            // Determine input data
+            let data = if file {
+                // Read from file
+                std::fs::read(&input).map_err(|e| {
+                    three_word_networking::ThreeWordError::Io(e)
+                })?
+            } else if hex {
+                // Parse as hex string
+                hex::decode(&input).map_err(|e| {
+                    three_word_networking::ThreeWordError::InvalidInput(format!("Invalid hex: {}", e))
+                })?
+            } else {
+                // Treat as string (likely multiaddress)
+                input.as_bytes().to_vec()
+            };
+            
+            match balanced_encoder.encode(&data) {
+                Ok(encoding) => {
+                    println!("🌟 Balanced Encoding Result");
+                    println!("===========================");
+                    println!();
+                    println!("Input: {}", if hex { format!("0x{}", hex::encode(&data)) } else { input.clone() });
+                    println!("Size: {} bytes", data.len());
+                    println!("Data Type: {:?}", encoding.data_type());
+                    println!();
+                    println!("Encoded: {}", encoding);
+                    println!("Word Groups: {}", encoding.word_count() / 3);
+                    println!("Total Words: {}", encoding.word_count());
+                    println!("Compression: {:.1}%", encoding.compression_ratio() * 100.0);
+                    println!("Efficiency: {}", encoding.efficiency_rating());
+                    println!();
+                    println!("Voice Format: \"{}\"", encoding.to_string().replace("·", "dot"));
+                    println!();
+                    println!("🎯 Benefits:");
+                    if encoding.compression_ratio() > 0.0 {
+                        println!("  ✅ {:.1}% size reduction through compression", encoding.compression_ratio() * 100.0);
+                    }
+                    println!("  ✅ {} natural 3-word groups", encoding.word_count() / 3);
+                    println!("  ✅ Voice-friendly pronunciation");
+                    println!("  ✅ Automatic data type detection");
+                }
+                Err(e) => {
+                    eprintln!("❌ Error: {}", e);
+                }
+            }
         }
     }
 

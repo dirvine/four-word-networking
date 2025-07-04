@@ -23,10 +23,45 @@ pub enum ThreeWordError {
     #[error("Numeric suffix out of range: {0}")]
     NumericSuffixOutOfRange(u32),
     
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    
+    #[error("Compression error: {0}")]
+    CompressionError(String),
+    
+    #[error("Decompression error: {0}")]
+    DecompressionError(String),
     
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
+    
+    #[error("Encoding error: {0}")]
+    EncodingError(String),
+    
+    #[error("Decoding error: {0}")]
+    DecodingError(String),
+    
+    #[error("Dictionary error: {0}")]
+    DictionaryError(String),
+}
+
+impl From<crate::encoder16k::EncodingError> for ThreeWordError {
+    fn from(err: crate::encoder16k::EncodingError) -> Self {
+        ThreeWordError::EncodingError(err.to_string())
+    }
+}
+
+impl From<crate::encoder16k::DecodingError> for ThreeWordError {
+    fn from(err: crate::encoder16k::DecodingError) -> Self {
+        ThreeWordError::DecodingError(err.to_string())
+    }
+}
+
+impl From<crate::dictionary16k::DictionaryError> for ThreeWordError {
+    fn from(err: crate::dictionary16k::DictionaryError) -> Self {
+        ThreeWordError::DictionaryError(err.to_string())
+    }
 }

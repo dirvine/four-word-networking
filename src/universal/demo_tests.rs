@@ -3,7 +3,7 @@
 //! These tests demonstrate the working architecture and human-friendly output
 //! without requiring perfect round-trip conversion (which needs production algorithms).
 
-use crate::universal::UniversalEncoder;
+use crate::balanced_encoder::BalancedEncoder;
 use std::collections::HashSet;
 
 #[cfg(test)]
@@ -26,7 +26,7 @@ mod tests {
 
     #[test]
     fn test_famous_addresses_demonstration() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         
         println!("\n🌟 Universal Word Encoding - Famous Address Demonstration");
         println!("=========================================================");
@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_encoding_strategy_demonstration() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         
         println!("\n🎯 Encoding Strategy Demonstration");
         println!("===================================");
@@ -147,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_deterministic_behavior() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         
         println!("\n🔒 Deterministic Behavior Verification");
         println!("=======================================");
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_collision_resistance_demo() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         let mut seen_encodings = HashSet::new();
         let mut test_count = 0;
         
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_voice_sharing_demonstration() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         
         println!("\n📞 Voice Sharing Demonstration");
         println!("===============================");
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_performance_demonstration() {
-        let encoder = UniversalEncoder::new().expect("Failed to create encoder");
+        let encoder = BalancedEncoder::new().expect("Failed to create encoder");
         
         println!("\n⚡ Performance Demonstration");
         println!("=============================");
