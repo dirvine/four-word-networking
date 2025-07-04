@@ -11,9 +11,10 @@
 We're building the future of human-friendly networking and need **your help** to test, validate, and improve this system for production use. Join us in making network addresses as easy to share as "reflector unlocked purple"!
 
 ```
-/ip4/192.168.1.1/tcp/443   →  upcoming sour human
-/ip4/203.0.113.1/tcp/80    →  reflector unlocked purple  
+/ip4/192.168.1.1/tcp/443    →  upcoming sour human
+/ip4/203.0.113.1/tcp/80     →  reflector unlocked purple  
 /ip4/192.168.1.100/tcp/8080 →  gunny sequester reborn
+/ip6/::1/tcp/80             →  dual neck cytoplast · winnings denatured torr
 ```
 
 ## Overview
@@ -111,6 +112,10 @@ println!("{}", encoding); // "upcoming sour human"
 let localhost = encoder.encode("/ip4/203.0.113.1/tcp/80")?;
 println!("{}", localhost); // "reflector unlocked purple"
 
+// IPv6 addresses with balanced encoding
+let ipv6_localhost = encoder.encode("/ip6/::1/tcp/80")?;
+println!("{}", ipv6_localhost); // "dual neck cytoplast · winnings denatured torr"
+
 // Check compression achievements  
 println!("Compression: {:.1}%", encoding.compression_percentage()); // 83.0%
 println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
@@ -123,9 +128,13 @@ println!("Perfect 3 words: {}", encoding.is_perfect_3_words()); // true
 cargo install three-word-networking
 
 # Encode multiaddress with ultra-compression
-three-word-networking ultra "/ip4/192.168.1.1/tcp/443"
+three-word-networking encode "/ip4/192.168.1.1/tcp/443"
 # Output: upcoming sour human
-# Compression: 83.0%, Perfect 3-word encoding!
+
+# IPv6 addresses with balanced encoding
+three-word-networking balanced "/ip6/::1/tcp/80"
+# Output: dual neck cytoplast · winnings denatured torr
+# Compression: 53.3%, Excellent (6 words)
 
 # Encode hash data
 three-word-networking balanced --hex "6ca13d52ca70c883e0f0046552dc76f9e22d5659e348e7a9101fe85223944155"
@@ -171,10 +180,17 @@ Encoded addresses are optimized for verbal communication:
 Technical: /ip4/192.168.1.1/tcp/443
 Voice: "upcoming sour human"
 
+Technical: /ip6/::1/tcp/80
+Voice: "dual neck cytoplast dot winnings denatured torr"
+
 Support scenarios:
 "What's your server address?"
 "upcoming sour human"
 "Got it, connecting now..."
+
+"What's the IPv6 localhost?"
+"dual neck cytoplast dot winnings denatured torr"
+"Perfect, testing the connection..."
 
 More examples:
 "The database server is at reflector unlocked purple"
