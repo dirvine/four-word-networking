@@ -46,8 +46,8 @@ pub struct Dictionary16K {
 impl Dictionary16K {
     /// Create a new dictionary instance
     pub fn new() -> Result<Self, DictionaryError> {
-        // Load the pre-built word list (cleaned with quality words first)
-        let wordlist_data = include_str!("../data/wordlist_16384_clean.txt");
+        // Load the pre-built word list (common English words prioritized)
+        let wordlist_data = include_str!("../data/wordlist_16384_common.txt");
         let words: Vec<String> = wordlist_data
             .lines()
             .map(|s| s.trim().to_string())
