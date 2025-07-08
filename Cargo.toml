@@ -2,7 +2,7 @@
 
 [package]
 name = "four-word-networking"
-version = "1.2.1"
+version = "1.2.2"
 edition = "2021"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
 description = "Convert IP addresses to memorable words. IPv4 = 4 words (perfect), IPv6 = 4-6 words (adaptive). Always reversible."
