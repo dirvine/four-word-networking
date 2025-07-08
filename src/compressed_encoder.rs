@@ -148,7 +148,7 @@ impl CompressedEncoder {
             original_bits,
             compressed_bits: actual_bits,
             compression_ratio: 1.0 - (actual_bits as f64 / original_bits as f64),
-            fits_in_three_words: packed.len() <= 5, // 5 bytes = 40 bits < 42 bits
+            fits_in_four_words: packed.len() <= 5, // 5 bytes = 40 bits < 42 bits
             address_type: format!("{:?}", compressed.addr_type),
         })
     }
@@ -160,7 +160,7 @@ pub struct CompressionStats {
     pub original_bits: usize,
     pub compressed_bits: usize,
     pub compression_ratio: f64,
-    pub fits_in_three_words: bool,
+    pub fits_in_four_words: bool,
     pub address_type: String,
 }
 
@@ -173,7 +173,7 @@ impl CompressionStats {
             self.compressed_bits,
             self.compression_ratio * 100.0,
             self.address_type,
-            if self.fits_in_three_words { "✓" } else { "✗" }
+            if self.fits_in_four_words { "✓" } else { "✗" }
         )
     }
 }
@@ -231,11 +231,11 @@ mod tests {
         // Localhost should compress very well
         let stats = encoder.compression_stats("127.0.0.1:80").unwrap();
         assert!(stats.compression_ratio > 0.4); // 50% compression is good
-        assert!(stats.fits_in_three_words);
+        assert!(stats.fits_in_four_words);
         
         // Public IP with port should not fit
         let stats = encoder.compression_stats("8.8.8.8:53").unwrap();
-        assert!(!stats.fits_in_three_words);
+        assert!(!stats.fits_in_four_words);
     }
 
     #[test]

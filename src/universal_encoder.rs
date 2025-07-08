@@ -1,4 +1,4 @@
-//! Universal IP+Port Encoder for Three Words
+//! Universal IP+Port Encoder for Four Words
 //!
 //! This module provides a high-level interface for compressing any IPv4+port
 //! combination into four words using multiple compression strategies.

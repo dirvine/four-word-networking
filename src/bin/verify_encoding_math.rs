@@ -54,19 +54,19 @@ fn main() {
     let dict_16k = 16_384u128;
     
     println!("\n3 Words (Current Base Format):");
-    let three_word_bits = 3 * 14;
-    let three_word_combos = dict_16k.pow(3);
-    println!("- Bits available: {} bits", three_word_bits);
-    println!("- Combinations: {:e}", three_word_combos);
-    println!("- Can encode up to {} bytes of data", three_word_bits / 8);
-    println!("- IPv4+Port coverage: {:.2}%", (three_word_combos as f64 / 2f64.powf(48.0)) * 100.0);
-    
-    println!("\n4 Words (Full IPv4 Coverage):");
-    let four_word_bits = 4 * 14;
-    let four_word_combos = dict_16k.pow(4);
+    let four_word_bits = 3 * 14;
+    let four_word_combos = dict_16k.pow(3);
     println!("- Bits available: {} bits", four_word_bits);
     println!("- Combinations: {:e}", four_word_combos);
-    println!("- IPv4+Port coverage: {:.1}%", (four_word_combos as f64 / 2f64.powf(48.0)) * 100.0);
+    println!("- Can encode up to {} bytes of data", four_word_bits / 8);
+    println!("- IPv4+Port coverage: {:.2}%", (four_word_combos as f64 / 2f64.powf(48.0)) * 100.0);
+    
+    println!("\n4 Words (Full IPv4 Coverage):");
+    let five_word_bits = 4 * 14;
+    let five_word_combos = dict_16k.pow(4);
+    println!("- Bits available: {} bits", five_word_bits);
+    println!("- Combinations: {:e}", five_word_combos);
+    println!("- IPv4+Port coverage: {:.1}%", (five_word_combos as f64 / 2f64.powf(48.0)) * 100.0);
     
     println!("\nCompression Success Rates:");
     println!("- Localhost (127.x.x.x): 2^8 addresses = {} (0.000006% of IPv4)", 256);

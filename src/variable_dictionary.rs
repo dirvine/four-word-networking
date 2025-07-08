@@ -186,10 +186,10 @@ impl VariableDictionary {
     /// Get capacity information for different word counts
     pub fn capacity_info() -> CapacityInfo {
         CapacityInfo {
-            three_words: MAX_BITS_3_WORDS,
-            four_words: MAX_BITS_4_WORDS,
-            five_words: MAX_BITS_5_WORDS,
-            six_words: MAX_BITS_6_WORDS,
+            four_words: MAX_BITS_3_WORDS,
+            five_words: MAX_BITS_4_WORDS,
+            six_words: MAX_BITS_5_WORDS,
+            seven_words: MAX_BITS_6_WORDS,
         }
     }
 }
@@ -239,10 +239,10 @@ impl AdaptiveEncoding {
 /// Information about the capacity of different word counts
 #[derive(Debug)]
 pub struct CapacityInfo {
-    pub three_words: usize,  // 42 bits
-    pub four_words: usize,   // 56 bits
-    pub five_words: usize,   // 70 bits
-    pub six_words: usize,    // 84 bits
+    pub four_words: usize,   // 42 bits
+    pub five_words: usize,   // 56 bits
+    pub six_words: usize,    // 70 bits
+    pub seven_words: usize,  // 84 bits
 }
 
 impl CapacityInfo {
@@ -253,10 +253,10 @@ impl CapacityInfo {
             4 words: {} bits (Common IPv6)\n\
             5 words: {} bits (Standard IPv6)\n\
             6 words: {} bits (Full IPv6 + port)",
-            self.three_words,
-            self.four_words, 
-            self.five_words,
-            self.six_words
+            self.four_words,
+            self.five_words, 
+            self.six_words,
+            self.seven_words
         )
     }
 }
@@ -308,10 +308,10 @@ mod tests {
     #[test]
     fn test_capacity_info() {
         let info = VariableDictionary::capacity_info();
-        assert_eq!(info.three_words, 42);
-        assert_eq!(info.four_words, 56);
-        assert_eq!(info.five_words, 70);
-        assert_eq!(info.six_words, 84);
+        assert_eq!(info.four_words, 42);
+        assert_eq!(info.five_words, 56);
+        assert_eq!(info.six_words, 70);
+        assert_eq!(info.seven_words, 84);
     }
 
     #[test]

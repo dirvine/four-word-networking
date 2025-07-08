@@ -9,9 +9,9 @@ pub struct SimpleEncoder {
     pub(crate) dictionaries: Dictionaries,
 }
 
-/// Three-word representation for simple encoding
+/// Four-word representation for simple encoding
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ThreeWords {
+pub struct FourWords {
     pub actor: String,
     pub action: String,
     pub object: String,
@@ -24,7 +24,7 @@ impl SimpleEncoder {
     }
     
     /// Encode data into four words
-    pub fn encode(&self, data: &[u8]) -> EncodingResult<ThreeWords> {
+    pub fn encode(&self, data: &[u8]) -> EncodingResult<FourWords> {
         if data.is_empty() {
             return Err(EncodingError::DataTooSmall(0));
         }
@@ -59,11 +59,11 @@ impl SimpleEncoder {
             .map_err(|_| EncodingError::DictionaryNotLoaded)?
             .to_string();
         
-        Ok(ThreeWords { actor, action, object })
+        Ok(FourWords { actor, action, object })
     }
     
     /// Decode four words back to original data
-    pub fn decode(&self, words: &ThreeWords) -> DecodingResult<Vec<u8>> {
+    pub fn decode(&self, words: &FourWords) -> DecodingResult<Vec<u8>> {
         // Get word indices
         let actor_index = self.dictionaries.get_actor_index(&words.actor)?;
         let action_index = self.dictionaries.get_action_index(&words.action)?;
@@ -120,7 +120,7 @@ impl SimpleEncoder {
     }
 }
 
-impl ThreeWords {
+impl FourWords {
     /// Get all words as a vector
     pub fn all_words(&self) -> Vec<&str> {
         vec![&self.actor, &self.action, &self.object]
@@ -140,7 +140,7 @@ impl ThreeWords {
             ));
         }
         
-        Ok(ThreeWords {
+        Ok(FourWords {
             actor: parts[0].to_string(),
             action: parts[1].to_string(),
             object: parts[2].to_string(),
@@ -197,8 +197,8 @@ mod tests {
     }
     
     #[test]
-    fn test_three_words_string_conversion() {
-        let words = ThreeWords {
+    fn test_four_words_string_conversion() {
+        let words = FourWords {
             actor: "falcon".to_string(),
             action: "crosses".to_string(),
             object: "bridge".to_string(),
@@ -207,16 +207,16 @@ mod tests {
         let string = words.to_string();
         assert_eq!(string, "falcon.crosses.bridge");
         
-        let parsed = ThreeWords::from_string(&string).unwrap();
+        let parsed = FourWords::from_string(&string).unwrap();
         assert_eq!(parsed, words);
     }
     
     #[test]
-    fn test_three_words_invalid_format() {
+    fn test_four_words_invalid_format() {
         // Test invalid formats
-        assert!(ThreeWords::from_string("").is_err());
-        assert!(ThreeWords::from_string("one.two").is_err());
-        assert!(ThreeWords::from_string("one.two.three.four").is_err());
+        assert!(FourWords::from_string("").is_err());
+        assert!(FourWords::from_string("one.two").is_err());
+        assert!(FourWords::from_string("one.two.three.four").is_err());
     }
     
     #[test]

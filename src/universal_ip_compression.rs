@@ -1,4 +1,4 @@
-//! Universal IP+Port Compression for Three Words
+//! Universal IP+Port Compression for Four Words
 //!
 //! This module implements advanced compression techniques to compress any IPv4+port
 //! combination into 42 bits (four words) using mathematical compression without

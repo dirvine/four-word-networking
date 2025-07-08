@@ -14,8 +14,8 @@ pub const WORD_COUNT: usize = 16_384;
 /// Number of bits needed per word
 pub const BITS_PER_WORD: usize = 14;
 
-/// Total bits covered by 4 words
-pub const BITS_THREE_WORDS: usize = 42;
+/// Total bits covered by 3 words
+pub const BITS_FOUR_WORDS: usize = 42;
 
 /// Maximum word index (0-based)
 pub const MAX_WORD_INDEX: u16 = (WORD_COUNT - 1) as u16;
@@ -378,7 +378,7 @@ mod tests {
     fn test_constants() {
         assert_eq!(WORD_COUNT, 16_384);
         assert_eq!(BITS_PER_WORD, 14);
-        assert_eq!(BITS_THREE_WORDS, 42);
+        assert_eq!(BITS_FOUR_WORDS, 42);
         assert_eq!(MAX_WORD_INDEX, 16_383);
     }
     

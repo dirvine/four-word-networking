@@ -27,7 +27,7 @@ pub enum IpPortErrorV2 {
     DecompressionError(String),
     
     #[error("Invalid four-word format")]
-    InvalidThreeWordFormat,
+    InvalidFourWordFormat,
 }
 
 /// Result type for IP+Port operations

@@ -58,7 +58,7 @@ impl EncodingStrategy {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UniversalEncoding {
     /// Simple encoding with 4 words
-    Simple(simple::ThreeWords),
+    Simple(simple::FourWords),
     /// Fractal encoding with base words and zoom levels
     Fractal(fractal::FractalEncoding),
     /// Holographic encoding with multiple story views

@@ -10,7 +10,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
         Ok(stats) => {
             println!("{}", stats.summary());
             
-            if stats.fits_in_three_words {
+            if stats.fits_in_four_words {
                 match encoder.encode(address) {
                     Ok(words) => {
                         println!("✓ Four words: {}", words);

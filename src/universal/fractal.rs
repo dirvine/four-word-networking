@@ -2,7 +2,7 @@
 
 use crate::universal::dictionaries::Dictionaries;
 use crate::universal::error::{EncodingError, EncodingResult, DecodingResult};
-use crate::universal::simple::{SimpleEncoder, ThreeWords};
+use crate::universal::simple::{SimpleEncoder, FourWords};
 
 /// Fractal encoder for data 9-20 bytes
 #[derive(Debug, Clone)]
@@ -13,7 +13,7 @@ pub struct FractalEncoder {
 /// Fractal encoding with base words and zoom levels
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FractalEncoding {
-    pub base_words: ThreeWords,
+    pub base_words: FourWords,
     pub zoom_levels: Vec<ZoomLevel>,
 }
 

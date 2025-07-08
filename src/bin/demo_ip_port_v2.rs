@@ -36,7 +36,7 @@ fn demo_perfect_round_trip(encoder: &IpPortEncoderV2) -> Result<(), IpPortErrorV
         "[2001:db8::1]:443",
     ];
     
-    println!("{:<25} | {:<25} | {:<25} | Match", "Original", "Three Words", "Decoded");
+    println!("{:<25} | {:<25} | {:<25} | Match", "Original", "Four Words", "Decoded");
     println!("{}", "-".repeat(105));
     
     let mut perfect_matches = 0;
