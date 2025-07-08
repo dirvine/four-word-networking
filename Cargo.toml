@@ -2,15 +2,16 @@
 
 [package]
 name = "three-word-networking"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
-description = "Convert complex network multiaddrs into memorable three-word combinations with 100% accurate encode/decode"
+description = "Convert IP addresses to memorable words. IPv4 = 3 words, IPv6 = 4-6 words. Always."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dirvine/three-word-networking"
 readme = "README.md"
-keywords = ["networking", "multiaddr", "human-readable", "addressing", "p2p"]
+keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
 categories = ["network-programming", "command-line-utilities"]
+exclude = ["src/bin/debug_*", "src/bin/test_*", "*.disabled"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -32,6 +33,11 @@ sha2 = "0.10"
 [[bin]]
 name = "three-word-networking"
 path = "src/main.rs"
+
+[[bin]]
+name = "3wn"
+path = "src/bin/3wn.rs"
+
 
 [lib]
 name = "three_word_networking"

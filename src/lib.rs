@@ -38,16 +38,36 @@ pub mod universal;
 pub mod dictionary16k;
 pub mod encoder16k;
 pub mod compression;
-pub mod balanced_encoder;
+// pub mod balanced_encoder; // Temporarily disabled - needs update for new compression API
 pub mod ultra_compression;
 pub mod ultra_compact_encoder;
+pub mod ip_port_encoder;
+pub mod ip_port_encoder_v2;
+pub mod compressed_encoder;
+pub mod universal_ip_compression;
+pub mod pure_ip_compression;
+pub mod universal_encoder;
+pub mod variable_dictionary;
+pub mod ipv6_compression;
+pub mod adaptive_encoder;
+pub mod api;
 
 pub use words::{ThreeWordAddress, WordDictionary, WordEncoder};
 pub use error::{ThreeWordError, Result};
 pub use multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
-pub use universal::{UniversalEncoder, UniversalEncoding, EncodingStrategy};
-pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
+pub use universal::{UniversalEncoding, EncodingStrategy};
+pub use ip_port_encoder::{IpPortEncoder, IpPortAddress};
+// pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
 pub use ultra_compact_encoder::{UltraCompactEncoder, UltraCompactEncoding};
+pub use ip_port_encoder_v2::{IpPortEncoderV2, IpPortEncodingV2, IpPortErrorV2};
+pub use compressed_encoder::{CompressedEncoder, CompressionStats};
+pub use universal_ip_compression::UniversalIpCompressor;
+pub use pure_ip_compression::{PureIpCompressor, MathematicalCompressor};
+pub use universal_encoder::{UniversalEncoder, CompressionAnalysis, StrategyResult};
+pub use variable_dictionary::{VariableDictionary, AdaptiveEncoding, CapacityInfo};
+pub use ipv6_compression::{Ipv6Compressor, CompressedIpv6, Ipv6Category};
+pub use adaptive_encoder::{AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis};
+pub use api::{ThreeWordNetworking, AddressInput, EncodingInfo, AddressType as ApiAddressType};
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
