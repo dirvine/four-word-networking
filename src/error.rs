@@ -8,9 +8,6 @@ pub type Result<T> = std::result::Result<T, ThreeWordError>;
 /// Error types for three-word networking
 #[derive(Error, Debug)]
 pub enum ThreeWordError {
-    #[error("Invalid multiaddr format: {0}")]
-    InvalidMultiaddr(String),
-    
     #[error("Invalid three-word address format: {0}")]
     InvalidThreeWordAddress(String),
     

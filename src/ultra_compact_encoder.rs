@@ -4,8 +4,8 @@
 //! with direct 16K dictionary encoding to achieve perfect 3-word outputs for
 //! most common multiaddress patterns.
 
-use crate::ultra_compression::{UltraCompressor, UltraCompressionError};
-use crate::encoder16k::{UniversalEncoder16K, Encoding16K, EncodingError, DecodingError};
+use crate::ultra_compression::UltraCompressor;
+use crate::encoder16k::{UniversalEncoder16K, Encoding16K};
 use crate::error::{ThreeWordError, Result};
 
 /// Ultra-compact encoding result optimized for 3-word outputs

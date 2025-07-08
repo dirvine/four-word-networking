@@ -1,39 +1,39 @@
-//! Three-Word Networking
+//! Four-Word Networking
 //!
-//! Convert complex network multiaddresses into memorable three-word combinations 
-//! for human-friendly peer discovery and sharing.
+//! Convert network IP addresses into memorable word combinations 
+//! for human-friendly networking.
 //!
 //! ## Features
 //!
-//! - **Human-Readable**: Converts complex multiaddrs like `/ip6/2001:db8::1/udp/9000/quic` 
-//!   into memorable addresses like `ocean.thunder.falcon`
+//! - **Perfect IPv4**: Converts IPv4 addresses like `192.168.1.1:443` 
+//!   into exactly 4 memorable words like `paper.broaden.smith.bully` with 100% perfect reconstruction
+//! - **Adaptive IPv6**: Converts IPv6 addresses into 4-6 words using intelligent compression
 //! - **Voice-Friendly**: Easy to share over phone calls or voice chat
 //! - **Error-Resistant**: Much less prone to typos than long technical addresses
-//! - **Deterministic**: Same multiaddr always produces the same three-word address
-//! - **Massive Scale**: Supports 68.7 billion base combinations, extensible to 4.5 quadrillion
-//! - **Universal**: Works with any valid multiaddr format
+//! - **Deterministic**: Same IP address always produces the same word combination
+//! - **Visual Distinction**: IPv4 uses dots, IPv6 uses dashes for clear differentiation
+//! - **Universal**: Works with any valid IP address format
 //!
 //! ## Example
 //!
 //! ```rust
-//! use three_word_networking::{WordEncoder, ThreeWordAddress};
+//! use four_word_networking::FourWordAdaptiveEncoder;
 //!
-//! let encoder = WordEncoder::new();
-//! let multiaddr = "/ip6/2001:db8::1/udp/9000/quic";
+//! let encoder = FourWordAdaptiveEncoder::new()?;
+//! let address = "192.168.1.1:443";
 //! 
-//! // Convert to three words
-//! let words = encoder.encode_multiaddr_string(multiaddr)?;
-//! println!("Address: {} -> {}", multiaddr, words);
+//! // Convert to four words (perfect reconstruction for IPv4)
+//! let words = encoder.encode(address)?;
+//! println!("Address: {} -> {}", address, words);
+//! // Output: Address: 192.168.1.1:443 -> paper.broaden.smith.bully
 //! 
-//! // Validate the three-word address
-//! let parsed = ThreeWordAddress::from_string(&words.to_string())?;
-//! assert!(parsed.validate(&encoder).is_ok());
+//! // Decode back to exact address
+//! let decoded = encoder.decode(&words)?;
+//! assert_eq!(address, decoded);
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
-pub mod words;
 pub mod error;
-pub mod multiaddr_parser;
 pub mod universal;
 pub mod dictionary16k;
 pub mod encoder16k;
@@ -51,10 +51,15 @@ pub mod variable_dictionary;
 pub mod ipv6_compression;
 pub mod adaptive_encoder;
 pub mod api;
+pub mod perfect_encoder;
+pub mod ipv4_perfect_codec;
+pub mod ipv6_perfect_codec;
+pub mod perfect_adaptive_encoder;
+pub mod simple_perfect_encoder;
+pub mod simple_adaptive_encoder;
+pub mod four_word_encoder;
 
-pub use words::{ThreeWordAddress, WordDictionary, WordEncoder};
 pub use error::{ThreeWordError, Result};
-pub use multiaddr_parser::{ParsedMultiaddr, IpType, Protocol};
 pub use universal::{UniversalEncoding, EncodingStrategy};
 pub use ip_port_encoder::{IpPortEncoder, IpPortAddress};
 // pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
@@ -68,29 +73,12 @@ pub use variable_dictionary::{VariableDictionary, AdaptiveEncoding, CapacityInfo
 pub use ipv6_compression::{Ipv6Compressor, CompressedIpv6, Ipv6Category};
 pub use adaptive_encoder::{AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis};
 pub use api::{ThreeWordNetworking, AddressInput, EncodingInfo, AddressType as ApiAddressType};
+pub use perfect_adaptive_encoder::PerfectAdaptiveEncoder;
+pub use simple_adaptive_encoder::SimpleAdaptiveEncoder;
+pub use four_word_encoder::FourWordAdaptiveEncoder;
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// Address space information
-pub struct AddressSpace;
-
-impl AddressSpace {
-    /// Get the total number of base three-word combinations
-    pub fn base_combinations() -> u64 {
-        ThreeWordAddress::base_combinations()
-    }
-    
-    /// Get the total number of extended combinations (with numeric suffixes)
-    pub fn total_combinations() -> u64 {
-        ThreeWordAddress::address_space_size()
-    }
-    
-    /// Get human-readable description of the address space
-    pub fn description() -> String {
-        ThreeWordAddress::address_space_description()
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -98,21 +86,11 @@ mod tests {
 
     #[test]
     fn test_basic_functionality() {
-        let encoder = WordEncoder::new();
-        let multiaddr = "/ip6/2001:db8::1/udp/9000/quic";
+        let encoder = FourWordAdaptiveEncoder::new().unwrap();
+        let address = "192.168.1.1:443";
         
-        let words = encoder.encode_multiaddr_string(multiaddr).unwrap();
-        assert!(words.validate(&encoder).is_ok());
-        
-        // Test deterministic encoding
-        let words2 = encoder.encode_multiaddr_string(multiaddr).unwrap();
-        assert_eq!(words, words2);
-    }
-    
-    #[test]
-    fn test_address_space() {
-        assert!(AddressSpace::base_combinations() > 0);
-        assert!(AddressSpace::total_combinations() >= AddressSpace::base_combinations());
-        assert!(!AddressSpace::description().is_empty());
+        let words = encoder.encode(address).unwrap();
+        let decoded = encoder.decode(&words).unwrap();
+        assert_eq!(address, decoded);
     }
 }

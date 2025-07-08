@@ -7,7 +7,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use crate::{
     variable_dictionary::{VariableDictionary, AdaptiveEncoding},
-    ipv6_compression::{Ipv6Compressor, CompressedIpv6},
+    ipv6_compression::{Ipv6Compressor, CompressedIpv6, Ipv6Category},
     pure_ip_compression::PureIpCompressor,
     error::ThreeWordError,
 };
@@ -121,9 +121,14 @@ impl AdaptiveEncoder {
         // Use hierarchical IPv6 compression
         let compressed_ipv6 = Ipv6Compressor::compress(ipv6, port)?;
         
-        // Create data payload: category byte + compressed data (port already included in compression)
+        // Create data payload: category byte + compressed data + port (if present)
         let mut data = vec![compressed_ipv6.category as u8];
         data.extend_from_slice(&compressed_ipv6.compressed_data);
+        
+        // Add port bytes if present
+        if let Some(p) = compressed_ipv6.port {
+            data.extend_from_slice(&p.to_be_bytes());
+        }
 
         // Get adaptive encoding
         let encoding = self.dictionary.encode_adaptive(&data)?;
@@ -233,28 +238,108 @@ impl AdaptiveEncoder {
         Ok((ip, None))
     }
 
-    /// Reconstruct address from decoded data (simplified)
+    /// Reconstruct address from decoded data
     fn reconstruct_address(&self, data: &[u8], word_count: usize) -> Result<String, ThreeWordError> {
-        // This is a simplified reconstruction
-        // In practice, we'd need better metadata storage
-        
         if word_count == 3 {
-            // Likely IPv4
-            if data.len() >= 4 {
-                let ip = Ipv4Addr::new(data[0], data[1], data[2], data[3]);
-                if data.len() >= 6 {
-                    let port = u16::from_be_bytes([data[4], data[5]]);
-                    Ok(format!("{}:{}", ip, port))
-                } else {
-                    Ok(ip.to_string())
+            // IPv4 - decompress from mathematical compression
+            if data.len() >= 5 {
+                // Reconstruct the compressed value from bytes (inverse of pack_42_bits)
+                let compressed_value = ((data[0] as u64) << 34) |
+                                     ((data[1] as u64) << 26) |
+                                     ((data[2] as u64) << 18) |
+                                     ((data[3] as u64) << 10) |
+                                     ((data[4] as u64) << 2);
+                
+                // Decompress using PureIpCompressor
+                match PureIpCompressor::decompress(compressed_value) {
+                    Ok((ip, port)) => {
+                        if port == 0 {
+                            Ok(ip.to_string())
+                        } else {
+                            Ok(format!("{}:{}", ip, port))
+                        }
+                    }
+                    Err(_) => {
+                        // Fallback: try direct interpretation if compression fails
+                        if data.len() >= 6 {
+                            let ip = Ipv4Addr::new(data[0], data[1], data[2], data[3]);
+                            let port = u16::from_be_bytes([data[4], data[5]]);
+                            Ok(format!("{}:{}", ip, port))
+                        } else {
+                            Err(ThreeWordError::InvalidInput("Failed to decompress IPv4 address".to_string()))
+                        }
+                    }
                 }
             } else {
                 Err(ThreeWordError::InvalidInput("Insufficient data for IPv4".to_string()))
             }
+        } else if word_count >= 4 && word_count <= 6 {
+            // IPv6 - decompress based on category
+            if data.is_empty() {
+                return Err(ThreeWordError::InvalidInput("No data for IPv6 decompression".to_string()));
+            }
+            
+            let category = data[0];
+            let compressed_data = &data[1..];
+            
+            // Use IPv6 decompressor based on category
+            match self.decompress_ipv6(category, compressed_data) {
+                Ok((ip, port)) => {
+                    if port == 0 {
+                        Ok(format!("[{}]", ip))
+                    } else {
+                        Ok(format!("[{}]:{}", ip, port))
+                    }
+                }
+                Err(e) => Err(e)
+            }
         } else {
-            // Likely IPv6 - simplified reconstruction
-            Ok(format!("[reconstructed IPv6 from {} words]", word_count))
+            Err(ThreeWordError::InvalidInput(
+                format!("Invalid word count: {} (expected 3 for IPv4, 4-6 for IPv6)", word_count)
+            ))
         }
+    }
+
+    /// Decompress IPv6 based on category
+    fn decompress_ipv6(&self, category: u8, data: &[u8]) -> Result<(Ipv6Addr, u16), ThreeWordError> {
+        
+        let category = match category {
+            0 => Ipv6Category::Unspecified,
+            1 => Ipv6Category::Loopback,
+            2 => Ipv6Category::LinkLocal,
+            3 => Ipv6Category::UniqueLocal,
+            4 => Ipv6Category::Documentation,
+            5 => Ipv6Category::GlobalUnicast,
+            6 => Ipv6Category::Special,
+            _ => return Err(ThreeWordError::InvalidInput(format!("Unknown IPv6 category: {}", category)))
+        };
+        
+        // For now, return a placeholder based on category
+        // In a full implementation, we'd reverse the compression for each category
+        let (ip, port) = match category {
+            Ipv6Category::Loopback => {
+                // For loopback, the port is embedded in the last 2 bytes of data
+                let port = if data.len() >= 8 {
+                    // Port is in the last 2 bytes after the 6 bytes of padding
+                    u16::from_be_bytes([data[6], data[7]])
+                } else {
+                    0
+                };
+                (Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), port)
+            }
+            Ipv6Category::Unspecified => {
+                (Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0), 0)
+            }
+            _ => {
+                // For other categories, we'd need to implement proper decompression
+                // For now, return a representative address
+                return Err(ThreeWordError::InvalidInput(
+                    format!("IPv6 decompression not fully implemented for {:?}", category)
+                ));
+            }
+        };
+        
+        Ok((ip, port))
     }
 
     /// Get compression strategy name for IPv6

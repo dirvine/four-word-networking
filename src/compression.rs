@@ -1,616 +1,715 @@
-//! Multiaddress compression for efficient encoding
-//!
-//! This module provides intelligent compression for multiaddresses by:
-//! - Converting protocol names to single bytes
-//! - Compressing IPv6 addresses with run-length encoding
-//! - Using single bytes for common ports
-//! - Compressing peer IDs by removing redundant prefixes
-//!
-//! Typical compression ratios: 40-60% for multiaddresses
+//! Advanced compression module for IP addresses and ports
+//! 
+//! This module implements sophisticated compression techniques to reduce
+//! IP addresses and ports to fit within the 42-bit limit of three words.
 
-use std::collections::HashMap;
-use std::net::{Ipv4Addr, Ipv6Addr};
-use std::str::FromStr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use crate::error::ThreeWordError;
 
-/// Compression errors
-#[derive(Debug, thiserror::Error)]
-pub enum CompressionError {
-    #[error("Invalid multiaddress format: {0}")]
-    InvalidFormat(String),
-    
-    #[error("Unknown protocol: {0}")]
-    UnknownProtocol(String),
-    
-    #[error("Invalid IP address: {0}")]
-    InvalidIpAddress(String),
-    
-    #[error("Invalid port: {0}")]
-    InvalidPort(String),
-    
-    #[error("Base58 decode error: {0}")]
-    Base58Error(String),
-    
-    #[error("UTF-8 error: {0}")]
-    Utf8Error(#[from] std::str::Utf8Error),
+/// Maximum bits available in three words (3 × 14 bits)
+const MAX_BITS: usize = 42;
+
+/// Address type prefixes (variable length encoding)
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum AddressType {
+    // IPv4 types (3-bit prefix)
+    Ipv4Localhost = 0b000,      // 127.0.0.0/8
+    Ipv4Private192 = 0b001,     // 192.168.0.0/16
+    Ipv4Private10 = 0b010,      // 10.0.0.0/8
+    Ipv4Private172 = 0b011,     // 172.16.0.0/12
+    Ipv4Public = 0b100,         // All other IPv4
+    // IPv6 types (4-bit prefix, starts with 0b11)
+    Ipv6Localhost = 0b1100,     // ::1
+    Ipv6LinkLocal = 0b1101,     // fe80::/10
+    Ipv6UniqueLocal = 0b1110,   // fc00::/7
+    Ipv6Public = 0b1111,        // All other IPv6
 }
 
-/// Data types for encoding strategy
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DataType {
-    Multiaddress,
-    Hash,
-    BitcoinAddress,
-    EthereumAddress,
-    Unknown,
-}
-
-/// Multiaddress compressor with protocol and port optimization
+/// Common port encoding (frequency-based)
 #[derive(Debug, Clone)]
-pub struct MultiaddressCompressor {
-    protocol_codes: HashMap<&'static str, u8>,
-    port_codes: HashMap<u16, u8>,
-    reverse_protocols: HashMap<u8, &'static str>,
-    reverse_ports: HashMap<u8, u16>,
+pub struct PortCompressor {
+    // Top 16 most common ports get 4-bit encoding
+    common_ports: Vec<(u16, u8)>,
+    // Next 240 ports get 8-bit encoding
+    frequent_ports: Vec<(u16, u8)>,
 }
 
-impl MultiaddressCompressor {
-    /// Create a new compressor with optimized tables
+impl PortCompressor {
     pub fn new() -> Self {
-        let mut protocol_codes = HashMap::new();
-        let mut port_codes = HashMap::new();
-        
-        // Protocol codes (most common get shortest codes)
-        protocol_codes.insert("ip4", 0x00);
-        protocol_codes.insert("ip6", 0x01);
-        protocol_codes.insert("tcp", 0x02);
-        protocol_codes.insert("udp", 0x03);
-        protocol_codes.insert("p2p", 0x04);
-        protocol_codes.insert("ipfs", 0x04); // Same as p2p
-        protocol_codes.insert("ws", 0x05);
-        protocol_codes.insert("wss", 0x06);
-        protocol_codes.insert("quic", 0x07);
-        protocol_codes.insert("tls", 0x08);
-        protocol_codes.insert("dns", 0x09);
-        protocol_codes.insert("dns4", 0x0A);
-        protocol_codes.insert("dns6", 0x0B);
-        protocol_codes.insert("sctp", 0x0C);
-        protocol_codes.insert("dccp", 0x0D);
-        protocol_codes.insert("http", 0x0E);
-        protocol_codes.insert("https", 0x0F);
-        
-        // Common ports get single-byte encoding
-        port_codes.insert(80, 0x00);    // HTTP
-        port_codes.insert(443, 0x01);   // HTTPS
-        port_codes.insert(8080, 0x02);  // HTTP Alt
-        port_codes.insert(3000, 0x03);  // Dev server
-        port_codes.insert(4001, 0x04);  // IPFS
-        port_codes.insert(5001, 0x05);  // IPFS API
-        port_codes.insert(8000, 0x06);  // HTTP Alt
-        port_codes.insert(9000, 0x07);  // Various
-        port_codes.insert(22, 0x08);    // SSH
-        port_codes.insert(21, 0x09);    // FTP
-        port_codes.insert(25, 0x0A);    // SMTP
-        port_codes.insert(53, 0x0B);    // DNS
-        port_codes.insert(110, 0x0C);   // POP3
-        port_codes.insert(143, 0x0D);   // IMAP
-        port_codes.insert(993, 0x0E);   // IMAPS
-        port_codes.insert(995, 0x0F);   // POP3S
-        
-        // Build reverse lookup tables - prefer p2p over ipfs for code 0x04
-        let mut reverse_protocols = HashMap::new();
-        for (&protocol, &code) in protocol_codes.iter() {
-            if protocol == "p2p" || !reverse_protocols.contains_key(&code) {
-                reverse_protocols.insert(code, protocol);
-            }
-        }
-        let reverse_ports = port_codes.iter()
-            .map(|(&k, &v)| (v, k))
-            .collect();
-        
         Self {
-            protocol_codes,
-            port_codes,
-            reverse_protocols,
-            reverse_ports,
+            // Most common ports (4-bit encoding: 0x0-0xF)
+            common_ports: vec![
+                (80, 0x0),    // HTTP
+                (443, 0x1),   // HTTPS
+                (22, 0x2),    // SSH
+                (21, 0x3),    // FTP
+                (25, 0x4),    // SMTP
+                (53, 0x5),    // DNS
+                (8080, 0x6),  // HTTP alt
+                (3306, 0x7),  // MySQL
+                (5432, 0x8),  // PostgreSQL
+                (6379, 0x9),  // Redis
+                (27017, 0xA), // MongoDB
+                (8443, 0xB),  // HTTPS alt
+                (3000, 0xC),  // Dev server
+                (5000, 0xD),  // Dev server
+                (8000, 0xE),  // Dev server
+                (9000, 0xF),  // Various
+            ],
+            // Next most frequent ports (8-bit encoding: 0x10-0xFF)
+            frequent_ports: vec![
+                (23, 0x10),    // Telnet
+                (110, 0x11),   // POP3
+                (143, 0x12),   // IMAP
+                (445, 0x13),   // SMB
+                (1433, 0x14),  // MSSQL
+                (1521, 0x15),  // Oracle
+                (2049, 0x16),  // NFS
+                (3389, 0x17),  // RDP
+                (5900, 0x18),  // VNC
+                (8081, 0x19),  // HTTP alt
+                (8082, 0x1A),  // HTTP alt
+                (8083, 0x1B),  // HTTP alt
+                (8888, 0x1C),  // HTTP alt
+                (9090, 0x1D),  // Web admin
+                (9200, 0x1E),  // Elasticsearch
+                (11211, 0x1F), // Memcached
+                // ... could add more up to 0xFF
+            ],
         }
     }
-    
-    /// Compress a multiaddress string to bytes
-    pub fn compress(&self, multiaddr: &str) -> Result<Vec<u8>, CompressionError> {
-        if !multiaddr.starts_with('/') {
-            return Err(CompressionError::InvalidFormat(
-                "Multiaddress must start with '/'".to_string()
+
+    pub fn compress(&self, port: Option<u16>) -> (Vec<u8>, usize) {
+        match port {
+            None => (vec![], 0), // No port = 0 bits
+            Some(p) => {
+                // Check common ports (4 bits)
+                if let Some((_, code)) = self.common_ports.iter().find(|(port, _)| *port == p) {
+                    (vec![*code], 4)
+                }
+                // Check frequent ports (8 bits) 
+                else if let Some((_, code)) = self.frequent_ports.iter().find(|(port, _)| *port == p) {
+                    (vec![*code], 8)
+                }
+                // Full port (16 bits)
+                else {
+                    (vec![(p >> 8) as u8, (p & 0xFF) as u8], 16)
+                }
+            }
+        }
+    }
+
+    pub fn decompress(&self, data: &[u8], bits: usize) -> Result<Option<u16>, ThreeWordError> {
+        match bits {
+            0 => Ok(None),
+            4 => {
+                let code = data[0] & 0x0F;
+                self.common_ports.iter()
+                    .find(|(_, c)| *c == code)
+                    .map(|(port, _)| Some(*port))
+                    .ok_or_else(|| ThreeWordError::InvalidInput("Invalid common port code".to_string()))
+            }
+            8 => {
+                let code = data[0];
+                // First check if it's a common port with full byte
+                if code <= 0x0F {
+                    self.common_ports.iter()
+                        .find(|(_, c)| *c == code)
+                        .map(|(port, _)| Some(*port))
+                        .ok_or_else(|| ThreeWordError::InvalidInput("Invalid port code".to_string()))
+                } else {
+                    self.frequent_ports.iter()
+                        .find(|(_, c)| *c == code)
+                        .map(|(port, _)| Some(*port))
+                        .ok_or_else(|| ThreeWordError::InvalidInput("Invalid frequent port code".to_string()))
+                }
+            }
+            16 => {
+                if data.len() >= 2 {
+                    Ok(Some(((data[0] as u16) << 8) | (data[1] as u16)))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for port".to_string()))
+                }
+            }
+            _ => Err(ThreeWordError::InvalidInput(format!("Invalid port bit count: {}", bits)))
+        }
+    }
+}
+
+/// Main compression engine
+pub struct IpCompressor {
+    port_compressor: PortCompressor,
+}
+
+impl IpCompressor {
+    pub fn new() -> Self {
+        Self {
+            port_compressor: PortCompressor::new(),
+        }
+    }
+
+    /// Compress an IP address with optional port into minimal bits
+    pub fn compress(&self, ip: &IpAddr, port: Option<u16>) -> Result<CompressedAddress, ThreeWordError> {
+        let (addr_type, addr_data, addr_bits) = self.compress_address(ip)?;
+        let (port_data, port_bits) = self.port_compressor.compress(port);
+        
+        let total_bits = addr_bits + port_bits;
+        if total_bits > MAX_BITS {
+            return Err(ThreeWordError::InvalidInput(
+                format!("Compressed size {} bits exceeds maximum {} bits", total_bits, MAX_BITS)
             ));
         }
+
+        Ok(CompressedAddress {
+            addr_type,
+            addr_data,
+            addr_bits,
+            port_data,
+            port_bits,
+            total_bits,
+        })
+    }
+
+    /// Compress IP address based on type and pattern
+    fn compress_address(&self, ip: &IpAddr) -> Result<(AddressType, Vec<u8>, usize), ThreeWordError> {
+        match ip {
+            IpAddr::V4(ipv4) => self.compress_ipv4(ipv4),
+            IpAddr::V6(ipv6) => self.compress_ipv6(ipv6),
+        }
+    }
+
+    fn compress_ipv4(&self, ipv4: &Ipv4Addr) -> Result<(AddressType, Vec<u8>, usize), ThreeWordError> {
+        let octets = ipv4.octets();
         
-        let mut compressed = Vec::new();
-        let components: Vec<&str> = multiaddr.trim_start_matches('/').split('/').collect();
+        // Localhost: 127.x.x.x (3-bit type + 8 bits for last octet = 11 bits)
+        if octets[0] == 127 {
+            Ok((AddressType::Ipv4Localhost, vec![octets[3]], 11))
+        }
+        // Private 192.168.x.x (3-bit type + 16 bits = 19 bits)
+        else if octets[0] == 192 && octets[1] == 168 {
+            Ok((AddressType::Ipv4Private192, vec![octets[2], octets[3]], 19))
+        }
+        // Private 10.x.x.x (3-bit type + 24 bits = 27 bits)
+        else if octets[0] == 10 {
+            Ok((AddressType::Ipv4Private10, vec![octets[1], octets[2], octets[3]], 27))
+        }
+        // Private 172.16-31.x.x (3-bit type + 4 bits for range + 16 bits = 23 bits)
+        else if octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31 {
+            let range_bits = octets[1] - 16; // 0-15 fits in 4 bits
+            Ok((AddressType::Ipv4Private172, 
+                vec![range_bits, octets[2], octets[3]], 
+                23))
+        }
+        // Public IPv4 (3-bit type + 32 bits = 35 bits)
+        else {
+            Ok((AddressType::Ipv4Public, octets.to_vec(), 35))
+        }
+    }
+
+    fn compress_ipv6(&self, ipv6: &Ipv6Addr) -> Result<(AddressType, Vec<u8>, usize), ThreeWordError> {
+        let segments = ipv6.segments();
         
-        let mut i = 0;
-        while i < components.len() {
-            let protocol = components[i];
-            
-            // Encode protocol
-            let protocol_code = self.protocol_codes.get(protocol)
-                .ok_or_else(|| CompressionError::UnknownProtocol(protocol.to_string()))?;
-            
-            compressed.push(*protocol_code);
-            i += 1;
-            
-            // Handle protocol-specific data
-            match protocol {
-                "ip4" => {
-                    if i >= components.len() {
-                        return Err(CompressionError::InvalidFormat("Missing IP4 address".to_string()));
-                    }
-                    
-                    let ip = Ipv4Addr::from_str(components[i])
-                        .map_err(|_| CompressionError::InvalidIpAddress(components[i].to_string()))?;
-                    compressed.extend_from_slice(&ip.octets());
-                    i += 1;
+        // Localhost ::1 (4-bit type only = 4 bits)
+        if ipv6.is_loopback() {
+            Ok((AddressType::Ipv6Localhost, vec![], 4))
+        }
+        // Link-local fe80::/10 (4-bit type + interface ID = variable)
+        else if segments[0] & 0xFFC0 == 0xFE80 {
+            // For link-local, we could store just the interface ID (last 64 bits)
+            // But that's still 64 bits, too large for our system
+            // Instead, we'll store a hash or truncated version
+            let interface_id = ((segments[6] as u32) << 16) | (segments[7] as u32);
+            Ok((AddressType::Ipv6LinkLocal, 
+                vec![
+                    (interface_id >> 24) as u8,
+                    (interface_id >> 16) as u8,
+                    (interface_id >> 8) as u8,
+                    interface_id as u8,
+                ],
+                36)) // 4-bit type + 32-bit truncated interface ID
+        }
+        // Unique local fc00::/7 (4-bit type + subnet ID = variable)
+        else if segments[0] & 0xFE00 == 0xFC00 {
+            // Store first 48 bits (prefix + global ID + partial subnet)
+            Ok((AddressType::Ipv6UniqueLocal,
+                vec![
+                    (segments[0] >> 8) as u8,
+                    segments[0] as u8,
+                    (segments[1] >> 8) as u8,
+                    segments[1] as u8,
+                    (segments[2] >> 8) as u8,
+                    segments[2] as u8,
+                ],
+                52)) // 4-bit type + 48 bits
+        }
+        // Public IPv6 - too large to fit
+        else {
+            Err(ThreeWordError::InvalidInput(
+                "Public IPv6 addresses cannot be compressed to fit in 42 bits".to_string()
+            ))
+        }
+    }
+
+    /// Decompress back to IP address and port
+    pub fn decompress(&self, compressed: &CompressedAddress) -> Result<(IpAddr, Option<u16>), ThreeWordError> {
+        let ip = self.decompress_address(compressed.addr_type, &compressed.addr_data)?;
+        let port = self.port_compressor.decompress(&compressed.port_data, compressed.port_bits)?;
+        Ok((ip, port))
+    }
+
+    fn decompress_address(&self, addr_type: AddressType, data: &[u8]) -> Result<IpAddr, ThreeWordError> {
+        match addr_type {
+            AddressType::Ipv4Localhost => {
+                if data.len() >= 1 {
+                    Ok(IpAddr::V4(Ipv4Addr::new(127, 0, 0, data[0])))
+                } else {
+                    Ok(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))
                 }
-                "ip6" => {
-                    if i >= components.len() {
-                        return Err(CompressionError::InvalidFormat("Missing IP6 address".to_string()));
-                    }
-                    
-                    let ip = Ipv6Addr::from_str(components[i])
-                        .map_err(|_| CompressionError::InvalidIpAddress(components[i].to_string()))?;
-                    let compressed_ip6 = self.compress_ipv6(&ip);
-                    compressed.extend_from_slice(&compressed_ip6);
-                    i += 1;
+            }
+            AddressType::Ipv4Private192 => {
+                if data.len() >= 2 {
+                    Ok(IpAddr::V4(Ipv4Addr::new(192, 168, data[0], data[1])))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for 192.168.x.x".to_string()))
                 }
-                "tcp" | "udp" | "sctp" | "dccp" => {
-                    if i >= components.len() {
-                        return Err(CompressionError::InvalidFormat(format!("Missing {} port", protocol)));
-                    }
-                    
-                    let port: u16 = components[i].parse()
-                        .map_err(|_| CompressionError::InvalidPort(components[i].to_string()))?;
-                    
-                    if let Some(&port_code) = self.port_codes.get(&port) {
-                        // Common port - single byte
-                        compressed.push(0xFF); // Marker for compressed port
-                        compressed.push(port_code);
-                    } else {
-                        // Uncommon port - two bytes
-                        compressed.extend_from_slice(&port.to_be_bytes());
-                    }
-                    i += 1;
+            }
+            AddressType::Ipv4Private10 => {
+                if data.len() >= 3 {
+                    Ok(IpAddr::V4(Ipv4Addr::new(10, data[0], data[1], data[2])))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for 10.x.x.x".to_string()))
                 }
-                "p2p" | "ipfs" => {
-                    if i >= components.len() {
-                        return Err(CompressionError::InvalidFormat("Missing peer ID".to_string()));
-                    }
-                    
-                    let compressed_peer = self.compress_peer_id(components[i])?;
-                    compressed.push(compressed_peer.len() as u8); // Length prefix
-                    compressed.extend_from_slice(&compressed_peer);
-                    i += 1;
+            }
+            AddressType::Ipv4Private172 => {
+                if data.len() >= 3 {
+                    let second_octet = 16 + data[0]; // Restore range 16-31
+                    Ok(IpAddr::V4(Ipv4Addr::new(172, second_octet, data[1], data[2])))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for 172.16-31.x.x".to_string()))
                 }
-                _ => {
-                    // Other protocols that might have data
-                    if i < components.len() && !components[i].is_empty() {
-                        let data = components[i].as_bytes();
-                        compressed.push(data.len() as u8); // Length prefix
-                        compressed.extend_from_slice(data);
-                        i += 1;
-                    }
+            }
+            AddressType::Ipv4Public => {
+                if data.len() >= 4 {
+                    Ok(IpAddr::V4(Ipv4Addr::new(data[0], data[1], data[2], data[3])))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for public IPv4".to_string()))
                 }
+            }
+            AddressType::Ipv6Localhost => {
+                Ok(IpAddr::V6(Ipv6Addr::LOCALHOST))
+            }
+            AddressType::Ipv6LinkLocal => {
+                if data.len() >= 4 {
+                    // Reconstruct a link-local address with the interface ID
+                    let interface_id = ((data[0] as u32) << 24) |
+                                     ((data[1] as u32) << 16) |
+                                     ((data[2] as u32) << 8) |
+                                     (data[3] as u32);
+                    Ok(IpAddr::V6(Ipv6Addr::new(
+                        0xfe80, 0, 0, 0, 0, 0,
+                        (interface_id >> 16) as u16,
+                        (interface_id & 0xFFFF) as u16,
+                    )))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for link-local IPv6".to_string()))
+                }
+            }
+            AddressType::Ipv6UniqueLocal => {
+                if data.len() >= 6 {
+                    let seg0 = ((data[0] as u16) << 8) | (data[1] as u16);
+                    let seg1 = ((data[2] as u16) << 8) | (data[3] as u16);
+                    let seg2 = ((data[4] as u16) << 8) | (data[5] as u16);
+                    Ok(IpAddr::V6(Ipv6Addr::new(
+                        seg0, seg1, seg2, 0, 0, 0, 0, 0
+                    )))
+                } else {
+                    Err(ThreeWordError::InvalidInput("Insufficient data for unique local IPv6".to_string()))
+                }
+            }
+            AddressType::Ipv6Public => {
+                Err(ThreeWordError::InvalidInput("Public IPv6 decompression not supported".to_string()))
+            }
+        }
+    }
+}
+
+/// Compressed address representation
+#[derive(Debug, Clone)]
+pub struct CompressedAddress {
+    pub addr_type: AddressType,
+    pub addr_data: Vec<u8>,
+    pub addr_bits: usize,
+    pub port_data: Vec<u8>,
+    pub port_bits: usize,
+    pub total_bits: usize,
+}
+
+impl CompressedAddress {
+    /// Pack into a bit stream for encoding
+    pub fn pack(&self) -> Vec<u8> {
+        let mut bits = BitWriter::new();
+        
+        // Write address type prefix
+        match self.addr_type {
+            // 3-bit prefixes
+            AddressType::Ipv4Localhost |
+            AddressType::Ipv4Private192 |
+            AddressType::Ipv4Private10 |
+            AddressType::Ipv4Private172 |
+            AddressType::Ipv4Public => {
+                bits.write_bits(self.addr_type as u32, 3);
+            }
+            // 4-bit prefixes
+            AddressType::Ipv6Localhost |
+            AddressType::Ipv6LinkLocal |
+            AddressType::Ipv6UniqueLocal |
+            AddressType::Ipv6Public => {
+                bits.write_bits(self.addr_type as u32, 4);
             }
         }
         
-        Ok(compressed)
+        // Write address data with appropriate bit sizes
+        match self.addr_type {
+            AddressType::Ipv4Localhost => {
+                // 8 bits for last octet
+                if !self.addr_data.is_empty() {
+                    bits.write_bits(self.addr_data[0] as u32, 8);
+                }
+            }
+            AddressType::Ipv4Private192 => {
+                // 8 bits + 8 bits for last two octets
+                for byte in &self.addr_data {
+                    bits.write_bits(*byte as u32, 8);
+                }
+            }
+            AddressType::Ipv4Private10 => {
+                // 8 bits + 8 bits + 8 bits for last three octets
+                for byte in &self.addr_data {
+                    bits.write_bits(*byte as u32, 8);
+                }
+            }
+            AddressType::Ipv4Private172 => {
+                // 4 bits for range + 8 bits + 8 bits for last two octets
+                if self.addr_data.len() >= 3 {
+                    bits.write_bits(self.addr_data[0] as u32, 4); // range_bits (4 bits)
+                    bits.write_bits(self.addr_data[1] as u32, 8); // third octet
+                    bits.write_bits(self.addr_data[2] as u32, 8); // fourth octet
+                }
+            }
+            AddressType::Ipv4Public => {
+                // 8 bits × 4 for all octets
+                for byte in &self.addr_data {
+                    bits.write_bits(*byte as u32, 8);
+                }
+            }
+            AddressType::Ipv6Localhost => {
+                // No additional data
+            }
+            AddressType::Ipv6LinkLocal => {
+                // 8 bits × 4 for interface ID
+                for byte in &self.addr_data {
+                    bits.write_bits(*byte as u32, 8);
+                }
+            }
+            AddressType::Ipv6UniqueLocal => {
+                // 8 bits × 6 for prefix data
+                for byte in &self.addr_data {
+                    bits.write_bits(*byte as u32, 8);
+                }
+            }
+            AddressType::Ipv6Public => {
+                // Should not reach here as it's rejected during compression
+            }
+        }
+        
+        // Write port flag and data
+        if self.port_bits > 0 {
+            bits.write_bits(1, 1); // Has port
+            if self.port_bits == 4 {
+                bits.write_bits(0, 1); // Common port marker
+                bits.write_bits(self.port_data[0] as u32, 4);
+            } else if self.port_bits == 8 {
+                bits.write_bits(1, 1); // Frequent port marker
+                bits.write_bits(0, 1); // Not full port
+                bits.write_bits(self.port_data[0] as u32, 8);
+            } else {
+                bits.write_bits(1, 1); // Frequent port marker
+                bits.write_bits(1, 1); // Full port marker
+                bits.write_bits(((self.port_data[0] as u32) << 8) | (self.port_data[1] as u32), 16);
+            }
+        } else {
+            bits.write_bits(0, 1); // No port
+        }
+        
+        bits.finish()
+    }
+
+    /// Unpack from a bit stream
+    pub fn unpack(data: &[u8], compressor: &IpCompressor) -> Result<(IpAddr, Option<u16>), ThreeWordError> {
+        let mut bits = BitReader::new(data);
+        
+        // Read address type prefix
+        let first_3_bits = bits.read_bits(3)? as u8;
+        let (addr_type, _type_bits) = if first_3_bits < 0b110 {
+            // IPv4 type (3-bit prefix)
+            (match first_3_bits {
+                0b000 => AddressType::Ipv4Localhost,
+                0b001 => AddressType::Ipv4Private192,
+                0b010 => AddressType::Ipv4Private10,
+                0b011 => AddressType::Ipv4Private172,
+                0b100 => AddressType::Ipv4Public,
+                _ => unreachable!(),
+            }, 3)
+        } else {
+            // IPv6 type (4-bit prefix)
+            let fourth_bit = bits.read_bits(1)? as u8;
+            let ipv6_type = (first_3_bits << 1) | fourth_bit;
+            (match ipv6_type {
+                0b1100 => AddressType::Ipv6Localhost,
+                0b1101 => AddressType::Ipv6LinkLocal,
+                0b1110 => AddressType::Ipv6UniqueLocal,
+                0b1111 => AddressType::Ipv6Public,
+                _ => unreachable!(),
+            }, 4)
+        };
+        
+        // Read address data based on type
+        let addr_data = match addr_type {
+            AddressType::Ipv4Localhost => vec![bits.read_bits(8)? as u8],
+            AddressType::Ipv4Private192 => vec![bits.read_bits(8)? as u8, bits.read_bits(8)? as u8],
+            AddressType::Ipv4Private10 => vec![
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+            ],
+            AddressType::Ipv4Private172 => vec![
+                bits.read_bits(4)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+            ],
+            AddressType::Ipv4Public => vec![
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+            ],
+            AddressType::Ipv6Localhost => vec![],
+            AddressType::Ipv6LinkLocal => vec![
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+            ],
+            AddressType::Ipv6UniqueLocal => vec![
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+                bits.read_bits(8)? as u8,
+            ],
+            AddressType::Ipv6Public => {
+                return Err(ThreeWordError::InvalidInput("Public IPv6 not supported".to_string()));
+            }
+        };
+        
+        // Read port if present
+        let port = if bits.read_bits(1)? == 1 {
+            if bits.read_bits(1)? == 0 {
+                // Common port (4 bits)
+                let code = bits.read_bits(4)? as u8;
+                compressor.port_compressor.decompress(&[code], 4)?
+            } else if bits.read_bits(1)? == 0 {
+                // Frequent port (8 bits)
+                let code = bits.read_bits(8)? as u8;
+                compressor.port_compressor.decompress(&[code], 8)?
+            } else {
+                // Full port (16 bits)
+                let port_value = bits.read_bits(16)?;
+                Some(port_value as u16)
+            }
+        } else {
+            None
+        };
+        
+        let ip = compressor.decompress_address(addr_type, &addr_data)?;
+        Ok((ip, port))
+    }
+}
+
+/// Bit-level writer for packing data
+struct BitWriter {
+    data: Vec<u8>,
+    current_byte: u8,
+    bits_in_current: usize,
+}
+
+impl BitWriter {
+    fn new() -> Self {
+        Self {
+            data: Vec::new(),
+            current_byte: 0,
+            bits_in_current: 0,
+        }
+    }
+
+    fn write_bits(&mut self, value: u32, num_bits: usize) {
+        let value = value;
+        let mut bits_to_write = num_bits;
+        
+        while bits_to_write > 0 {
+            let bits_available = 8 - self.bits_in_current;
+            let bits_this_round = bits_to_write.min(bits_available);
+            
+            let mask = (1 << bits_this_round) - 1;
+            let bits = ((value >> (bits_to_write - bits_this_round)) & mask) as u8;
+            
+            self.current_byte = (self.current_byte << bits_this_round) | bits;
+            self.bits_in_current += bits_this_round;
+            
+            if self.bits_in_current == 8 {
+                self.data.push(self.current_byte);
+                self.current_byte = 0;
+                self.bits_in_current = 0;
+            }
+            
+            bits_to_write -= bits_this_round;
+        }
+    }
+
+    fn finish(mut self) -> Vec<u8> {
+        if self.bits_in_current > 0 {
+            // Pad the remaining bits to complete the byte
+            self.current_byte <<= 8 - self.bits_in_current;
+            self.data.push(self.current_byte);
+        }
+        self.data
     }
     
-    /// Decompress bytes back to a multiaddress
-    pub fn decompress(&self, data: &[u8]) -> Result<String, CompressionError> {
-        let mut result = String::new();
-        let mut i = 0;
-        
-        while i < data.len() {
-            let protocol_code = data[i];
-            i += 1;
-            
-            let protocol = self.reverse_protocols.get(&protocol_code)
-                .ok_or_else(|| CompressionError::UnknownProtocol(format!("Unknown code: {}", protocol_code)))?;
-            
-            result.push('/');
-            result.push_str(protocol);
-            
-            // Handle protocol-specific data
-            match *protocol {
-                "ip4" => {
-                    if i + 4 > data.len() {
-                        return Err(CompressionError::InvalidFormat("Incomplete IP4 address".to_string()));
-                    }
-                    
-                    let ip = Ipv4Addr::new(data[i], data[i+1], data[i+2], data[i+3]);
-                    result.push('/');
-                    result.push_str(&ip.to_string());
-                    i += 4;
-                }
-                "ip6" => {
-                    let (ip, bytes_read) = self.decompress_ipv6(&data[i..])?;
-                    result.push('/');
-                    result.push_str(&ip.to_string());
-                    i += bytes_read;
-                }
-                "tcp" | "udp" | "sctp" | "dccp" => {
-                    if i >= data.len() {
-                        return Err(CompressionError::InvalidFormat(format!("Missing {} port", protocol)));
-                    }
-                    
-                    let port = if data[i] == 0xFF {
-                        // Compressed port
-                        i += 1;
-                        if i >= data.len() {
-                            return Err(CompressionError::InvalidFormat("Incomplete compressed port".to_string()));
-                        }
-                        
-                        let port_code = data[i];
-                        i += 1;
-                        
-                        *self.reverse_ports.get(&port_code)
-                            .ok_or_else(|| CompressionError::InvalidPort(format!("Unknown port code: {}", port_code)))?
-                    } else {
-                        // Uncompressed port
-                        if i + 2 > data.len() {
-                            return Err(CompressionError::InvalidFormat("Incomplete port".to_string()));
-                        }
-                        
-                        let port = u16::from_be_bytes([data[i], data[i+1]]);
-                        i += 2;
-                        port
-                    };
-                    
-                    result.push('/');
-                    result.push_str(&port.to_string());
-                }
-                "p2p" | "ipfs" => {
-                    if i >= data.len() {
-                        return Err(CompressionError::InvalidFormat("Missing peer ID length".to_string()));
-                    }
-                    
-                    let length = data[i] as usize;
-                    i += 1;
-                    
-                    if i + length > data.len() {
-                        return Err(CompressionError::InvalidFormat("Incomplete peer ID".to_string()));
-                    }
-                    
-                    let peer_id = self.decompress_peer_id(&data[i..i+length])?;
-                    result.push('/');
-                    result.push_str(&peer_id);
-                    i += length;
-                }
-                _ => {
-                    // Generic data with length prefix
-                    if i < data.len() {
-                        let length = data[i] as usize;
-                        i += 1;
-                        
-                        if i + length <= data.len() && length > 0 {
-                            let text = std::str::from_utf8(&data[i..i+length])?;
-                            result.push('/');
-                            result.push_str(text);
-                            i += length;
-                        }
-                    }
-                }
-            }
+    /// Get the total number of bits written
+    fn bit_count(&self) -> usize {
+        self.data.len() * 8 + self.bits_in_current
+    }
+}
+
+/// Bit-level reader for unpacking data
+struct BitReader<'a> {
+    data: &'a [u8],
+    byte_index: usize,
+    bit_index: usize,
+}
+
+impl<'a> BitReader<'a> {
+    fn new(data: &'a [u8]) -> Self {
+        Self {
+            data,
+            byte_index: 0,
+            bit_index: 0,
         }
+    }
+
+    fn read_bits(&mut self, num_bits: usize) -> Result<u32, ThreeWordError> {
+        let mut result = 0u32;
+        let mut bits_read = 0;
         
-        if result.is_empty() {
-            result.push('/');
+        while bits_read < num_bits {
+            if self.byte_index >= self.data.len() {
+                return Err(ThreeWordError::InvalidInput("Insufficient data for bit reading".to_string()));
+            }
+            
+            let bits_available = 8 - self.bit_index;
+            let bits_to_read = (num_bits - bits_read).min(bits_available);
+            
+            let mask = ((1 << bits_to_read) - 1) as u8;
+            let bits = (self.data[self.byte_index] >> (bits_available - bits_to_read)) & mask;
+            
+            result = (result << bits_to_read) | (bits as u32);
+            bits_read += bits_to_read;
+            
+            self.bit_index += bits_to_read;
+            if self.bit_index == 8 {
+                self.byte_index += 1;
+                self.bit_index = 0;
+            }
         }
         
         Ok(result)
-    }
-    
-    /// Compress IPv6 address using run-length encoding for zeros
-    fn compress_ipv6(&self, addr: &Ipv6Addr) -> Vec<u8> {
-        let octets = addr.octets();
-        let mut compressed = Vec::new();
-        
-        let mut i = 0;
-        while i < 16 {
-            if octets[i] == 0 {
-                // Count consecutive zeros
-                let zero_count = octets[i..].iter().take_while(|&&b| b == 0).count();
-                
-                if zero_count > 2 {
-                    // Use run-length encoding for 3+ consecutive zeros
-                    compressed.push(0xFE); // Zero run marker
-                    compressed.push(zero_count as u8);
-                    i += zero_count;
-                } else {
-                    // Just store the zeros normally for short runs
-                    compressed.push(0);
-                    i += 1;
-                }
-            } else {
-                compressed.push(octets[i]);
-                i += 1;
-            }
-        }
-        
-        compressed
-    }
-    
-    /// Decompress IPv6 address from compressed format
-    fn decompress_ipv6(&self, data: &[u8]) -> Result<(Ipv6Addr, usize), CompressionError> {
-        let mut octets = [0u8; 16];
-        let mut i = 0;
-        let mut pos = 0;
-        
-        while i < data.len() && pos < 16 {
-            if data[i] == 0xFE && i + 1 < data.len() {
-                // Zero run
-                let zero_count = data[i + 1] as usize;
-                if pos + zero_count > 16 {
-                    return Err(CompressionError::InvalidFormat("IPv6 zero run overflow".to_string()));
-                }
-                
-                // octets[pos..pos+zero_count] are already zero
-                pos += zero_count;
-                i += 2;
-            } else {
-                octets[pos] = data[i];
-                pos += 1;
-                i += 1;
-            }
-        }
-        
-        Ok((Ipv6Addr::from(octets), i))
-    }
-    
-    /// Compress peer ID by removing redundant prefixes
-    fn compress_peer_id(&self, peer_id: &str) -> Result<Vec<u8>, CompressionError> {
-        if peer_id.starts_with("Qm") && peer_id.len() == 46 {
-            // CIDv0 - decode base58 and skip the multihash prefix
-            let decoded = bs58::decode(peer_id)
-                .into_vec()
-                .map_err(|e| CompressionError::Base58Error(e.to_string()))?;
-            
-            if decoded.len() >= 34 && decoded[0] == 0x12 && decoded[1] == 0x20 {
-                // Skip 0x12, 0x20 (SHA-256 identifier + length)
-                let mut result = vec![0x01]; // CIDv0 marker
-                result.extend_from_slice(&decoded[2..]);
-                Ok(result)
-            } else {
-                // Unknown format, store as-is
-                let mut result = vec![0x00]; // Unknown format marker
-                result.extend_from_slice(peer_id.as_bytes());
-                Ok(result)
-            }
-        } else if peer_id.starts_with("12") || peer_id.starts_with("baf") {
-            // CIDv1 or other format - store with marker
-            let mut result = vec![0x02]; // CIDv1 marker
-            result.extend_from_slice(peer_id.as_bytes());
-            Ok(result)
-        } else {
-            // Unknown format, store as-is
-            let mut result = vec![0x00]; // Unknown format marker
-            result.extend_from_slice(peer_id.as_bytes());
-            Ok(result)
-        }
-    }
-    
-    /// Decompress peer ID
-    fn decompress_peer_id(&self, data: &[u8]) -> Result<String, CompressionError> {
-        if data.is_empty() {
-            return Err(CompressionError::InvalidFormat("Empty peer ID data".to_string()));
-        }
-        
-        match data[0] {
-            0x01 => {
-                // CIDv0 - reconstruct from SHA-256 hash
-                if data.len() != 33 { // 1 marker + 32 hash bytes
-                    return Err(CompressionError::InvalidFormat("Invalid CIDv0 length".to_string()));
-                }
-                
-                let mut full_hash = vec![0x12, 0x20]; // SHA-256 multihash prefix
-                full_hash.extend_from_slice(&data[1..]);
-                
-                Ok(bs58::encode(full_hash).into_string())
-            }
-            0x02 => {
-                // CIDv1 or other format - stored as-is
-                Ok(std::str::from_utf8(&data[1..])?.to_string())
-            }
-            _ => {
-                // Unknown format - stored as-is
-                Ok(std::str::from_utf8(&data[1..])?.to_string())
-            }
-        }
-    }
-    
-    /// Calculate compression ratio for a multiaddress
-    pub fn compression_ratio(&self, multiaddr: &str) -> f64 {
-        match self.compress(multiaddr) {
-            Ok(compressed) => {
-                let original_len = multiaddr.len();
-                let compressed_len = compressed.len();
-                
-                if original_len == 0 {
-                    0.0
-                } else {
-                    (original_len - compressed_len) as f64 / original_len as f64
-                }
-            }
-            Err(_) => 0.0,
-        }
-    }
-    
-    /// Try to compress arbitrary data (return original if no benefit)
-    pub fn try_compress(&self, data: &[u8]) -> Vec<u8> {
-        // For now, only handle multiaddresses
-        // Could be extended with other compression algorithms
-        if let Ok(text) = std::str::from_utf8(data) {
-            if text.starts_with('/') {
-                if let Ok(compressed) = self.compress(text) {
-                    if compressed.len() < data.len() {
-                        return compressed;
-                    }
-                }
-            }
-        }
-        
-        data.to_vec()
-    }
-}
-
-impl Default for MultiaddressCompressor {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
-    fn test_simple_ipv4_compression() {
-        let compressor = MultiaddressCompressor::new();
+    fn test_ipv4_compression() {
+        let compressor = IpCompressor::new();
         
-        let multiaddr = "/ip4/192.168.1.1/tcp/4001";
-        let compressed = compressor.compress(multiaddr).unwrap();
-        let decompressed = compressor.decompress(&compressed).unwrap();
+        // Test localhost
+        let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+        let compressed = compressor.compress(&ip, Some(80)).unwrap();
+        assert!(compressed.total_bits <= 15); // 11 bits for IP + 4 bits for common port
         
-        assert_eq!(multiaddr, decompressed);
+        // Test private network
+        let ip = IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100));
+        let compressed = compressor.compress(&ip, Some(443)).unwrap();
+        assert!(compressed.total_bits <= 23); // 19 bits for IP + 4 bits for common port
         
-        // Should be: 1 + 4 + 1 + 2 = 8 bytes (protocol + IP + protocol + port marker + port code)
-        assert!(compressed.len() <= 8);
-        
-        println!("Original: {} ({} bytes)", multiaddr, multiaddr.len());
-        println!("Compressed: {} bytes", compressed.len());
-        println!("Ratio: {:.1}%", compressor.compression_ratio(multiaddr) * 100.0);
+        // Round trip test
+        let (decompressed_ip, decompressed_port) = compressor.decompress(&compressed).unwrap();
+        assert_eq!(decompressed_ip, ip);
+        assert_eq!(decompressed_port, Some(443));
     }
-    
+
     #[test]
     fn test_ipv6_compression() {
-        let compressor = MultiaddressCompressor::new();
+        let compressor = IpCompressor::new();
         
-        let multiaddr = "/ip6/2001:0db8:85a3:0000:0000:8a2e:0370:7334/tcp/443";
-        let compressed = compressor.compress(multiaddr).unwrap();
-        let decompressed = compressor.decompress(&compressed).unwrap();
+        // Test localhost
+        let ip = IpAddr::V6(Ipv6Addr::LOCALHOST);
+        let compressed = compressor.compress(&ip, Some(22)).unwrap();
+        assert!(compressed.total_bits <= 8); // 4 bits for type + 4 bits for common port
         
-        // IPv6 addresses can be represented in different formats - normalize for comparison
-        let original_ip = std::net::Ipv6Addr::from_str("2001:0db8:85a3:0000:0000:8a2e:0370:7334").unwrap();
-        let decompressed_ip = decompressed.split('/').nth(2).unwrap();
-        let decompressed_addr = std::net::Ipv6Addr::from_str(decompressed_ip).unwrap();
-        
-        assert_eq!(original_ip, decompressed_addr, "IPv6 addresses should be equivalent");
-        
-        // IPv6 with zeros should compress well
-        let ratio = compressor.compression_ratio(multiaddr);
-        assert!(ratio > 0.3); // Should save at least 30%
-        
-        println!("IPv6 Original: {} ({} bytes)", multiaddr, multiaddr.len());
-        println!("IPv6 Compressed: {} bytes", compressed.len());
-        println!("IPv6 Ratio: {:.1}%", ratio * 100.0);
+        // Round trip test
+        let (decompressed_ip, decompressed_port) = compressor.decompress(&compressed).unwrap();
+        assert_eq!(decompressed_ip, ip);
+        assert_eq!(decompressed_port, Some(22));
     }
-    
+
     #[test]
-    fn test_peer_id_compression() {
-        let compressor = MultiaddressCompressor::new();
+    fn test_port_compression() {
+        let compressor = PortCompressor::new();
         
-        let multiaddr = "/ip4/192.168.1.1/tcp/4001/p2p/QmYwAPJzv5CZsnA625s3Xf2nemtYg4LTdvUGUi9Bso1RBW";
-        let compressed = compressor.compress(multiaddr).unwrap();
-        let decompressed = compressor.decompress(&compressed).unwrap();
+        // Common port
+        let (data, bits) = compressor.compress(Some(80));
+        assert_eq!(bits, 4);
+        assert_eq!(compressor.decompress(&data, bits).unwrap(), Some(80));
         
-        assert_eq!(multiaddr, decompressed);
+        // Frequent port
+        let (data, bits) = compressor.compress(Some(3389));
+        assert_eq!(bits, 8);
+        assert_eq!(compressor.decompress(&data, bits).unwrap(), Some(3389));
         
-        // Peer ID should compress significantly
-        let ratio = compressor.compression_ratio(multiaddr);
-        assert!(ratio > 0.4); // Should save at least 40%
-        
-        println!("P2P Original: {} ({} bytes)", multiaddr, multiaddr.len());
-        println!("P2P Compressed: {} bytes", compressed.len());
-        println!("P2P Ratio: {:.1}%", ratio * 100.0);
+        // Arbitrary port
+        let (data, bits) = compressor.compress(Some(12345));
+        assert_eq!(bits, 16);
+        assert_eq!(compressor.decompress(&data, bits).unwrap(), Some(12345));
     }
-    
+
     #[test]
-    fn test_common_port_compression() {
-        let compressor = MultiaddressCompressor::new();
+    fn test_bit_packing() {
+        let compressor = IpCompressor::new();
         
-        let test_cases = vec![
-            "/ip4/1.2.3.4/tcp/80",     // HTTP
-            "/ip4/1.2.3.4/tcp/443",    // HTTPS
-            "/ip4/1.2.3.4/tcp/4001",   // IPFS
-            "/ip4/1.2.3.4/tcp/9999",   // Uncommon port
-        ];
+        let ip = IpAddr::V4(Ipv4Addr::new(10, 20, 30, 40));
+        let compressed = compressor.compress(&ip, Some(8080)).unwrap();
         
-        for multiaddr in test_cases {
-            let compressed = compressor.compress(multiaddr).unwrap();
-            let decompressed = compressor.decompress(&compressed).unwrap();
-            
-            assert_eq!(multiaddr, decompressed);
-            
-            let ratio = compressor.compression_ratio(multiaddr);
-            println!("{}: {} bytes -> {} bytes ({:.1}% savings)", 
-                     multiaddr, multiaddr.len(), compressed.len(), ratio * 100.0);
-        }
-    }
-    
-    #[test]
-    fn test_complex_multiaddress() {
-        let compressor = MultiaddressCompressor::new();
+        // Pack and unpack
+        let packed = compressed.pack();
+        assert!(packed.len() <= 6); // Should fit in 6 bytes max
         
-        // Use a simpler complex multiaddress without peer ID for now
-        let multiaddr = "/ip6/2001:db8::1/tcp/443/ws";
-        let compressed = compressor.compress(multiaddr).unwrap();
-        let decompressed = compressor.decompress(&compressed).unwrap();
-        
-        // Check that the essential parts are preserved (IPv6 and port)
-        assert!(decompressed.contains("2001:db8::1") || decompressed.contains("2001:db8:0:0:0:0:0:1"));
-        assert!(decompressed.contains("443"));
-        assert!(decompressed.contains("ws"));
-        
-        let ratio = compressor.compression_ratio(multiaddr);
-        assert!(ratio > 0.3); // Should save at least 30%
-        
-        println!("Complex Original: {} ({} bytes)", multiaddr, multiaddr.len());
-        println!("Complex Compressed: {} bytes", compressed.len());
-        println!("Complex Ratio: {:.1}%", ratio * 100.0);
-    }
-    
-    #[test]
-    fn test_invalid_multiaddresses() {
-        let compressor = MultiaddressCompressor::new();
-        
-        let invalid_cases = vec![
-            "invalid",
-            "/invalid",
-            "/ip4/invalid.ip",
-            "/tcp/70000",
-            "/ip4/1.2.3.4/tcp",
-        ];
-        
-        for invalid in invalid_cases {
-            assert!(compressor.compress(invalid).is_err());
-        }
-    }
-    
-    #[test]
-    fn test_compression_benefits() {
-        let compressor = MultiaddressCompressor::new();
-        
-        // Test that we get significant compression on typical multiaddresses
-        let test_cases = vec![
-            ("/ip4/192.168.1.1/tcp/4001", 0.3),
-            ("/ip6/2001:db8::1/tcp/443", 0.4),
-            ("/ip4/1.2.3.4/tcp/80/ws", 0.35),
-            ("/ip4/1.2.3.4/tcp/4001/p2p/QmYwAPJzv5CZsnA625s3Xf2nemtYg4LTdvUGUi9Bso1RBW", 0.4), // Adjusted to 40%
-        ];
-        
-        for (multiaddr, min_ratio) in test_cases {
-            let ratio = compressor.compression_ratio(multiaddr);
-            assert!(ratio >= min_ratio, 
-                    "Multiaddr {} only compressed {:.1}%, expected >= {:.1}%", 
-                    multiaddr, ratio * 100.0, min_ratio * 100.0);
-        }
+        let (unpacked_ip, unpacked_port) = CompressedAddress::unpack(&packed, &compressor).unwrap();
+        assert_eq!(unpacked_ip, ip);
+        assert_eq!(unpacked_port, Some(8080));
     }
 }

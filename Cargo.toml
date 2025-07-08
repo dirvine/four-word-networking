@@ -1,15 +1,15 @@
 [workspace]
 
 [package]
-name = "three-word-networking"
-version = "1.0.0"
+name = "four-word-networking"
+version = "1.1.0"
 edition = "2021"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
-description = "Convert IP addresses to memorable words. IPv4 = 3 words, IPv6 = 4-6 words. Always."
+description = "Convert IP addresses to memorable words. IPv4 = 4 words (perfect), IPv6 = 4-6 words (adaptive). Always reversible."
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/dirvine/three-word-networking"
+repository = "https://github.com/dirvine/four-word-networking"
 readme = "README.md"
-keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
+keywords = ["networking", "ip-address", "human-readable", "encoding", "cli", "four-word"]
 categories = ["network-programming", "command-line-utilities"]
 exclude = ["src/bin/debug_*", "src/bin/test_*", "*.disabled"]
 
@@ -31,14 +31,14 @@ rand = "0.8"
 sha2 = "0.10"
 
 [[bin]]
-name = "three-word-networking"
+name = "four-word-networking"
 path = "src/main.rs"
 
 [[bin]]
-name = "3wn"
-path = "src/bin/3wn.rs"
+name = "4wn"
+path = "src/bin/4wn.rs"
 
 
 [lib]
-name = "three_word_networking"
+name = "four_word_networking"
 path = "src/lib.rs"

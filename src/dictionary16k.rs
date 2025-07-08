@@ -140,6 +140,113 @@ impl Dictionary16K {
             length_distribution,
         }
     }
+    
+    /// Encode bytes into three words using the 16k dictionary
+    /// For up to 5 bytes (40 bits), which fits in 3 words (42 bits)
+    pub fn encode_bytes(&self, data: &[u8]) -> Result<Vec<String>, DictionaryError> {
+        if data.is_empty() || data.len() > 5 {
+            return Err(DictionaryError::InvalidWordCount {
+                expected: 5,
+                actual: data.len(),
+            });
+        }
+        
+        
+        // We have exactly 42 bits to work with (3 words × 14 bits)
+        // We'll use a different approach:
+        // - For lengths 1-4: Use 2 bits for length, 40 bits for data
+        // - For length 5: We need all 40 bits for data, so encode length differently
+        
+        let mut value = 0u64;
+        
+        if data.len() <= 4 {
+            // Standard encoding: 2 bits length + up to 32 bits data
+            let len_encoded = (data.len() - 1) as u64;
+            value = len_encoded << 40;
+            
+            // Pack data (shift left to fill from MSB)
+            for (i, &byte) in data.iter().enumerate() {
+                value |= (byte as u64) << (32 - i * 8);
+            }
+        } else {
+            // Length 5: Special encoding
+            // Set top 2 bits to 11 (3) to indicate length 5
+            value = 3u64 << 40;
+            
+            // For 5 bytes, we need all 40 bits
+            // Pack all 5 bytes into the lower 40 bits
+            for (i, &byte) in data.iter().enumerate() {
+                value |= (byte as u64) << ((4 - i) * 8);
+            }
+        }
+        
+        
+        // Extract three 14-bit indices from the 42-bit value
+        // We have 42 bits total: [41:28] [27:14] [13:0]
+        let idx1 = ((value >> 28) & 0x3FFF) as u16;
+        let idx2 = ((value >> 14) & 0x3FFF) as u16;
+        let idx3 = (value & 0x3FFF) as u16;
+        
+        
+        Ok(vec![
+            self.get_word(idx1)?.to_string(),
+            self.get_word(idx2)?.to_string(),
+            self.get_word(idx3)?.to_string(),
+        ])
+    }
+    
+    /// Decode three words back to bytes
+    pub fn decode_words(&self, words: &[&str]) -> Result<Vec<u8>, DictionaryError> {
+        if words.len() != 3 {
+            return Err(DictionaryError::InvalidWordCount {
+                expected: 3,
+                actual: words.len(),
+            });
+        }
+        
+        
+        // Get indices for each word
+        let idx1 = self.get_index(words[0])?;
+        let idx2 = self.get_index(words[1])?;
+        let idx3 = self.get_index(words[2])?;
+        
+        
+        // Reconstruct the value (3 words × 14 bits = 42 bits)
+        let value = ((idx1 as u64) << 28) | ((idx2 as u64) << 14) | (idx3 as u64);
+        
+        
+        // Extract length from the uppermost 2 bits of our 42-bit value
+        let len_encoded = (idx1 >> 12) & 0x3;  // Top 2 bits of first word
+        let len = if len_encoded == 3 { 5 } else { (len_encoded + 1) as usize };
+        
+        
+        // Extract data based on length
+        let mut result = Vec::with_capacity(len);
+        
+        if len <= 4 {
+            // Standard decoding: data starts at bit 32
+            let data_bits = value & 0xFFFFFFFFFF;  // Lower 40 bits
+            
+            // Extract bytes from the data (data was shifted to MSB)
+            for i in 0..len {
+                let shift = 32 - i * 8;
+                let byte = ((data_bits >> shift) & 0xFF) as u8;
+                result.push(byte);
+            }
+        } else {
+            // Length 5: All 40 lower bits are data
+            let data_bits = value & 0xFFFFFFFFFF;
+            
+            for i in 0..5 {
+                let shift = (4 - i) * 8;
+                let byte = ((data_bits >> shift) & 0xFF) as u8;
+                result.push(byte);
+            }
+        }
+        
+        
+        Ok(result)
+    }
 }
 
 /// Dictionary statistics

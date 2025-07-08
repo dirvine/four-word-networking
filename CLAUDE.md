@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Three-Word Networking is a Rust library and CLI that converts complex network multiaddresses into memorable three-word combinations for human-friendly networking. The system has evolved through multiple encoding strategies, from the original 4,096-word system to advanced 16K word dictionaries and ultra-compact encoding that achieves 75-87% compression while maintaining perfect three-word outputs.
+Four-Word Networking is a Rust library and CLI that converts IP addresses into memorable word combinations for human-friendly networking. The system provides perfect reconstruction for IPv4 addresses using exactly 4 words, and adaptive compression for IPv6 addresses using 4-6 words with intelligent category-based optimization.
 
 ## Common Development Commands
 
@@ -32,7 +32,7 @@ cargo test test_three_word_address_parsing
 ./run_exhaustive_tests.sh full
 
 # Run the CLI
-cargo run -- examples --count 5
+cargo run --bin 4wn -- 192.168.1.1:443
 ```
 
 ### Code Quality
@@ -52,20 +52,20 @@ cargo machete
 
 ### CLI Usage Examples
 ```bash
-# Convert multiaddr to three words
-cargo run -- encode "/ip6/2001:db8::1/udp/9000/quic"
+# Convert IPv4 to four words (perfect reconstruction)
+cargo run --bin 4wn -- 192.168.1.1:443
 
-# Convert with base format only (no suffix)
-cargo run -- encode "/ip6/2001:db8::1/udp/9000/quic" --base
+# Convert IPv6 to 4-6 words (adaptive compression)
+cargo run --bin 4wn -- "[::1]:443"
 
-# Validate a three-word address
-cargo run -- validate "ocean.thunder.falcon"
+# Decode words back to IP addresses
+cargo run --bin 4wn -- paper.broaden.smith.bully
 
-# Show address space information
-cargo run -- info
+# Decode IPv6 from words
+cargo run --bin 4wn -- City-Tub-Book-April-Book
 
-# Generate examples
-cargo run -- examples --count 10
+# Verbose output
+cargo run --bin 4wn -- -v 192.168.1.1:443
 ```
 
 ### Binary Tools
@@ -88,10 +88,11 @@ cargo run --bin debug_aim_issue
 ### Core Components
 
 - **`src/lib.rs`**: Main library interface and public API
-- **`src/words.rs`**: Original three-word address system (4,096 words, 12 bits/word)
-- **`src/multiaddr_parser.rs`**: Multiaddr parsing and component extraction
+- **`src/four_word_encoder.rs`**: Four-word encoder system for perfect IPv4 and adaptive IPv6
+- **`src/ipv6_compression.rs`**: IPv6 category-based compression algorithms
 - **`src/error.rs`**: Comprehensive error types using `thiserror`
 - **`src/main.rs`**: CLI application using `clap`
+- **`src/bin/4wn.rs`**: Command-line interface for four-word networking
 
 ### Advanced Encoding Systems
 
@@ -112,11 +113,11 @@ Experimental system for encoding arbitrary 32-byte data:
 
 ### Key Data Structures
 
-- **`ThreeWordAddress`**: Three-word address with optional numeric suffix
-- **`WordEncoder`**: Main interface for encoding/decoding
-- **`WordDictionary`**: Position-specific word lists (context, quality, identity)
-- **`ParsedMultiaddr`**: Structured multiaddr components
-- **`MultiAddrBytes`**: Compressed multiaddr representation
+- **`FourWordEncoding`**: Four-word address structure with IP version detection
+- **`FourWordAdaptiveEncoder`**: Main interface for encoding/decoding IP addresses
+- **`FourWordDictionary`**: 16,384-word dictionary for encoding
+- **`CompressedIpv6`**: IPv6 compression with category-based optimization
+- **`Ipv6Category`**: IPv6 address types (Loopback, LinkLocal, GlobalUnicast, etc.)
 - **`UltraCompactData`**: 5-byte compressed format
 
 ## Encoding Strategies

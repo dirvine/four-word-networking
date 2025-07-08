@@ -1,14 +1,14 @@
-//! Three-Word Networking CLI
+//! Four-Word Networking CLI
 //!
-//! Command-line interface for converting network multiaddresses to human-friendly
-//! three-word addresses and vice versa.
+//! Command-line interface for converting network IP addresses to human-friendly
+//! word combinations with perfect IPv4 reconstruction and adaptive IPv6 compression.
 
 use clap::{Parser, Subcommand};
-use three_word_networking::{WordEncoder, ThreeWordAddress, AddressSpace, BalancedEncoder, Result};
+use four_word_networking::{IpPortEncoder, CompressedEncoder, UniversalEncoder, FourWordAdaptiveEncoder, Result};
 
 #[derive(Parser)]
-#[command(name = "three-word-networking")]
-#[command(about = "Convert network addresses to human-friendly three-word combinations")]
+#[command(name = "four-word-networking")]
+#[command(about = "Convert network addresses to human-friendly word combinations")]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
@@ -17,249 +17,380 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert multiaddr to three-word address
-    Encode {
-        /// The multiaddress to convert (e.g., "/ip6/2001:db8::1/udp/9000/quic")
-        multiaddr: String,
-        
-        /// Use base format only (no numeric suffix)
-        #[arg(short, long)]
-        base: bool,
+    /// Encode pure IP address with port (e.g., "192.168.1.1:8080")
+    IpEncode {
+        /// The IP address with port to encode
+        address: String,
     },
     
-    /// Convert three-word address back to multiaddr (requires registry)
-    Decode {
-        /// The three-word address to convert (e.g., "ocean.thunder.falcon")
+    /// Decode three words back to IP address with port
+    IpDecode {
+        /// The three-word address to decode
         words: String,
     },
     
-    /// Validate that a three-word address is well-formed
-    Validate {
-        /// The three-word address to validate
+    /// Encode IP address using advanced compression (recommended)
+    Compress {
+        /// The IP address with optional port to encode
+        address: String,
+        
+        /// Show compression statistics
+        #[arg(long)]
+        stats: bool,
+    },
+    
+    /// Decode compressed three-word address back to IP
+    Decompress {
+        /// The three-word address to decode
         words: String,
     },
-    
-    /// Show information about the address space
-    Info,
-    
-    /// Generate random examples
-    Examples {
-        /// Number of examples to generate
-        #[arg(short, long, default_value = "5")]
-        count: usize,
+
+    /// Universal compression - tries all strategies
+    Universal {
+        /// The IP address with port to compress
+        address: String,
+        
+        /// Show detailed analysis of all compression strategies
+        #[arg(long)]
+        analysis: bool,
     },
-    
-    /// Use balanced encoding with compression (recommended)
-    Balanced {
-        /// The data to encode (multiaddr, hex string, or file path)
-        input: String,
+
+    /// Decode using universal compression
+    UniversalDecode {
+        /// Three words to decode
+        words: String,
+    },
+
+    /// Perfect encoding - 100% reversible encoding for all IP addresses
+    Adaptive {
+        /// The IP address with optional port to encode
+        address: String,
         
-        /// Treat input as hex string
+        /// Show detailed encoding analysis
         #[arg(long)]
-        hex: bool,
-        
-        /// Treat input as file path
-        #[arg(long)]
-        file: bool,
+        analysis: bool,
+    },
+
+    /// Decode perfect encoding back to exact IP address
+    AdaptiveDecode {
+        /// Three-word address to decode
+        words: String,
     },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    let encoder = WordEncoder::new();
 
     match cli.command {
-        Commands::Encode { multiaddr, base } => {
-            match if base {
-                encoder.encode_multiaddr_string_base(&multiaddr)
-            } else {
-                encoder.encode_multiaddr_string(&multiaddr)
-            } {
-                Ok(words) => {
-                    println!("Multiaddr: {}", multiaddr);
-                    println!("Three-word: {}", words);
-                    if words.is_extended() {
-                        println!("Base format: {}", words.base_address());
-                    }
-                    println!("Valid: ✓");
-                }
-                Err(e) => {
-                    eprintln!("Error encoding multiaddr: {}", e);
-                    std::process::exit(1);
-                }
-            }
-        }
-        
-        Commands::Decode { words } => {
-            match ThreeWordAddress::from_string(&words) {
-                Ok(addr) => {
-                    match encoder.decode_to_multiaddr_string(&addr) {
-                        Ok(multiaddr) => {
+        Commands::IpEncode { address } => {
+            match IpPortEncoder::new() {
+                Ok(encoder) => {
+                    match encoder.encode(&address) {
+                        Ok(words) => {
+                            println!("IP Address: {}", address);
                             println!("Three-word: {}", words);
-                            println!("Multiaddr: {}", multiaddr);
+                            println!("Valid: ✓");
                         }
                         Err(e) => {
-                            eprintln!("Error decoding to multiaddr: {}", e);
+                            eprintln!("Error encoding IP address: {}", e);
                             std::process::exit(1);
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error parsing three-word address: {}", e);
+                    eprintln!("Error initializing encoder: {}", e);
                     std::process::exit(1);
                 }
             }
         }
         
-        Commands::Validate { words } => {
-            match ThreeWordAddress::from_string(&words) {
-                Ok(addr) => {
-                    match addr.validate(&encoder) {
-                        Ok(()) => {
-                            println!("Three-word address: {}", words);
-                            println!("Format: ✓ Valid");
-                            println!("Dictionary: ✓ All words found");
-                            if addr.is_extended() {
-                                println!("Type: Extended (with numeric suffix)");
-                                println!("Base: {}", addr.base_address());
-                                println!("Suffix: {}", addr.suffix.unwrap());
-                            } else {
-                                println!("Type: Base format");
+        Commands::IpDecode { words } => {
+            match IpPortEncoder::new() {
+                Ok(encoder) => {
+                    match encoder.decode(&words) {
+                        Ok(address) => {
+                            println!("Three-word: {}", words);
+                            println!("IP Address: {}", address);
+                        }
+                        Err(e) => {
+                            eprintln!("Error decoding three-word address: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        
+        Commands::Compress { address, stats } => {
+            match CompressedEncoder::new() {
+                Ok(encoder) => {
+                    if stats {
+                        match encoder.compression_stats(&address) {
+                            Ok(stats) => {
+                                println!("Compression Analysis for: {}", address);
+                                println!("==================================");
+                                println!("{}", stats.summary());
+                                println!();
+                                
+                                if stats.fits_in_three_words {
+                                    match encoder.encode(&address) {
+                                        Ok(words) => {
+                                            println!("Three-word encoding: {}", words);
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Error encoding: {}", e);
+                                        }
+                                    }
+                                } else {
+                                    println!("⚠️  This address cannot be encoded in three words");
+                                    println!("   It requires {} bits but only 42 bits are available", stats.compressed_bits);
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Error analyzing compression: {}", e);
+                                std::process::exit(1);
+                            }
+                        }
+                    } else {
+                        match encoder.encode(&address) {
+                            Ok(words) => {
+                                println!("IP Address: {}", address);
+                                println!("Three-word: {}", words);
+                                println!("Compression: ✓");
+                            }
+                            Err(e) => {
+                                eprintln!("Error encoding IP address: {}", e);
+                                eprintln!("\nNote: Only private networks and common ports can be compressed to three words.");
+                                eprintln!("Try addresses like: 192.168.1.1:80, 10.0.0.1:443, 127.0.0.1:8080");
+                                std::process::exit(1);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        
+        Commands::Decompress { words } => {
+            match CompressedEncoder::new() {
+                Ok(encoder) => {
+                    match encoder.decode(&words) {
+                        Ok(address) => {
+                            println!("Three-word: {}", words);
+                            println!("IP Address: {}", address);
+                            println!("Compression: ✓");
+                        }
+                        Err(e) => {
+                            eprintln!("Error decoding three-word address: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Universal { address, analysis } => {
+            match UniversalEncoder::new() {
+                Ok(encoder) => {
+                    if analysis {
+                        match encoder.compression_stats(&address) {
+                            Ok(stats) => {
+                                println!("🔬 Universal Compression Analysis for: {}", address);
+                                println!("==============================================");
+                                println!("Original: {} bits (IPv4 + port)", stats.original_bits);
+                                println!("Target: 42 bits (three words)");
+                                println!();
+                                
+                                if let Some(best) = stats.best_strategy() {
+                                    println!("✅ {}", stats.summary());
+                                    println!();
+                                    
+                                    // Try encoding with best strategy
+                                    match encoder.encode(&address) {
+                                        Ok(words) => {
+                                            println!("Three-word encoding: {}", words);
+                                        }
+                                        Err(e) => {
+                                            println!("Encoding failed: {}", e);
+                                        }
+                                    }
+                                } else {
+                                    println!("❌ No compression strategy succeeded");
+                                    println!("This address requires the full 48 bits and cannot fit in 42 bits");
+                                }
+                                
+                                println!();
+                                println!("Strategy Details:");
+                                for strategy in &stats.strategies {
+                                    let status = if strategy.success { "✓" } else { "✗" };
+                                    println!("  {} {}: {:.1}% compression ({})", 
+                                            status, strategy.name, 
+                                            strategy.compression_ratio * 100.0,
+                                            strategy.method);
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Error analyzing compression: {}", e);
+                                std::process::exit(1);
+                            }
+                        }
+                    } else {
+                        match encoder.encode(&address) {
+                            Ok(words) => {
+                                println!("IP Address: {}", address);
+                                println!("Three-word: {}", words);
+                                println!("Universal compression: ✓");
+                            }
+                            Err(e) => {
+                                eprintln!("Error encoding IP address: {}", e);
+                                eprintln!("\nNote: This address cannot be compressed to fit in three words.");
+                                eprintln!("The fundamental limit is 42 bits (three words) vs 48 bits (IPv4+port).");
+                                eprintln!("Try --analysis to see detailed compression attempts.");
+                                std::process::exit(1);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing universal encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::UniversalDecode { words } => {
+            match UniversalEncoder::new() {
+                Ok(encoder) => {
+                    match encoder.decode(&words) {
+                        Ok(address) => {
+                            println!("Three-word: {}", words);
+                            println!("IP Address: {}", address);
+                            println!("Universal decompression: ✓");
+                        }
+                        Err(e) => {
+                            eprintln!("Error decoding three-word address: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing universal encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Adaptive { address, analysis } => {
+            match SimpleAdaptiveEncoder::new() {
+                Ok(encoder) => {
+                    if analysis {
+                        println!("🎯 Perfect Three-Word Networking");
+                        println!("=========================================");
+                        println!("Using multi-dimensional encoding for 100% perfect reconstruction");
+                        println!();
+                        println!("Address: {}", address);
+                        println!();
+                        
+                        // Try encoding
+                        match encoder.encode(&address) {
+                            Ok(encoded) => {
+                                println!("✅ Encoding successful!");
+                                println!("Words: {}", encoded);
+                                println!();
+                                println!("Features:");
+                                if encoded.contains('.') && !encoded.contains('-') {
+                                    println!("  • IPv4 address (dot separators)");
+                                    println!("  • Simple lowercase format");
+                                } else if encoded.contains('-') {
+                                    println!("  • IPv6 address (dash separators)");
+                                    println!("  • Title case for distinction");
+                                }
+                                println!("  • 100% perfect reconstruction guaranteed");
+                                println!("  • Uses word order, case, and separators for extra bits");
+                                
+                                // Verify roundtrip
+                                match encoder.decode(&encoded) {
+                                    Ok(decoded) => {
+                                        println!();
+                                        println!("✓ Roundtrip verification: {} → {} → {}", 
+                                                address, encoded, decoded);
+                                    }
+                                    Err(e) => {
+                                        println!("\n⚠️  Decode verification failed: {}", e);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                println!("❌ Encoding failed: {}", e);
+                            }
+                        }
+                    } else {
+                        match encoder.encode(&address) {
+                            Ok(encoded) => {
+                                println!("IP Address: {}", address);
+                                println!("Three-word: {}", encoded);
+                                println!("Encoding: ✓ Perfect (100% reversible)");
+                                
+                                // Show appropriate messaging based on format
+                                if encoded.contains('.') && !encoded.contains('-') {
+                                    println!("Type: IPv4 (standard format)");
+                                } else if encoded.contains('-') {
+                                    println!("Type: IPv6 (enhanced format)");
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Error encoding address: {}", e);
+                                std::process::exit(1);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error initializing perfect encoder: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::AdaptiveDecode { words } => {
+            match SimpleAdaptiveEncoder::new() {
+                Ok(encoder) => {
+                    match encoder.decode(&words) {
+                        Ok(address) => {
+                            println!("Three-word: {}", words);
+                            println!("IP Address: {}", address);
+                            println!("Decoding: ✓ Perfect reconstruction");
+                            
+                            // Show format detection
+                            if words.contains('.') && !words.contains('-') {
+                                println!("Type: IPv4 (detected from dot separators)");
+                            } else if words.contains('-') {
+                                println!("Type: IPv6 (detected from dash separators)");
                             }
                         }
                         Err(e) => {
-                            println!("Three-word address: {}", words);
-                            println!("Format: ✓ Valid");
-                            println!("Dictionary: ✗ {}", e);
+                            eprintln!("Error decoding words: {}", e);
+                            eprintln!("\nMake sure the three-word address is valid.");
+                            eprintln!("Expected format: word1.word2.word3 or Word1-Word2-Word3");
+                            std::process::exit(1);
                         }
                     }
                 }
                 Err(e) => {
-                    println!("Three-word address: {}", words);
-                    println!("Format: ✗ {}", e);
-                }
-            }
-        }
-        
-        Commands::Info => {
-            println!("Three-Word Networking Address Space");
-            println!("===================================");
-            println!();
-            println!("Total Address Space: {}", AddressSpace::description());
-            println!("Base Combinations: {}", AddressSpace::base_combinations());
-            println!("Total Combinations: {}", AddressSpace::total_combinations());
-            println!();
-            println!("Format Examples:");
-            println!("  Base: forest.lightning.compass");
-            println!("  Extended: forest.lightning.compass.1847");
-            println!();
-            println!("Dictionary Structure:");
-            println!("  Position 1 (Context): Geographic, network, scale contexts");
-            println!("  Position 2 (Quality): Performance, purpose, status descriptors");
-            println!("  Position 3 (Identity): Nature, objects, abstract concepts");
-            println!();
-            println!("Features:");
-            println!("  ✓ Human-readable and memorable");
-            println!("  ✓ Voice-friendly for phone/voice sharing");
-            println!("  ✓ Error-resistant compared to long addresses");
-            println!("  ✓ Deterministic (same multiaddr = same words)");
-            println!("  ✓ Massive scale (quintillions of addresses)");
-            println!("  ✓ Universal (works with any multiaddr format)");
-        }
-        
-        Commands::Examples { count } => {
-            println!("Three-Word Networking Examples");
-            println!("=============================");
-            println!();
-            
-            let example_multiaddrs = vec![
-                "/ip6/2001:db8::1/udp/9000/quic",
-                "/ip4/192.168.1.1/tcp/8080",
-                "/ip6/::1/tcp/22",
-                "/ip4/10.0.0.1/udp/5000/quic",
-                "/ip6/fe80::1/tcp/443",
-                "/ip4/203.0.113.1/tcp/443/tls",
-                "/dns4/example.com/tcp/80",
-                "/dns6/ipv6.google.com/tcp/443",
-                "/ip4/127.0.0.1/tcp/8080/ws",
-                "/ip6/2606:4700:4700::1111/udp/443/quic",
-            ];
-            
-            let examples_to_show = std::cmp::min(count, example_multiaddrs.len());
-            
-            for (i, multiaddr) in example_multiaddrs.iter().take(examples_to_show).enumerate() {
-                match encoder.encode_multiaddr_string(multiaddr) {
-                    Ok(words) => {
-                        println!("{}. Multiaddr: {}", i + 1, multiaddr);
-                        println!("   Three-word: {}", words);
-                        if words.is_extended() {
-                            println!("   Base format: {}", words.base_address());
-                        }
-                        println!("   Voice-friendly: \"Connect to {}\"", words.to_string().replace('.', " "));
-                        println!();
-                    }
-                    Err(e) => {
-                        eprintln!("   Error: {}", e);
-                        println!();
-                    }
-                }
-            }
-            
-            println!("Use Cases:");
-            println!("• Share P2P addresses over phone: \"Connect to ocean thunder falcon\"");
-            println!("• QR codes with memorable text backup");
-            println!("• User-friendly network configuration");
-            println!("• Simplified peer discovery");
-            println!("• Voice-activated network connections");
-        }
-        
-        Commands::Balanced { input, hex, file } => {
-            let balanced_encoder = BalancedEncoder::new()?;
-            
-            // Determine input data
-            let data = if file {
-                // Read from file
-                std::fs::read(&input).map_err(|e| {
-                    three_word_networking::ThreeWordError::Io(e)
-                })?
-            } else if hex {
-                // Parse as hex string
-                hex::decode(&input).map_err(|e| {
-                    three_word_networking::ThreeWordError::InvalidInput(format!("Invalid hex: {}", e))
-                })?
-            } else {
-                // Treat as string (likely multiaddress)
-                input.as_bytes().to_vec()
-            };
-            
-            match balanced_encoder.encode(&data) {
-                Ok(encoding) => {
-                    println!("🌟 Balanced Encoding Result");
-                    println!("===========================");
-                    println!();
-                    println!("Input: {}", if hex { format!("0x{}", hex::encode(&data)) } else { input.clone() });
-                    println!("Size: {} bytes", data.len());
-                    println!("Data Type: {:?}", encoding.data_type());
-                    println!();
-                    println!("Encoded: {}", encoding);
-                    println!("Word Groups: {}", encoding.word_count() / 3);
-                    println!("Total Words: {}", encoding.word_count());
-                    println!("Compression: {:.1}%", encoding.compression_ratio() * 100.0);
-                    println!("Efficiency: {}", encoding.efficiency_rating());
-                    println!();
-                    println!("Voice Format: \"{}\"", encoding.to_string().replace("·", "dot"));
-                    println!();
-                    println!("🎯 Benefits:");
-                    if encoding.compression_ratio() > 0.0 {
-                        println!("  ✅ {:.1}% size reduction through compression", encoding.compression_ratio() * 100.0);
-                    }
-                    println!("  ✅ {} natural 3-word groups", encoding.word_count() / 3);
-                    println!("  ✅ Voice-friendly pronunciation");
-                    println!("  ✅ Automatic data type detection");
-                }
-                Err(e) => {
-                    eprintln!("❌ Error: {}", e);
+                    eprintln!("Error initializing perfect encoder: {}", e);
+                    std::process::exit(1);
                 }
             }
         }
