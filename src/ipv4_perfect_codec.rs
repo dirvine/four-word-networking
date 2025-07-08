@@ -20,7 +20,7 @@ impl IPv4PerfectCodec {
         })
     }
     
-    /// Encode IPv4 address + port into three words with perfect reconstruction
+    /// Encode IPv4 address + port into four words with perfect reconstruction
     pub fn encode(&self, ip: Ipv4Addr, port: u16) -> Result<MultiDimEncoding> {
         // Convert IPv4 + port to 48 bits
         let ip_bits = u32::from_be_bytes(ip.octets()) as u64;
@@ -31,7 +31,7 @@ impl IPv4PerfectCodec {
         self.encoder.encode_48_bits(combined)
     }
     
-    /// Decode three words back to exact IPv4 address + port
+    /// Decode four words back to exact IPv4 address + port
     pub fn decode(&self, encoding: &MultiDimEncoding) -> Result<(Ipv4Addr, u16)> {
         // Decode to 48 bits
         let combined = self.encoder.decode_48_bits(encoding)?;

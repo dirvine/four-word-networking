@@ -26,7 +26,7 @@ pub enum IpPortErrorV2 {
     #[error("Decompression error: {0}")]
     DecompressionError(String),
     
-    #[error("Invalid three-word format")]
+    #[error("Invalid four-word format")]
     InvalidThreeWordFormat,
 }
 
@@ -36,7 +36,7 @@ pub type Result<T> = std::result::Result<T, IpPortErrorV2>;
 /// IP+Port encoding result
 #[derive(Debug, Clone, PartialEq)]
 pub struct IpPortEncodingV2 {
-    /// The three words
+    /// The four words
     pub words: [String; 3],
     /// Original socket address
     pub socket_addr: SocketAddr,
@@ -45,12 +45,12 @@ pub struct IpPortEncodingV2 {
 }
 
 impl IpPortEncodingV2 {
-    /// Get the three words as a dot-separated string
+    /// Get the four words as a dot-separated string
     pub fn to_string(&self) -> String {
         format!("{}.{}.{}", self.words[0], self.words[1], self.words[2])
     }
     
-    /// Get the three words as a space-separated string
+    /// Get the four words as a space-separated string
     pub fn to_words(&self) -> String {
         format!("{} {} {}", self.words[0], self.words[1], self.words[2])
     }
@@ -74,7 +74,7 @@ impl IpPortEncoderV2 {
         })
     }
     
-    /// Encode an IP address with port to three words
+    /// Encode an IP address with port to four words
     pub fn encode(&self, input: &str) -> Result<IpPortEncodingV2> {
         // Parse the socket address
         let socket_addr = self.parse_socket_addr(input)?;
@@ -101,7 +101,7 @@ impl IpPortEncoderV2 {
         })
     }
     
-    /// Decode three words back to IP address with port
+    /// Decode four words back to IP address with port
     pub fn decode(&self, word1: &str, word2: &str, word3: &str) -> Result<String> {
         // Get indices from words
         let idx1 = self.dictionary.get_index(word1)?;

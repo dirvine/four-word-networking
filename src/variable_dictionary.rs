@@ -1,12 +1,12 @@
 //! Variable-Length Dictionary System
 //!
 //! This module provides a dictionary system that can encode data into 3-6 words
-//! based on the size requirements. This enables "Three-Word Networking" for IPv4
+//! based on the size requirements. This enables "Four-Word Networking" for IPv4
 //! while supporting IPv6 with smart scaling to 4-6 words as needed.
 
 use crate::{
     dictionary16k::Dictionary16K,
-    error::ThreeWordError,
+    error::FourWordError,
 };
 
 /// Number of bits per word in our 16K dictionary
@@ -24,15 +24,15 @@ pub struct VariableDictionary {
 }
 
 impl VariableDictionary {
-    pub fn new() -> Result<Self, ThreeWordError> {
+    pub fn new() -> Result<Self, FourWordError> {
         Ok(Self {
             dictionary: Dictionary16K::new()
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?,
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?,
         })
     }
 
     /// Encode data into the minimum number of words needed (3-6 words)
-    pub fn encode_adaptive(&self, data: &[u8]) -> Result<AdaptiveEncoding, ThreeWordError> {
+    pub fn encode_adaptive(&self, data: &[u8]) -> Result<AdaptiveEncoding, FourWordError> {
         let bit_count = data.len() * 8;
         
         // Determine minimum word count needed
@@ -45,7 +45,7 @@ impl VariableDictionary {
         } else if bit_count <= MAX_BITS_6_WORDS {
             6
         } else {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Data requires {} bits, exceeds maximum {} bits (6 words)", 
                        bit_count, MAX_BITS_6_WORDS)
             ));
@@ -63,9 +63,9 @@ impl VariableDictionary {
     }
 
     /// Encode data into exactly the specified number of words
-    pub fn encode_fixed_length(&self, data: &[u8], word_count: usize) -> Result<Vec<String>, ThreeWordError> {
+    pub fn encode_fixed_length(&self, data: &[u8], word_count: usize) -> Result<Vec<String>, FourWordError> {
         if word_count < 3 || word_count > 6 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Word count must be 3-6, got {}", word_count)
             ));
         }
@@ -74,7 +74,7 @@ impl VariableDictionary {
         let bit_count = data.len() * 8;
 
         if bit_count > max_bits {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Data requires {} bits, but {} words can only hold {} bits", 
                        bit_count, word_count, max_bits)
             ));
@@ -92,7 +92,7 @@ impl VariableDictionary {
             let shift = (word_count - 1 - i) * BITS_PER_WORD;
             let word_index = ((bit_value >> shift) & 0x3FFF) as u16;
             let word = self.dictionary.get_word(word_index)
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
             words.push(word.to_string());
         }
 
@@ -100,9 +100,9 @@ impl VariableDictionary {
     }
 
     /// Decode words back to original data
-    pub fn decode_adaptive(&self, words: &[String]) -> Result<Vec<u8>, ThreeWordError> {
+    pub fn decode_adaptive(&self, words: &[String]) -> Result<Vec<u8>, FourWordError> {
         if words.len() < 3 || words.len() > 6 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Word count must be 3-6, got {}", words.len())
             ));
         }
@@ -111,7 +111,7 @@ impl VariableDictionary {
         let mut bit_value = 0u128;
         for (i, word) in words.iter().enumerate() {
             let index = self.dictionary.get_index(word)
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
             let shift = (words.len() - 1 - i) * BITS_PER_WORD;
             bit_value |= (index as u128) << shift;
         }
@@ -132,7 +132,7 @@ impl VariableDictionary {
     }
 
     /// Pack data to fit exactly in the target bit space
-    fn pack_to_target_bits(&self, data: &[u8], target_bits: usize) -> Result<Vec<u8>, ThreeWordError> {
+    fn pack_to_target_bits(&self, data: &[u8], target_bits: usize) -> Result<Vec<u8>, FourWordError> {
         let target_bytes = (target_bits + 7) / 8; // Round up to nearest byte
         let mut packed = vec![0u8; target_bytes];
         
@@ -144,7 +144,7 @@ impl VariableDictionary {
     }
 
     /// Unpack data from the target bit space back to original size
-    fn unpack_from_target_bits(&self, packed_data: &[u8], _target_bits: usize) -> Result<Vec<u8>, ThreeWordError> {
+    fn unpack_from_target_bits(&self, packed_data: &[u8], _target_bits: usize) -> Result<Vec<u8>, FourWordError> {
         // For now, return the packed data as-is
         // In a more sophisticated implementation, we would store the original length
         // and trim to the exact original size
@@ -219,7 +219,7 @@ impl AdaptiveEncoding {
         )
     }
 
-    /// Check if this is the optimal encoding (3 words for IPv4)
+    /// Check if this is the optimal encoding (4 words for IPv4)
     pub fn is_optimal(&self) -> bool {
         self.word_count == 3
     }
@@ -249,7 +249,7 @@ impl CapacityInfo {
     pub fn describe(&self) -> String {
         format!(
             "Word Capacity:\n\
-            3 words: {} bits (IPv4 + port)\n\
+            4 words: {} bits (IPv4 + port)\n\
             4 words: {} bits (Common IPv6)\n\
             5 words: {} bits (Standard IPv6)\n\
             6 words: {} bits (Full IPv6 + port)",
@@ -269,7 +269,7 @@ mod tests {
     fn test_adaptive_encoding() {
         let dict = VariableDictionary::new().unwrap();
         
-        // Test small data (should use 3 words)
+        // Test small data (should use 4 words)
         let small_data = vec![0x12, 0x34, 0x56]; // 24 bits
         let encoding = dict.encode_adaptive(&small_data).unwrap();
         assert_eq!(encoding.word_count, 3);
@@ -318,7 +318,7 @@ mod tests {
     fn test_encoding_categories() {
         let dict = VariableDictionary::new().unwrap();
         
-        let data3 = vec![0u8; 5]; // Should use 3 words
+        let data3 = vec![0u8; 5]; // Should use 4 words
         let enc3 = dict.encode_adaptive(&data3).unwrap();
         assert_eq!(enc3.category(), "Optimal (IPv4)");
         

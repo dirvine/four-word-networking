@@ -1,7 +1,7 @@
-//! Ultra-compact encoder tests with 3-word validation
+//! Ultra-compact encoder tests with 4-word validation
 //!
 //! This module tests the UltraCompactEncoder with real multiaddress strings
-//! to validate 3-word encoding achievements and collision resistance.
+//! to validate 4-word encoding achievements and collision resistance.
 
 use std::collections::HashSet;
 use std::time::Instant;
@@ -11,7 +11,7 @@ use crate::UltraCompactEncoder;
 
 /// Test configuration for ultra-compact encoding
 const ULTRA_TEST_SIZE: usize = 1_000_000; // 1M addresses for focused testing
-const EXPECTED_PERFECT_3_WORD_RATE: f64 = 0.6; // Expect 60%+ to achieve 3 words
+const EXPECTED_PERFECT_3_WORD_RATE: f64 = 0.6; // Expect 60%+ to achieve 4 words
 
 /// Test results for ultra-compact encoding
 #[derive(Debug, Default)]
@@ -89,7 +89,7 @@ impl UltraAddressGenerator {
         format!("/ip6/{}/{}/{}", ip, protocol, port)
     }
     
-    /// Generate common/localhost patterns (should achieve perfect 3-word encoding)
+    /// Generate common/localhost patterns (should achieve perfect 4-word encoding)
     pub fn generate_common_multiaddr(&mut self) -> String {
         let patterns = [
             "/ip4/127.0.0.1/tcp/4001",
@@ -156,7 +156,7 @@ mod tests {
             }
         }
         
-        // Test common patterns (should achieve perfect 3-word encoding)
+        // Test common patterns (should achieve perfect 4-word encoding)
         println!("Testing {} common multiaddresses...", common_count);
         for i in 0..common_count {
             let multiaddr = generator.generate_common_multiaddr();
@@ -176,7 +176,7 @@ mod tests {
         println!("\n📊 Ultra-Compact Encoder Test Results:");
         println!("  Total addresses tested: {}", summary.total_tests);
         println!("  Successful encodings: {}", summary.successful_encodings);
-        println!("  Perfect 3-word encodings: {} ({:.1}%)", 
+        println!("  Perfect 4-word encodings: {} ({:.1}%)", 
             summary.perfect_3_word_encodings, 
             summary.perfect_3_word_encodings as f64 / summary.successful_encodings as f64 * 100.0);
         println!("  Unique encodings: {}", summary.unique_encodings);
@@ -196,14 +196,14 @@ mod tests {
         
         let perfect_3_word_rate = summary.perfect_3_word_encodings as f64 / summary.successful_encodings as f64;
         assert!(perfect_3_word_rate >= EXPECTED_PERFECT_3_WORD_RATE, 
-            "❌ Perfect 3-word rate too low: {:.1}% (expected ≥{:.1}%)", 
+            "❌ Perfect 4-word rate too low: {:.1}% (expected ≥{:.1}%)", 
             perfect_3_word_rate * 100.0, EXPECTED_PERFECT_3_WORD_RATE * 100.0);
         
         assert!(summary.average_encoding_time_us < 10.0, 
             "❌ Average encoding time too slow: {:.2}μs", summary.average_encoding_time_us);
         
         println!("\n✅ Ultra-Compact Encoder Test PASSED!");
-        println!("   🎯 {:.1}% achieved perfect 3-word encoding", perfect_3_word_rate * 100.0);
+        println!("   🎯 {:.1}% achieved perfect 4-word encoding", perfect_3_word_rate * 100.0);
         println!("   🚀 {:.4}% collision rate (excellent performance)", collision_rate * 100.0);
         println!("   ⚡ {:.2}μs average encoding time", summary.average_encoding_time_us);
     }
@@ -256,11 +256,11 @@ mod tests {
         let avg_compression = total_compression / common_patterns.len() as f64;
         
         println!("\n📊 Common Pattern Results:");
-        println!("  Perfect 3-word encodings: {}/{} ({:.1}%)", perfect_count, common_patterns.len(), perfect_rate * 100.0);
+        println!("  Perfect 4-word encodings: {}/{} ({:.1}%)", perfect_count, common_patterns.len(), perfect_rate * 100.0);
         println!("  Average compression: {:.1}%", avg_compression);
         
-        // Common patterns should achieve very high 3-word rates
-        assert!(perfect_rate >= 0.8, "❌ Common patterns should achieve ≥80% perfect 3-word encoding, got {:.1}%", perfect_rate * 100.0);
+        // Common patterns should achieve very high 4-word rates
+        assert!(perfect_rate >= 0.8, "❌ Common patterns should achieve ≥80% perfect 4-word encoding, got {:.1}%", perfect_rate * 100.0);
         assert!(avg_compression >= 75.0, "❌ Common patterns should achieve ≥75% compression, got {:.1}%", avg_compression);
         
         println!("✅ Common Pattern Test PASSED!");
@@ -292,7 +292,7 @@ fn test_encoding(
                 summary.min_word_count = word_count;
             }
             
-            // Track perfect 3-word encodings
+            // Track perfect 4-word encodings
             if encoded.is_perfect_3_words() {
                 summary.perfect_3_word_encodings += 1;
             }

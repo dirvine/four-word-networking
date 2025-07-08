@@ -1,12 +1,12 @@
-# Contributing to Three-Word Networking
+# Contributing to Four-Word Networking
 
-Thank you for your interest in contributing to Three-Word Networking! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Four-Word Networking! This document provides guidelines and information for contributors.
 
 ## 🎯 Project Goals
 
-Three-Word Networking aims to make network addressing human-friendly by:
+Four-Word Networking aims to make network addressing human-friendly by:
 
-- Converting complex multiaddrs into memorable three-word combinations
+- Converting complex multiaddrs into memorable four-word combinations
 - Providing deterministic, collision-resistant encoding
 - Supporting massive scale addressing (quadrillions of addresses)  
 - Maintaining universal compatibility with multiaddr formats
@@ -24,8 +24,8 @@ Three-Word Networking aims to make network addressing human-friendly by:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/three-word-networking.git
-cd three-word-networking
+git clone https://github.com/YOUR_USERNAME/four-word-networking.git
+cd four-word-networking
 
 # Build the project
 cargo build
@@ -44,10 +44,10 @@ cargo test --release
 ### Project Structure
 
 ```
-three-word-networking/
+four-word-networking/
 ├── src/
 │   ├── lib.rs           # Main library interface
-│   ├── words.rs         # Core three-word address implementation
+│   ├── words.rs         # Core four-word address implementation
 │   ├── error.rs         # Error types and handling
 │   └── main.rs          # CLI application
 ├── tests/               # Integration tests
@@ -62,8 +62,8 @@ three-word-networking/
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/three-word-networking.git
-cd three-word-networking
+git clone https://github.com/YOUR_USERNAME/four-word-networking.git
+cd four-word-networking
 
 # Create a feature branch
 git checkout -b feature/your-feature-name
@@ -157,7 +157,7 @@ mod tests {
 - Add inline comments for complex logic
 
 ```rust
-/// Converts a multiaddr string to a three-word address.
+/// Converts a multiaddr string to a four-word address.
 /// 
 /// # Arguments
 /// 
@@ -170,7 +170,7 @@ mod tests {
 /// # Examples
 /// 
 /// ```
-/// use three_word_networking::WordEncoder;
+/// use four_word_networking::WordEncoder;
 /// 
 /// let encoder = WordEncoder::new();
 /// let words = encoder.encode_multiaddr_string("/ip6/::1/tcp/8080")?;
@@ -313,4 +313,4 @@ Contributors will be recognized in:
 - **Release Notes**: Major contributions mentioned in releases
 - **GitHub**: Contributor statistics and graphs
 
-Thank you for contributing to Three-Word Networking! 🎉
+Thank you for contributing to Four-Word Networking! 🎉

@@ -1,16 +1,16 @@
-//! Compressed encoder that integrates IP compression with three-word encoding
+//! Compressed encoder that integrates IP compression with four-word encoding
 //! 
 //! This module provides the integration layer between the advanced compression
-//! techniques and the 16K dictionary to enable three-word addresses for IP+port.
+//! techniques and the 16K dictionary to enable four-word addresses for IP+port.
 
 use crate::{
     compression::{IpCompressor, CompressedAddress},
     dictionary16k::Dictionary16K,
-    error::ThreeWordError,
+    error::FourWordError,
 };
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-/// Main encoder that combines compression with three-word encoding
+/// Main encoder that combines compression with four-word encoding
 pub struct CompressedEncoder {
     compressor: IpCompressor,
     dictionary: Dictionary16K,
@@ -18,16 +18,16 @@ pub struct CompressedEncoder {
 
 impl CompressedEncoder {
     /// Create a new compressed encoder
-    pub fn new() -> Result<Self, ThreeWordError> {
+    pub fn new() -> Result<Self, FourWordError> {
         Ok(Self {
             compressor: IpCompressor::new(),
             dictionary: Dictionary16K::new()
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?,
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?,
         })
     }
 
-    /// Encode an IP address string with optional port into three words
-    pub fn encode(&self, address: &str) -> Result<String, ThreeWordError> {
+    /// Encode an IP address string with optional port into four words
+    pub fn encode(&self, address: &str) -> Result<String, FourWordError> {
         // Parse the address
         let (ip, port) = self.parse_address(address)?;
         
@@ -39,31 +39,31 @@ impl CompressedEncoder {
         
         // Check actual packed size
         if packed.len() > 5 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Compressed address requires {} bytes, exceeds 5-byte limit for three words", packed.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Compressed address requires {} bytes, exceeds 5-byte limit for four words", packed.len())
             ));
         }
         
-        // Encode as three words
+        // Encode as four words
         let words = self.dictionary.encode_bytes(&packed)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         
         Ok(words.join("."))
     }
 
-    /// Decode three words back to IP address string with optional port
-    pub fn decode(&self, words: &str) -> Result<String, ThreeWordError> {
+    /// Decode four words back to IP address string with optional port
+    pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
         // Split and validate words
         let word_vec: Vec<&str> = words.split('.').collect();
         if word_vec.len() != 3 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Expected 3 words, got {}", word_vec.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Expected 4 words, got {}", word_vec.len())
             ));
         }
         
         // Decode words to bytes
         let packed = self.dictionary.decode_words(&word_vec)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         
         // Unpack from bit stream
         let (ip, port) = CompressedAddress::unpack(&packed, &self.compressor)?;
@@ -78,7 +78,7 @@ impl CompressedEncoder {
     }
 
     /// Parse an IP address string with optional port
-    fn parse_address(&self, input: &str) -> Result<(IpAddr, Option<u16>), ThreeWordError> {
+    fn parse_address(&self, input: &str) -> Result<(IpAddr, Option<u16>), FourWordError> {
         // Handle IPv6 with port: [addr]:port
         if input.starts_with('[') {
             if let Some(close_idx) = input.find(']') {
@@ -90,11 +90,11 @@ impl CompressedEncoder {
                 };
                 
                 let ip = addr_part.parse::<Ipv6Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
                 
                 let port = if let Some(port_str) = port_part {
                     Some(port_str.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
                 } else {
                     None
                 };
@@ -114,10 +114,10 @@ impl CompressedEncoder {
                 let port_part = &input[last_colon + 1..];
                 
                 let ip = addr_part.parse::<Ipv4Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part)))?;
                 
                 let port = port_part.parse::<u16>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
                 
                 return Ok((IpAddr::V4(ip), Some(port)));
             }
@@ -125,13 +125,13 @@ impl CompressedEncoder {
         
         // Try parsing as standalone IP
         let ip = input.parse::<IpAddr>()
-            .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
+            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
         
         Ok((ip, None))
     }
 
     /// Get compression statistics for an address
-    pub fn compression_stats(&self, address: &str) -> Result<CompressionStats, ThreeWordError> {
+    pub fn compression_stats(&self, address: &str) -> Result<CompressionStats, FourWordError> {
         let (ip, port) = self.parse_address(address)?;
         let compressed = self.compressor.compress(&ip, port)?;
         
@@ -168,7 +168,7 @@ impl CompressionStats {
     /// Get a human-readable summary
     pub fn summary(&self) -> String {
         format!(
-            "{} → {} bits ({:.1}% compression) - {} - Three words: {}",
+            "{} → {} bits ({:.1}% compression) - {} - Four words: {}",
             self.original_bits,
             self.compressed_bits,
             self.compression_ratio * 100.0,
@@ -265,7 +265,7 @@ mod tests {
         assert!(encoder.encode("8.8.8.8:1234").is_err());
         assert!(encoder.encode("1.2.3.4:65535").is_err());
         
-        // Invalid three-word format
+        // Invalid four-word format
         assert!(encoder.decode("one.two").is_err());
         assert!(encoder.decode("one.two.three.four").is_err());
     }

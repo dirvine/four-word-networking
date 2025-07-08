@@ -1,13 +1,13 @@
 //! Universal IP+Port Compression for Three Words
 //!
 //! This module implements advanced compression techniques to compress any IPv4+port
-//! combination into 42 bits (three words) using mathematical compression without
+//! combination into 42 bits (four words) using mathematical compression without
 //! special cases or type prefixes.
 
 use std::net::Ipv4Addr;
-use crate::error::ThreeWordError;
+use crate::error::FourWordError;
 
-/// Maximum bits available in three words (3 × 14 bits)
+/// Maximum bits available in four words (3 × 14 bits)
 const MAX_BITS: usize = 42;
 const MAX_VALUE: u64 = (1u64 << MAX_BITS) - 1; // 4,398,046,511,103
 
@@ -25,7 +25,7 @@ impl UniversalIpCompressor {
     }
 
     /// Compress IPv4 address and port into 42 bits or return error
-    pub fn compress(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    pub fn compress(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         // Try multiple compression strategies
         
         // Strategy 1: Frequency-based port compression
@@ -48,13 +48,13 @@ impl UniversalIpCompressor {
             return Ok(compressed);
         }
         
-        Err(ThreeWordError::InvalidInput(
+        Err(FourWordError::InvalidInput(
             format!("Cannot compress {}:{} into 42 bits with any strategy", ip, port)
         ))
     }
 
     /// Strategy 1: Use port frequency to save bits on common ports
-    fn compress_with_port_frequency(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    fn compress_with_port_frequency(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         let octets = ip.octets();
         let ip_u32 = u32::from_be_bytes(octets);
         
@@ -71,11 +71,11 @@ impl UniversalIpCompressor {
             }
         }
         
-        Err(ThreeWordError::InvalidInput("Port frequency compression failed".to_string()))
+        Err(FourWordError::InvalidInput("Port frequency compression failed".to_string()))
     }
 
     /// Strategy 2: Exploit common IP patterns and ranges
-    fn compress_with_ip_patterns(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    fn compress_with_ip_patterns(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         let octets = ip.octets();
         
         // Pattern 1: Sequential octets (e.g., 192.168.1.100 -> base + offset)
@@ -93,11 +93,11 @@ impl UniversalIpCompressor {
             return Ok(compressed);
         }
         
-        Err(ThreeWordError::InvalidInput("No IP pattern match".to_string()))
+        Err(FourWordError::InvalidInput("No IP pattern match".to_string()))
     }
 
     /// Strategy 3: Lossy compression with reconstruction ability
-    fn compress_lossy_with_hints(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    fn compress_lossy_with_hints(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         let octets = ip.octets();
         
         // Approach: Store most significant bits + reconstruction hints
@@ -117,12 +117,12 @@ impl UniversalIpCompressor {
         if result <= MAX_VALUE {
             Ok(result)
         } else {
-            Err(ThreeWordError::InvalidInput("Lossy compression overflow".to_string()))
+            Err(FourWordError::InvalidInput("Lossy compression overflow".to_string()))
         }
     }
 
     /// Strategy 4: Range-based compression for clustered IPs
-    fn compress_with_ranges(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    fn compress_with_ranges(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         let octets = ip.octets();
         let ip_u32 = u32::from_be_bytes(octets);
         
@@ -152,7 +152,7 @@ impl UniversalIpCompressor {
             }
         }
         
-        Err(ThreeWordError::InvalidInput("No suitable range found".to_string()))
+        Err(FourWordError::InvalidInput("No suitable range found".to_string()))
     }
 
     fn try_sequential_pattern(&self, octets: [u8; 4], port: u16) -> Option<u64> {
@@ -196,9 +196,9 @@ impl UniversalIpCompressor {
     }
 
     /// Decompress back to IP and port
-    pub fn decompress(&self, compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    pub fn decompress(&self, compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         if compressed > MAX_VALUE {
-            return Err(ThreeWordError::InvalidInput("Invalid compressed value".to_string()));
+            return Err(FourWordError::InvalidInput("Invalid compressed value".to_string()));
         }
 
         // Try to identify which compression strategy was used and reverse it
@@ -208,7 +208,7 @@ impl UniversalIpCompressor {
         self.decompress_lossy_with_hints(compressed)
     }
 
-    fn decompress_lossy_with_hints(&self, compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    fn decompress_lossy_with_hints(&self, compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         let hint = (compressed & 0xF) as u8;
         let port = ((compressed >> 2) & 0xFFFF) as u16;
         let compressed_ip = (compressed >> 18) as u32;

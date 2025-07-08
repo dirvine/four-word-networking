@@ -200,12 +200,12 @@ fn get_server_words(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
 
 ## How It Works
 
-### IPv4 Encoding (3 Words)
+### IPv4 Encoding (4 Words)
 
 1. **Input**: IPv4 address + port (6 bytes total)
 2. **Compression**: Mathematical transform reduces to 42 bits
-3. **Dictionary Mapping**: 42 bits → 3 words (14 bits each)
-4. **Output**: Exactly 3 memorable words
+3. **Dictionary Mapping**: 48 bits → 4 words (14 bits each)
+4. **Output**: Exactly 4 memorable words
 
 ### IPv6 Encoding (4-6 Words)
 
@@ -297,12 +297,12 @@ Status: Restored connection to storm.crystal.phoenix
 
 ### Web Services
 ```rust
-use three_word_networking::ThreeWordNetworking;
+use four_word_networking::FourWordNetworking;
 use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    let twn = ThreeWordNetworking::new().unwrap();
+    let twn = FourWordNetworking::new().unwrap();
     let addr: SocketAddr = "127.0.0.1:3030".parse().unwrap();
     let words = twn.encode(addr).unwrap();
     
@@ -346,7 +346,7 @@ if let Ok(addr) = twn.decode("ocean.thunder.falcon") {
 
 ```rust
 // Main API interface
-pub struct ThreeWordNetworking { ... }
+pub struct FourWordNetworking { ... }
 
 // Methods
 fn encode<T: Into<AddressInput>>(&self, input: T) -> Result<String>
@@ -366,7 +366,7 @@ pub enum AddressInput {
 ## Design Principles
 
 ### Clarity Through Separation
-- **IPv4 = 3 words**: Instant recognition of IPv4 addresses
+- **IPv4 = 4 words**: Instant recognition of IPv4 addresses
 - **IPv6 = 4-6 words**: Clear differentiation from IPv4
 - **No ambiguity**: Word count alone identifies IP version
 
@@ -387,11 +387,11 @@ pub enum AddressInput {
 
 ## Production Features
 
-- ✅ **IPv4 Support**: All 4.3 billion addresses, always 3 words
+- ✅ **IPv4 Support**: All 4.3 billion addresses, always 4 words
 - ✅ **IPv6 Support**: Full address space, always 4-6 words  
 - ✅ **Zero Collisions**: Mathematically guaranteed uniqueness
 - ✅ **Clean API**: Simple integration with any Rust application
-- ✅ **CLI Tool**: `3wn` command for instant conversions
+- ✅ **CLI Tool**: `4wn` command for instant conversions
 - ✅ **Performance**: Microsecond encoding, <1MB memory
 - ✅ **Thread Safety**: Safe for concurrent applications
 - ✅ **Cross-Platform**: Linux, macOS, Windows support
@@ -419,10 +419,10 @@ at your option.
 
 ## Support
 
-- **Documentation**: [docs.rs/three-word-networking](https://docs.rs/three-word-networking)
-- **Issues**: [GitHub Issues](https://github.com/dirvine/three-word-networking/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/dirvine/three-word-networking/discussions)
+- **Documentation**: [docs.rs/four-word-networking](https://docs.rs/four-word-networking)
+- **Issues**: [GitHub Issues](https://github.com/dirvine/four-word-networking/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dirvine/four-word-networking/discussions)
 
 ---
 
-**Three-Word Networking**: Making IP addresses human-friendly. IPv4 in 3 words. IPv6 in 4-6 words. Always.
+**Four-Word Networking**: Making IP addresses human-friendly. IPv4 in 4 words. IPv6 in 4-6 words. Always.

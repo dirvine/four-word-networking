@@ -16,7 +16,7 @@ Implement a Universal Word Encoding System that can encode ANY data from network
 Implement three encoding strategies based on data size:
 ```rust
 pub enum EncodingStrategy {
-    Simple,      // <= 8 bytes: 3 words only
+    Simple,      // <= 8 bytes: 4 words only
     Fractal,     // 9-20 bytes: 3 base words + zoom levels
     Holographic, // 21-32 bytes: Multiple story views
 }
@@ -88,7 +88,7 @@ For cryptocurrency addresses and node IDs:
 ```rust
 impl FractalEncoder {
     pub fn encode(&self, data: &[u8]) -> FractalEncoding {
-        // Generate base 3 words (first 8 bytes)
+        // Generate base 4 words (first 8 bytes)
         // Generate zoom levels for remaining bytes
         // Each zoom level adds ~5 bytes of precision
     }
@@ -481,7 +481,7 @@ This system will revolutionize how we share network addresses and cryptocurrency
 
 ### Phase 11: CLI and Integration
 - [ ] Create command-line interface for the universal encoder
-- [ ] Integrate with existing three-word-networking CLI
+- [ ] Integrate with existing four-word-networking CLI
 - [ ] Add migration path from current system
 - [ ] Create compatibility layer if needed
 

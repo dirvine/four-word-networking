@@ -1,14 +1,14 @@
 //! Universal IP+Port Encoder for Three Words
 //!
 //! This module provides a high-level interface for compressing any IPv4+port
-//! combination into three words using multiple compression strategies.
+//! combination into four words using multiple compression strategies.
 
 use std::net::Ipv4Addr;
 use crate::{
     dictionary16k::Dictionary16K,
     pure_ip_compression::{PureIpCompressor, MathematicalCompressor},
     universal_ip_compression::UniversalIpCompressor,
-    error::ThreeWordError,
+    error::FourWordError,
 };
 
 /// High-level encoder that attempts multiple compression strategies
@@ -17,40 +17,40 @@ pub struct UniversalEncoder {
 }
 
 impl UniversalEncoder {
-    pub fn new() -> Result<Self, ThreeWordError> {
+    pub fn new() -> Result<Self, FourWordError> {
         Ok(Self {
             dictionary: Dictionary16K::new()
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?,
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?,
         })
     }
 
-    /// Encode IPv4+port to three words using best available strategy
-    pub fn encode(&self, address: &str) -> Result<String, ThreeWordError> {
+    /// Encode IPv4+port to four words using best available strategy
+    pub fn encode(&self, address: &str) -> Result<String, FourWordError> {
         let (ip, port) = self.parse_ip_port(address)?;
         
         // Try multiple compression strategies in order of preference
         let compressed = self.try_compression_strategies(ip, port)?;
         
-        // Convert compressed value to three words
+        // Convert compressed value to four words
         let packed = self.pack_42_bits(compressed);
         let words = self.dictionary.encode_bytes(&packed)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         
         Ok(words.join("."))
     }
 
-    /// Decode three words back to IPv4+port
-    pub fn decode(&self, words: &str) -> Result<String, ThreeWordError> {
+    /// Decode four words back to IPv4+port
+    pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
         let word_vec: Vec<&str> = words.split('.').collect();
         if word_vec.len() != 3 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Expected 3 words, got {}", word_vec.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Expected 4 words, got {}", word_vec.len())
             ));
         }
 
         // Decode words to bytes
         let packed = self.dictionary.decode_words(&word_vec)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         
         // Unpack to 42-bit value
         let compressed = self.unpack_42_bits(&packed);
@@ -63,7 +63,7 @@ impl UniversalEncoder {
     }
 
     /// Get compression statistics for an address
-    pub fn compression_stats(&self, address: &str) -> Result<CompressionAnalysis, ThreeWordError> {
+    pub fn compression_stats(&self, address: &str) -> Result<CompressionAnalysis, FourWordError> {
         let (ip, port) = self.parse_ip_port(address)?;
         
         let mut analysis = CompressionAnalysis {
@@ -80,7 +80,7 @@ impl UniversalEncoder {
         Ok(analysis)
     }
 
-    fn try_compression_strategies(&self, ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    fn try_compression_strategies(&self, ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         // Strategy 1: Pure mathematical compression
         if let Ok(compressed) = PureIpCompressor::compress(ip, port) {
             return Ok(compressed | (1u64 << 62)); // Mark strategy 1
@@ -112,12 +112,12 @@ impl UniversalEncoder {
             return Ok(gray | (5u64 << 62)); // Mark strategy 5
         }
 
-        Err(ThreeWordError::InvalidInput(
+        Err(FourWordError::InvalidInput(
             "No compression strategy succeeded for this address".to_string()
         ))
     }
 
-    fn decompress_with_strategy_detection(&self, compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    fn decompress_with_strategy_detection(&self, compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         // Extract strategy marker (top 2 bits for simplified detection)
         // For now, try universal decompression strategies
 
@@ -138,21 +138,21 @@ impl UniversalEncoder {
         Ok((Ipv4Addr::from(scaled_ip), port))
     }
 
-    fn parse_ip_port(&self, input: &str) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    fn parse_ip_port(&self, input: &str) -> Result<(Ipv4Addr, u16), FourWordError> {
         if let Some(colon_pos) = input.rfind(':') {
             let ip_part = &input[..colon_pos];
             let port_part = &input[colon_pos + 1..];
             
             let ip = ip_part.parse::<Ipv4Addr>()
-                .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IP: {}", ip_part)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", ip_part)))?;
             
             let port = port_part.parse::<u16>()
-                .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
             
             Ok((ip, port))
         } else {
             let ip = input.parse::<Ipv4Addr>()
-                .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IP: {}", input)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", input)))?;
             
             Ok((ip, 0)) // Default port
         }

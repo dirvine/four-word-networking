@@ -73,10 +73,10 @@ fn main() {
     println!("- Private 192.168.x.x: 2^16 addresses = {} (0.0015% of IPv4)", 65536);
     println!("- Private 10.x.x.x: 2^24 addresses = {} (0.39% of IPv4)", 16777216);
     println!("- Private 172.16-31.x.x: 2^20 addresses = {} (0.024% of IPv4)", 1048576);
-    println!("- Total private: ~1.8% of IPv4 space can be compressed to 3 words");
+    println!("- Total private: ~1.8% of IPv4 space can be compressed to 4 words");
     
     println!("\nConclusion:");
-    println!("- 3 words with 16K dict: Good for private/common addresses only");
+    println!("- 4 words with 16K dict: Good for private/common addresses only");
     println!("- 4 words with 16K dict: Covers 100% of IPv4+port combinations");
-    println!("- 3 words with 64K dict: Covers 100% of IPv4+port combinations");
+    println!("- 4 words with 64K dict: Covers 100% of IPv4+port combinations");
 }

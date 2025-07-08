@@ -1,15 +1,15 @@
-//! Error types for three-word networking
+//! Error types for four-word networking
 
 use thiserror::Error;
 
-/// Result type for three-word networking operations
-pub type Result<T> = std::result::Result<T, ThreeWordError>;
+/// Result type for four-word networking operations
+pub type Result<T> = std::result::Result<T, FourWordError>;
 
-/// Error types for three-word networking
+/// Error types for four-word networking
 #[derive(Error, Debug)]
-pub enum ThreeWordError {
-    #[error("Invalid three-word address format: {0}")]
-    InvalidThreeWordAddress(String),
+pub enum FourWordError {
+    #[error("Invalid four-word address format: {0}")]
+    InvalidFourWordAddress(String),
     
     #[error("Word not found in dictionary: {0}")]
     WordNotFound(String),
@@ -45,20 +45,20 @@ pub enum ThreeWordError {
     DictionaryError(String),
 }
 
-impl From<crate::encoder16k::EncodingError> for ThreeWordError {
+impl From<crate::encoder16k::EncodingError> for FourWordError {
     fn from(err: crate::encoder16k::EncodingError) -> Self {
-        ThreeWordError::EncodingError(err.to_string())
+        FourWordError::EncodingError(err.to_string())
     }
 }
 
-impl From<crate::encoder16k::DecodingError> for ThreeWordError {
+impl From<crate::encoder16k::DecodingError> for FourWordError {
     fn from(err: crate::encoder16k::DecodingError) -> Self {
-        ThreeWordError::DecodingError(err.to_string())
+        FourWordError::DecodingError(err.to_string())
     }
 }
 
-impl From<crate::dictionary16k::DictionaryError> for ThreeWordError {
+impl From<crate::dictionary16k::DictionaryError> for FourWordError {
     fn from(err: crate::dictionary16k::DictionaryError) -> Self {
-        ThreeWordError::DictionaryError(err.to_string())
+        FourWordError::DictionaryError(err.to_string())
     }
 }

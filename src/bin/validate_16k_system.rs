@@ -144,11 +144,11 @@ fn efficiency_demonstration(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn
     println!("\n📈 Efficiency Improvements:");
     
     let improvements = vec![
-        ("IPv4 (4 bytes)", vec![192, 168, 1, 100], "3 words", "3 words", "No change (already optimal)"),
-        ("IPv6 (16 bytes)", vec![0x20; 16], "3 words + ~28 digits", "3 words + ~96 digits", "68 fewer digits (~71% reduction)"),
-        ("Bitcoin (21 bytes)", vec![0x00; 21], "3 words + ~32 digits", "3 words + ~124 digits", "92 fewer digits (~74% reduction)"),
-        ("Ethereum (20 bytes)", vec![0xd8; 20], "3 words + ~32 digits", "3 words + ~120 digits", "88 fewer digits (~73% reduction)"),
-        ("SHA-256 (32 bytes)", vec![0x6c; 32], "3 words + ~56 digits", "3 words + ~188 digits", "132 fewer digits (~70% reduction)"),
+        ("IPv4 (4 bytes)", vec![192, 168, 1, 100], "4 words", "4 words", "No change (already optimal)"),
+        ("IPv6 (16 bytes)", vec![0x20; 16], "4 words + ~28 digits", "4 words + ~96 digits", "68 fewer digits (~71% reduction)"),
+        ("Bitcoin (21 bytes)", vec![0x00; 21], "4 words + ~32 digits", "4 words + ~124 digits", "92 fewer digits (~74% reduction)"),
+        ("Ethereum (20 bytes)", vec![0xd8; 20], "4 words + ~32 digits", "4 words + ~120 digits", "88 fewer digits (~73% reduction)"),
+        ("SHA-256 (32 bytes)", vec![0x6c; 32], "4 words + ~56 digits", "4 words + ~188 digits", "132 fewer digits (~70% reduction)"),
     ];
     
     for (name, data, new_format, old_format, improvement) in improvements {

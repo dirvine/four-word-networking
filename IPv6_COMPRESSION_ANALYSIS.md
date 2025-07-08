@@ -10,7 +10,7 @@ After thorough analysis, we have determined the optimal encoding strategies:
 ## Why Not 11 Words for IPv6?
 
 The initial calculation of 11 words was based on encoding the full 144 bits (128-bit IPv6 + 16-bit port) without any compression:
-- 144 bits ÷ 14 bits/word = 10.3 words → 11 words needed
+- 144 bits ÷ 14 bits/word = 10.4 words → 11 words needed
 
 However, this ignores the significant compression opportunities in IPv6 addresses.
 
@@ -93,4 +93,4 @@ The 4-6 word encoding for IPv6 represents an optimal balance between:
 - **Practicality**: Covers the vast majority of real-world IPv6 addresses
 - **Consistency**: Clear visual distinction from IPv4 encoding
 
-This approach is significantly better than the theoretical 11-word requirement and makes IPv6 addresses as accessible as IPv4 addresses in the three-word networking system.
+This approach is significantly better than the theoretical 11-word requirement and makes IPv6 addresses as accessible as IPv4 addresses in the four-word networking system.

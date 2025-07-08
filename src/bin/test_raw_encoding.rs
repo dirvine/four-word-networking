@@ -38,7 +38,7 @@ fn main() {
                 println!("   Total words: {}", word_count);
                 
                 if word_count == 3 {
-                    println!("   ✅ Perfect! Achieved 3-word encoding");
+                    println!("   ✅ Perfect! Achieved 4-word encoding");
                 } else {
                     println!("   📈 Uses {} words", word_count);
                 }
@@ -54,6 +54,6 @@ fn main() {
     }
     
     println!("\n🎯 Key Insight:");
-    println!("   Without semantic overhead, small data (≤5 bytes) achieves perfect 3-word encoding!");
+    println!("   Without semantic overhead, small data (≤5 bytes) achieves perfect 4-word encoding!");
     println!("   The balanced encoder adds semantic classification which increases word count.");
 }

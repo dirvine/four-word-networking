@@ -4,7 +4,7 @@
 //! into 42 bits using pure mathematical techniques without any special cases.
 
 use std::net::Ipv4Addr;
-use crate::error::ThreeWordError;
+use crate::error::FourWordError;
 
 /// Maximum value that fits in 42 bits
 const MAX_42_BITS: u64 = (1u64 << 42) - 1; // 4,398,046,511,103
@@ -14,7 +14,7 @@ pub struct PureIpCompressor;
 
 impl PureIpCompressor {
     /// Primary compression function - tries multiple mathematical approaches
-    pub fn compress(ip: Ipv4Addr, port: u16) -> Result<u64, ThreeWordError> {
+    pub fn compress(ip: Ipv4Addr, port: u16) -> Result<u64, FourWordError> {
         let ip_u32 = u32::from(ip);
         let _full_value = ((ip_u32 as u64) << 16) | (port as u64);
         
@@ -43,13 +43,13 @@ impl PureIpCompressor {
             return Ok(compressed);
         }
         
-        Err(ThreeWordError::InvalidInput(
+        Err(FourWordError::InvalidInput(
             format!("Cannot compress {}:{} (48→42 bits)", ip, port)
         ))
     }
 
     /// Strategy 1: Mathematical bit reduction using modular arithmetic
-    fn bit_reduction_compress(ip: u32, port: u16) -> Result<u64, ThreeWordError> {
+    fn bit_reduction_compress(ip: u32, port: u16) -> Result<u64, FourWordError> {
         // Use the fact that we have 6 extra bits to lose
         // Apply controlled bit reduction that preserves uniqueness for most values
         
@@ -72,7 +72,7 @@ impl PureIpCompressor {
     }
 
     /// Strategy 2: Prime factorization for specific patterns
-    fn prime_factorization_compress(ip: u32, port: u16) -> Result<u64, ThreeWordError> {
+    fn prime_factorization_compress(ip: u32, port: u16) -> Result<u64, FourWordError> {
         // Some IP+port combinations have mathematical structure we can exploit
         
         let full_value = ((ip as u64) << 16) | (port as u64);
@@ -92,11 +92,11 @@ impl PureIpCompressor {
             return Ok(compressed);
         }
         
-        Err(ThreeWordError::InvalidInput("No suitable factorization".to_string()))
+        Err(FourWordError::InvalidInput("No suitable factorization".to_string()))
     }
 
     /// Strategy 3: Polynomial mapping to reduce bit space
-    fn polynomial_compress(ip: u32, port: u16) -> Result<u64, ThreeWordError> {
+    fn polynomial_compress(ip: u32, port: u16) -> Result<u64, FourWordError> {
         // Map the 48-bit space to 42-bit space using polynomial functions
         // that preserve structure for common IP ranges
         
@@ -116,7 +116,7 @@ impl PureIpCompressor {
     }
 
     /// Strategy 4: Cryptographic hash with controlled collisions
-    fn hash_compress(ip: u32, port: u16) -> Result<u64, ThreeWordError> {
+    fn hash_compress(ip: u32, port: u16) -> Result<u64, FourWordError> {
         // Use a hash function designed to map 48→42 bits with good distribution
         
         let full_value = ((ip as u64) << 16) | (port as u64);
@@ -136,7 +136,7 @@ impl PureIpCompressor {
     }
 
     /// Strategy 5: Sliding window compression for sequential IPs
-    fn sliding_window_compress(ip: u32, port: u16) -> Result<u64, ThreeWordError> {
+    fn sliding_window_compress(ip: u32, port: u16) -> Result<u64, FourWordError> {
         // Exploit locality in IP address space
         // Many real-world scenarios use sequential or nearby IPs
         
@@ -162,13 +162,13 @@ impl PureIpCompressor {
             }
         }
         
-        Err(ThreeWordError::InvalidInput("No suitable base found".to_string()))
+        Err(FourWordError::InvalidInput("No suitable base found".to_string()))
     }
 
     /// Decompress using strategy detection
-    pub fn decompress(compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    pub fn decompress(compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         if compressed > MAX_42_BITS {
-            return Err(ThreeWordError::InvalidInput("Invalid compressed value".to_string()));
+            return Err(FourWordError::InvalidInput("Invalid compressed value".to_string()));
         }
 
         // Try to detect which strategy was used based on value patterns
@@ -183,7 +183,7 @@ impl PureIpCompressor {
         Self::decompress_hash_approximate(compressed)
     }
 
-    fn decompress_sliding_window(compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    fn decompress_sliding_window(compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         let base_idx = (compressed >> 40) as usize;
         let offset = ((compressed >> 16) & 0xFFFFF) as u32;
         let port = (compressed & 0xFFFF) as u16;
@@ -194,11 +194,11 @@ impl PureIpCompressor {
             let ip_u32 = bases[base_idx] + offset;
             Ok((Ipv4Addr::from(ip_u32), port))
         } else {
-            Err(ThreeWordError::InvalidInput("Invalid base index".to_string()))
+            Err(FourWordError::InvalidInput("Invalid base index".to_string()))
         }
     }
 
-    fn decompress_hash_approximate(compressed: u64) -> Result<(Ipv4Addr, u16), ThreeWordError> {
+    fn decompress_hash_approximate(compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
         // Hash compression is lossy - we can't perfectly reverse it
         // But we can provide reasonable approximations for common cases
         

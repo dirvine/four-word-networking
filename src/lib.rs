@@ -58,8 +58,11 @@ pub mod perfect_adaptive_encoder;
 pub mod simple_perfect_encoder;
 pub mod simple_adaptive_encoder;
 pub mod four_word_encoder;
+pub mod ipv6_perfect_patterns;
+pub mod ipv6_multi_dimensional;
+pub mod ipv6_perfect_encoder;
 
-pub use error::{ThreeWordError, Result};
+pub use error::{FourWordError, Result};
 pub use universal::{UniversalEncoding, EncodingStrategy};
 pub use ip_port_encoder::{IpPortEncoder, IpPortAddress};
 // pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
@@ -72,12 +75,15 @@ pub use universal_encoder::{UniversalEncoder, CompressionAnalysis, StrategyResul
 pub use variable_dictionary::{VariableDictionary, AdaptiveEncoding, CapacityInfo};
 pub use ipv6_compression::{Ipv6Compressor, CompressedIpv6, Ipv6Category};
 pub use adaptive_encoder::{AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis};
-pub use api::{ThreeWordNetworking, AddressInput, EncodingInfo, AddressType as ApiAddressType};
+pub use api::{FourWordNetworking, AddressInput, EncodingInfo, AddressType as ApiAddressType};
 pub use perfect_adaptive_encoder::PerfectAdaptiveEncoder;
 pub use simple_adaptive_encoder::SimpleAdaptiveEncoder;
 pub use four_word_encoder::FourWordAdaptiveEncoder;
+pub use ipv6_perfect_patterns::{IPv6PatternDetector, IPv6Pattern};
+pub use ipv6_multi_dimensional::{IPv6MultiDimEncoder, IPv6MultiDimEncoding};
+pub use ipv6_perfect_encoder::{IPv6PerfectEncoder, IPv6PerfectEncoding};
 
-/// Version of the three-word networking library
+/// Version of the four-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(test)]

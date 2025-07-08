@@ -1,7 +1,7 @@
 //! Ultra-aggressive compression for maximum word efficiency
 //!
 //! This module provides ultra-compact compression that targets ≤5 bytes for most
-//! common multiaddresses to achieve perfect 3-word encoding.
+//! common multiaddresses to achieve perfect 4-word encoding.
 //!
 //! Compression ratios: 75-85% for common patterns vs 40-60% for standard compression
 

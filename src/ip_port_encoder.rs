@@ -1,12 +1,12 @@
-//! Pure IP address and port encoding into three-word addresses.
+//! Pure IP address and port encoding into four-word addresses.
 //! 
 //! This module provides efficient encoding of IP addresses (IPv4/IPv6) with optional ports
-//! into memorable three-word combinations, without the overhead of multiaddr parsing.
+//! into memorable four-word combinations, without the overhead of multiaddr parsing.
 
-use crate::{dictionary16k::Dictionary16K, error::ThreeWordError};
+use crate::{dictionary16k::Dictionary16K, error::FourWordError};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-/// Maximum size of compressed data (5 bytes to fit in 3 words with 16k dictionary)
+/// Maximum size of compressed data (5 bytes to fit in 4 words with 16k dictionary)
 const MAX_COMPRESSED_SIZE: usize = 5;
 
 /// Common ports that get single-byte encoding
@@ -38,7 +38,7 @@ pub struct IpPortAddress {
 
 impl IpPortAddress {
     /// Parse from string formats like "192.168.1.1:8080" or "[2001:db8::1]:443"
-    pub fn parse(input: &str) -> Result<Self, ThreeWordError> {
+    pub fn parse(input: &str) -> Result<Self, FourWordError> {
         // Handle IPv6 with port: [addr]:port
         if input.starts_with('[') {
             if let Some(close_idx) = input.find(']') {
@@ -50,11 +50,11 @@ impl IpPortAddress {
                 };
                 
                 let ip = addr_part.parse::<Ipv6Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
                 
                 let port = if let Some(port_str) = port_part {
                     Some(port_str.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
                 } else {
                     None
                 };
@@ -77,10 +77,10 @@ impl IpPortAddress {
                 let port_part = &input[last_colon + 1..];
                 
                 let ip = addr_part.parse::<Ipv4Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part)))?;
                 
                 let port = port_part.parse::<u16>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
                 
                 return Ok(Self {
                     ip: IpAddr::V4(ip),
@@ -91,7 +91,7 @@ impl IpPortAddress {
         
         // Try parsing as standalone IP
         let ip = input.parse::<IpAddr>()
-            .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
+            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
         
         Ok(Self { ip, port: None })
     }
@@ -115,7 +115,7 @@ pub struct CompressedIpPort {
 
 impl CompressedIpPort {
     /// Compress an IP+port address into minimal bytes
-    pub fn compress(addr: &IpPortAddress) -> Result<Self, ThreeWordError> {
+    pub fn compress(addr: &IpPortAddress) -> Result<Self, FourWordError> {
         let mut data = Vec::with_capacity(MAX_COMPRESSED_SIZE);
         
         match &addr.ip {
@@ -155,7 +155,7 @@ impl CompressedIpPort {
                         if let Some(&(_, code)) = COMMON_PORTS.iter().find(|&&(p, _)| p == port) {
                             data.push(code);
                         } else {
-                            return Err(ThreeWordError::InvalidInput(
+                            return Err(FourWordError::InvalidInput(
                                 "10.x.x.x addresses with non-common ports exceed 5 bytes".to_string()
                             ));
                         }
@@ -174,7 +174,7 @@ impl CompressedIpPort {
                             // Check if port code fits in 4 bits
                             if code > 0x0F {
                                 // Port code doesn't fit in 4 bits
-                                return Err(ThreeWordError::InvalidInput(
+                                return Err(FourWordError::InvalidInput(
                                     "172.16-31.x.x addresses require smaller port codes".to_string()
                                 ));
                             }
@@ -182,7 +182,7 @@ impl CompressedIpPort {
                             data[3] |= code;
                         } else {
                             // Non-common port doesn't fit
-                            return Err(ThreeWordError::InvalidInput(
+                            return Err(FourWordError::InvalidInput(
                                 "172.16-31.x.x addresses with non-common ports exceed 5 bytes".to_string()
                             ));
                         }
@@ -195,7 +195,7 @@ impl CompressedIpPort {
                     
                     if addr.port.is_some() {
                         // Public IPs with ports don't fit in 5 bytes
-                        return Err(ThreeWordError::InvalidInput(
+                        return Err(FourWordError::InvalidInput(
                             "Public IPv4 addresses with ports exceed 5 bytes".to_string()
                         ));
                     }
@@ -214,13 +214,13 @@ impl CompressedIpPort {
                     // Store marker + interface ID (last 64 bits)
                     data.push(0x91); // IPv6 link-local marker
                     // This would need 8 more bytes - doesn't fit
-                    return Err(ThreeWordError::InvalidInput(
+                    return Err(FourWordError::InvalidInput(
                         "IPv6 link-local addresses exceed 5 bytes".to_string()
                     ));
                 }
                 else {
                     // Full IPv6 doesn't fit in 5 bytes
-                    return Err(ThreeWordError::InvalidInput(
+                    return Err(FourWordError::InvalidInput(
                         "Full IPv6 addresses exceed 5 bytes".to_string()
                     ));
                 }
@@ -228,7 +228,7 @@ impl CompressedIpPort {
         }
         
         if data.len() > MAX_COMPRESSED_SIZE {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Compressed size {} exceeds maximum {}", data.len(), MAX_COMPRESSED_SIZE)
             ));
         }
@@ -249,9 +249,9 @@ impl CompressedIpPort {
     }
     
     /// Decompress back to IP+port
-    pub fn decompress(&self) -> Result<IpPortAddress, ThreeWordError> {
+    pub fn decompress(&self) -> Result<IpPortAddress, FourWordError> {
         if self.data.is_empty() {
-            return Err(ThreeWordError::InvalidInput("Empty compressed data".to_string()));
+            return Err(FourWordError::InvalidInput("Empty compressed data".to_string()));
         }
         
         let header = self.data[0];
@@ -275,7 +275,7 @@ impl CompressedIpPort {
             0x81 => {
                 // 192.168.x.x
                 if idx + 1 >= self.data.len() {
-                    return Err(ThreeWordError::InvalidInput("Incomplete 192.168.x.x address".to_string()));
+                    return Err(FourWordError::InvalidInput("Incomplete 192.168.x.x address".to_string()));
                 }
                 
                 let ip = IpAddr::V4(Ipv4Addr::new(192, 168, self.data[idx], self.data[idx + 1]));
@@ -287,7 +287,7 @@ impl CompressedIpPort {
             0x82 => {
                 // 10.x.x.x
                 if idx + 2 >= self.data.len() {
-                    return Err(ThreeWordError::InvalidInput("Incomplete 10.x.x.x address".to_string()));
+                    return Err(FourWordError::InvalidInput("Incomplete 10.x.x.x address".to_string()));
                 }
                 
                 let ip = IpAddr::V4(Ipv4Addr::new(10, self.data[idx], self.data[idx + 1], self.data[idx + 2]));
@@ -299,7 +299,7 @@ impl CompressedIpPort {
             0x83 => {
                 // 172.16-31.x.x (packed format)
                 if idx + 2 >= self.data.len() {
-                    return Err(ThreeWordError::InvalidInput("Incomplete 172.16-31.x.x address".to_string()));
+                    return Err(FourWordError::InvalidInput("Incomplete 172.16-31.x.x address".to_string()));
                 }
                 
                 let second_octet = 16 + (self.data[idx] >> 4);
@@ -322,7 +322,7 @@ impl CompressedIpPort {
             0x84 => {
                 // Public IPv4
                 if idx + 3 >= self.data.len() {
-                    return Err(ThreeWordError::InvalidInput("Incomplete public IPv4 address".to_string()));
+                    return Err(FourWordError::InvalidInput("Incomplete public IPv4 address".to_string()));
                 }
                 
                 let ip = IpAddr::V4(Ipv4Addr::new(
@@ -342,12 +342,12 @@ impl CompressedIpPort {
                 let port = self.decompress_port(&mut idx)?;
                 Ok(IpPortAddress { ip, port })
             }
-            _ => Err(ThreeWordError::InvalidInput(format!("Unknown compression header: 0x{:02X}", header))),
+            _ => Err(FourWordError::InvalidInput(format!("Unknown compression header: 0x{:02X}", header))),
         }
     }
     
     /// Decompress port from data
-    fn decompress_port(&self, idx: &mut usize) -> Result<Option<u16>, ThreeWordError> {
+    fn decompress_port(&self, idx: &mut usize) -> Result<Option<u16>, FourWordError> {
         if *idx >= self.data.len() {
             return Ok(None);
         }
@@ -362,7 +362,7 @@ impl CompressedIpPort {
         
         // Otherwise it's a full 2-byte port
         if *idx + 1 >= self.data.len() {
-            return Err(ThreeWordError::InvalidInput("Incomplete port data".to_string()));
+            return Err(FourWordError::InvalidInput("Incomplete port data".to_string()));
         }
         
         let port = ((first_byte as u16) << 8) | (self.data[*idx + 1] as u16);
@@ -372,42 +372,42 @@ impl CompressedIpPort {
     }
 }
 
-/// Main encoder for IP+port to three-word addresses
+/// Main encoder for IP+port to four-word addresses
 pub struct IpPortEncoder {
     dictionary: Dictionary16K,
 }
 
 impl IpPortEncoder {
     /// Create a new encoder with the 16k dictionary
-    pub fn new() -> Result<Self, ThreeWordError> {
+    pub fn new() -> Result<Self, FourWordError> {
         Ok(Self {
             dictionary: Dictionary16K::new()
-                .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?,
+                .map_err(|e| FourWordError::InvalidInput(e.to_string()))?,
         })
     }
     
-    /// Encode an IP+port address into three words
-    pub fn encode(&self, input: &str) -> Result<String, ThreeWordError> {
+    /// Encode an IP+port address into four words
+    pub fn encode(&self, input: &str) -> Result<String, FourWordError> {
         let addr = IpPortAddress::parse(input)?;
         let compressed = CompressedIpPort::compress(&addr)?;
         
-        // Convert compressed bytes to three words using 16k dictionary
+        // Convert compressed bytes to four words using 16k dictionary
         let words = self.dictionary.encode_bytes(&compressed.data)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         Ok(words.join("."))
     }
     
-    /// Decode three words back to IP+port address
-    pub fn decode(&self, words: &str) -> Result<String, ThreeWordError> {
+    /// Decode four words back to IP+port address
+    pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
         let word_vec: Vec<&str> = words.split('.').collect();
         if word_vec.len() != 3 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Expected 3 words, got {}", word_vec.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Expected 4 words, got {}", word_vec.len())
             ));
         }
         
         let bytes = self.dictionary.decode_words(&word_vec)
-            .map_err(|e| ThreeWordError::InvalidInput(e.to_string()))?;
+            .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
         let compressed = CompressedIpPort { data: bytes };
         let addr = compressed.decompress()?;
         

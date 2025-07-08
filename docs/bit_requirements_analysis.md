@@ -55,9 +55,9 @@ This document analyzes the bit requirements for encoding all possible IP address
 - **Verdict**: ✅ Works with 4 words, significant overhead
 
 ### With 65,536-word dictionary (16 bits/word)
-- **Calculation**: 48 ÷ 16 = 3 words exactly
+- **Calculation**: 48 ÷ 16 = 4 words exactly
 - **Total combinations**: 65,536³ = 281,474,976,710,656 (281 trillion)
-- **Verdict**: ✅ Perfect fit - exactly 3 words needed
+- **Verdict**: ✅ Perfect fit - exactly 4 words needed
 
 ## Words Required for IPv6 + Port (144 bits)
 
@@ -100,13 +100,13 @@ This document analyzes the bit requirements for encoding all possible IP address
 | 8,192 (13-bit) | 4 words | 92.3% | 12 words | 92.3% |
 | 16,384 (14-bit) | 4 words | 85.7% | 11 words | 93.5% |
 | 32,768 (15-bit) | 4 words | 80.0% | 10 words | 96.0% |
-| 65,536 (16-bit) | 3 words | 100% (perfect) | 9 words | 100% (perfect) |
+| 65,536 (16-bit) | 4 words | 100% (perfect) | 9 words | 100% (perfect) |
 
 ## Key Findings
 
 1. **Perfect Fits**:
    - 4,096-word dictionary: 4 words for IPv4, 12 words for IPv6
-   - 65,536-word dictionary: 3 words for IPv4, 9 words for IPv6
+   - 65,536-word dictionary: 4 words for IPv4, 9 words for IPv6
 
 2. **Most Practical for Human Use**:
    - **IPv4**: 3-4 words is manageable for humans
@@ -117,7 +117,7 @@ This document analyzes the bit requirements for encoding all possible IP address
    - Larger dictionaries = fewer words needed but harder to find memorable words
 
 4. **Recommendation for Three-Word System**:
-   - The current three-word system works only with a 65,536-word dictionary for IPv4
+   - The current four-word system works only with a 65,536-word dictionary for IPv4
    - For smaller dictionaries, a fourth word (or numeric suffix) is required
    - IPv6 requires significantly more words regardless of dictionary size
 

@@ -1,4 +1,4 @@
-//! Final demonstration of the Three-Word Networking system
+//! Final demonstration of the Four-Word Networking system
 //!
 //! Shows the complete solution:
 //! - IPv4: 4 words with perfect reconstruction

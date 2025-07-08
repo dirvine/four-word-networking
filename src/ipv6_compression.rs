@@ -5,12 +5,12 @@
 //! common patterns to achieve optimal compression ratios.
 
 use std::net::Ipv6Addr;
-use crate::error::ThreeWordError;
+use crate::error::FourWordError;
 
 /// IPv6 address categories for compression optimization
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Ipv6Category {
-    /// ::1 - IPv6 loopback (3 words)
+    /// ::1 - IPv6 loopback (4 words)
     Loopback,
     /// fe80::/10 - Link-local addresses (3-4 words)
     LinkLocal,
@@ -20,7 +20,7 @@ pub enum Ipv6Category {
     Documentation,
     /// 2000::/3 - Global unicast (4-6 words)
     GlobalUnicast,
-    /// ::/128 - Unspecified address (3 words)
+    /// ::/128 - Unspecified address (4 words)
     Unspecified,
     /// Multicast and other special addresses (5-6 words)
     Special,
@@ -77,7 +77,7 @@ pub struct Ipv6Compressor;
 
 impl Ipv6Compressor {
     /// Compress an IPv6 address with optional port
-    pub fn compress(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    pub fn compress(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let category = Self::categorize_address(&ip);
         
         match category {
@@ -92,7 +92,7 @@ impl Ipv6Compressor {
     }
 
     /// Decompress back to IPv6 address and port
-    pub fn decompress(compressed: &CompressedIpv6) -> Result<(Ipv6Addr, Option<u16>), ThreeWordError> {
+    pub fn decompress(compressed: &CompressedIpv6) -> Result<(Ipv6Addr, Option<u16>), FourWordError> {
         let ip = match compressed.category {
             Ipv6Category::Loopback => Self::decompress_loopback(&compressed.compressed_data)?,
             Ipv6Category::LinkLocal => Self::decompress_link_local(&compressed.compressed_data)?,
@@ -145,7 +145,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress loopback address ::1
-    fn compress_loopback(_ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_loopback(_ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         // Loopback is just ::1, but we ensure 4 words minimum for IPv6
         // Add padding bytes to ensure we reach 4 words (56 bits total)
         let padding = vec![0x00, 0x00, 0x01, 0x00, 0x00, 0x00]; // 48 bits of padding
@@ -159,7 +159,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress link-local address fe80::/10
-    fn compress_link_local(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_link_local(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let segments = ip.segments();
         
         // Link-local: fe80:0000:0000:0000:xxxx:xxxx:xxxx:xxxx
@@ -221,7 +221,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress unique local address fc00::/7
-    fn compress_unique_local(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_unique_local(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let segments = ip.segments();
         
         // Unique local: fcxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
@@ -251,7 +251,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress documentation address 2001:db8::/32
-    fn compress_documentation(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_documentation(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let segments = ip.segments();
         
         // Documentation: 2001:0db8:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
@@ -298,7 +298,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress global unicast address 2000::/3
-    fn compress_global_unicast(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_global_unicast(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let segments = ip.segments();
         
         // Global unicast is the most challenging to compress
@@ -331,7 +331,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress unspecified address ::
-    fn compress_unspecified(_ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_unspecified(_ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         // Unspecified is all zeros, but we ensure 4 words minimum for IPv6
         // Add padding bytes to ensure we reach 4 words (56 bits total)
         let padding = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // 48 bits of padding
@@ -345,7 +345,7 @@ impl Ipv6Compressor {
     }
 
     /// Compress special addresses (multicast, etc.)
-    fn compress_special(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, ThreeWordError> {
+    fn compress_special(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
         let segments = ip.segments();
         
         // For special addresses, store all segments but mark as special
@@ -401,13 +401,13 @@ impl Ipv6Compressor {
     }
 
     // Decompression methods (implementations would mirror compression logic)
-    fn decompress_loopback(_data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_loopback(_data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         Ok(Ipv6Addr::LOCALHOST)
     }
 
-    fn decompress_link_local(data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_link_local(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.is_empty() {
-            return Err(ThreeWordError::InvalidInput("Empty link-local data".to_string()));
+            return Err(FourWordError::InvalidInput("Empty link-local data".to_string()));
         }
         
         let mut segments = [0u16; 8];
@@ -457,14 +457,14 @@ impl Ipv6Compressor {
                 }
             },
             _ => {
-                return Err(ThreeWordError::InvalidInput("Invalid link-local pattern".to_string()));
+                return Err(FourWordError::InvalidInput("Invalid link-local pattern".to_string()));
             }
         }
         
         Ok(Ipv6Addr::from(segments))
     }
 
-    fn decompress_unique_local(data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_unique_local(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.len() >= 7 {
             let prefix = ((data[0] as u16) << 8) | 0x00;
             let global_id_part = ((data[1] as u16) << 8) | (data[2] as u16);
@@ -477,13 +477,13 @@ impl Ipv6Compressor {
             
             Ok(Ipv6Addr::from(segments))
         } else {
-            Err(ThreeWordError::InvalidInput("Invalid unique local data".to_string()))
+            Err(FourWordError::InvalidInput("Invalid unique local data".to_string()))
         }
     }
 
-    fn decompress_documentation(data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_documentation(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.is_empty() {
-            return Err(ThreeWordError::InvalidInput("Empty documentation data".to_string()));
+            return Err(FourWordError::InvalidInput("Empty documentation data".to_string()));
         }
         
         let mut segments = [0u16; 8];
@@ -522,14 +522,14 @@ impl Ipv6Compressor {
                 }
             },
             _ => {
-                return Err(ThreeWordError::InvalidInput("Invalid documentation pattern".to_string()));
+                return Err(FourWordError::InvalidInput("Invalid documentation pattern".to_string()));
             }
         }
         
         Ok(Ipv6Addr::from(segments))
     }
 
-    fn decompress_global_unicast(data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_global_unicast(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.len() >= 16 {
             let mut segments = [0u16; 8];
             for i in 0..8 {
@@ -537,15 +537,15 @@ impl Ipv6Compressor {
             }
             Ok(Ipv6Addr::from(segments))
         } else {
-            Err(ThreeWordError::InvalidInput("Invalid global unicast data".to_string()))
+            Err(FourWordError::InvalidInput("Invalid global unicast data".to_string()))
         }
     }
 
-    fn decompress_unspecified(_data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_unspecified(_data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         Ok(Ipv6Addr::UNSPECIFIED)
     }
 
-    fn decompress_special(data: &[u8]) -> Result<Ipv6Addr, ThreeWordError> {
+    fn decompress_special(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.len() >= 16 {
             let mut segments = [0u16; 8];
             for i in 0..8 {
@@ -553,7 +553,7 @@ impl Ipv6Compressor {
             }
             Ok(Ipv6Addr::from(segments))
         } else {
-            Err(ThreeWordError::InvalidInput("Invalid special address data".to_string()))
+            Err(FourWordError::InvalidInput("Invalid special address data".to_string()))
         }
     }
 }

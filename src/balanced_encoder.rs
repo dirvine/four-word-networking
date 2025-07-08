@@ -1,17 +1,17 @@
-//! Balanced encoding system combining compression and 3-word grouping
+//! Balanced encoding system combining compression and 4-word grouping
 //!
 //! This module implements the balanced encoding approach that:
 //! - Compresses multiaddresses intelligently (40-60% savings)
-//! - Uses 16K dictionary for efficient 3-word grouping
-//! - Outputs natural multiples of 3 words with · separator
+//! - Uses 16K dictionary for efficient 4-word grouping
+//! - Outputs natural multiples of 4 words with · separator
 //! - Automatically detects data types and avoids compressing high-entropy data
 
 use crate::compression::{MultiaddressCompressor, DataType};
 use crate::dictionary16k::Dictionary16K;
 use crate::encoder16k::{UniversalEncoder16K, Encoding16K};
-use crate::error::{ThreeWordError, Result};
+use crate::error::{FourWordError, Result};
 
-/// Balanced encoder combining compression with 3-word grouping
+/// Balanced encoder combining compression with 4-word grouping
 #[derive(Debug, Clone)]
 pub struct BalancedEncoder {
     compressor: MultiaddressCompressor,
@@ -19,10 +19,10 @@ pub struct BalancedEncoder {
     dictionary: Dictionary16K,
 }
 
-/// Balanced encoding result with natural 3-word grouping
+/// Balanced encoding result with natural 4-word grouping
 #[derive(Debug, Clone, PartialEq)]
 pub struct BalancedEncoding {
-    /// Groups of 3 words separated by ·
+    /// Groups of 4 words separated by ·
     word_groups: Vec<Vec<String>>,
     /// Original data type detected
     data_type: DataType,
@@ -52,9 +52,9 @@ impl BalancedEncoder {
             DataType::Multiaddress => {
                 // Compress multiaddresses
                 let text = std::str::from_utf8(data)
-                    .map_err(|_| ThreeWordError::InvalidInput("Invalid UTF-8 in multiaddress".to_string()))?;
+                    .map_err(|_| FourWordError::InvalidInput("Invalid UTF-8 in multiaddress".to_string()))?;
                 self.compressor.compress(text)
-                    .map_err(|e| ThreeWordError::CompressionError(e.to_string()))?
+                    .map_err(|e| FourWordError::CompressionError(e.to_string()))?
             }
             DataType::Hash | DataType::BitcoinAddress | DataType::EthereumAddress => {
                 // Don't compress high-entropy data
@@ -76,7 +76,7 @@ impl BalancedEncoder {
         // Encode with 16K dictionary system
         let encoding16k = self.encoder16k.encode(&processed_data)?;
         
-        // Convert to 3-word groups
+        // Convert to 4-word groups
         let word_groups = self.create_word_groups(&encoding16k)?;
         
         // Generate efficiency rating
@@ -108,7 +108,7 @@ impl BalancedEncoder {
             DataType::Multiaddress => {
                 // Decompress multiaddress
                 let multiaddr = self.compressor.decompress(&processed_data)
-                    .map_err(|e| ThreeWordError::DecompressionError(e.to_string()))?;
+                    .map_err(|e| FourWordError::DecompressionError(e.to_string()))?;
                 Ok(multiaddr.into_bytes())
             }
             _ => {
@@ -145,18 +145,18 @@ impl BalancedEncoder {
         }
     }
 
-    /// Create natural 3-word groupings from 16K encoding
+    /// Create natural 4-word groupings from 16K encoding
     fn create_word_groups(&self, encoding: &Encoding16K) -> Result<Vec<Vec<String>>> {
         let mut groups = Vec::new();
         
-        // Start with base 3 words
+        // Start with base 4 words
         let base_words = encoding.base_words();
         groups.push(base_words.to_vec());
         
-        // Add digit groups as 3-word groups
+        // Add digit groups as 4-word groups
         if let Some(digit_groups) = encoding.digit_groups() {
             for digit_group in digit_groups {
-                // Convert digit group to 3 words
+                // Convert digit group to 4 words
                 let digit_words = self.digits_to_words(digit_group)?;
                 groups.push(digit_words);
             }
@@ -165,11 +165,11 @@ impl BalancedEncoder {
         Ok(groups)
     }
 
-    /// Convert digit group to 3 words using direct 16K dictionary mapping
+    /// Convert digit group to 4 words using direct 16K dictionary mapping
     fn digits_to_words(&self, digits: &str) -> Result<Vec<String>> {
         // Convert digits to number (0-9999)
         let number: u64 = digits.parse()
-            .map_err(|_| ThreeWordError::InvalidInput("Invalid digit group".to_string()))?;
+            .map_err(|_| FourWordError::InvalidInput("Invalid digit group".to_string()))?;
         
         // Add a large offset to avoid clustering at low indices for small numbers
         // This ensures even "0000" maps to higher word indices, not "aim"
@@ -193,20 +193,20 @@ impl BalancedEncoder {
     /// Reconstruct 16K encoding from word groups
     fn reconstruct_encoding16k(&self, word_groups: &[Vec<String>]) -> Result<Encoding16K> {
         if word_groups.is_empty() {
-            return Err(ThreeWordError::InvalidInput("Empty word groups".to_string()));
+            return Err(FourWordError::InvalidInput("Empty word groups".to_string()));
         }
 
         // First group is base words
         let base_words = &word_groups[0];
         if base_words.len() != 3 {
-            return Err(ThreeWordError::InvalidInput("Base words must have exactly 3 words".to_string()));
+            return Err(FourWordError::InvalidInput("Base words must have exactly 4 words".to_string()));
         }
 
         // Additional groups are digit groups
         let mut digit_groups = Vec::new();
         for group in &word_groups[1..] {
             if group.len() != 3 {
-                return Err(ThreeWordError::InvalidInput("All word groups must have exactly 3 words".to_string()));
+                return Err(FourWordError::InvalidInput("All word groups must have exactly 4 words".to_string()));
             }
             
             // Convert word group back to digits
@@ -227,7 +227,7 @@ impl BalancedEncoder {
         }
     }
 
-    /// Convert 3 words back to digit string using reverse mapping
+    /// Convert 4 words back to digit string using reverse mapping
     fn words_to_digits(&self, words: &[String]) -> Result<String> {
         // Get word indices
         let idx1 = self.dictionary.get_index(&words[0])?;
@@ -276,7 +276,7 @@ impl BalancedEncoder {
 }
 
 impl BalancedEncoding {
-    /// Format as natural 3-word groups with · separator
+    /// Format as natural 4-word groups with · separator
     pub fn to_string(&self) -> String {
         self.word_groups
             .iter()
@@ -314,14 +314,14 @@ impl BalancedEncoding {
     pub fn from_string(s: &str) -> Result<Self> {
         let group_strs: Vec<&str> = s.split(" · ").collect();
         if group_strs.is_empty() {
-            return Err(ThreeWordError::InvalidInput("Empty encoding string".to_string()));
+            return Err(FourWordError::InvalidInput("Empty encoding string".to_string()));
         }
 
         let mut word_groups = Vec::new();
         for group_str in group_strs {
             let words: Vec<String> = group_str.split_whitespace().map(|s| s.to_string()).collect();
             if words.len() != 3 {
-                return Err(ThreeWordError::InvalidInput("Each group must have exactly 3 words".to_string()));
+                return Err(FourWordError::InvalidInput("Each group must have exactly 4 words".to_string()));
             }
             word_groups.push(words);
         }

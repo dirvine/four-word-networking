@@ -21,7 +21,7 @@ The upgrade from 4,096 words (12 bits per word) to 16,384 words (14 bits per wor
 ### **Production-Ready Implementation**
 - ✅ 16,384 high-quality words from EFF, BIP39, Diceware sources
 - ✅ Comprehensive dictionary validation and statistics
-- ✅ Hybrid encoding system (3 words + digits when needed)
+- ✅ Hybrid encoding system (4 words + digits when needed)
 - ✅ Full test suite with 100% pass rate
 - ✅ Memory usage under 1MB
 - ✅ Zero compilation warnings
@@ -30,11 +30,11 @@ The upgrade from 4,096 words (12 bits per word) to 16,384 words (14 bits per wor
 
 | Address Type | Old System (4K) | New System (16K) | Improvement |
 |-------------|-----------------|------------------|-------------|
-| **IPv4 (4 bytes)** | 3 words | 3 words | No change (already optimal) |
-| **IPv6 (16 bytes)** | 3 words + 96 digits | 3 words + 28 digits | **71% fewer digits** |
-| **Bitcoin (21 bytes)** | 3 words + 124 digits | 3 words + 32 digits | **74% fewer digits** |
-| **Ethereum (20 bytes)** | 3 words + 120 digits | 3 words + 32 digits | **73% fewer digits** |
-| **SHA-256 (32 bytes)** | 3 words + 188 digits | 3 words + 56 digits | **70% fewer digits** |
+| **IPv4 (4 bytes)** | 4 words | 4 words | No change (already optimal) |
+| **IPv6 (16 bytes)** | 4 words + 96 digits | 4 words + 28 digits | **71% fewer digits** |
+| **Bitcoin (21 bytes)** | 4 words + 124 digits | 4 words + 32 digits | **74% fewer digits** |
+| **Ethereum (20 bytes)** | 4 words + 120 digits | 4 words + 32 digits | **73% fewer digits** |
+| **SHA-256 (32 bytes)** | 4 words + 188 digits | 4 words + 56 digits | **70% fewer digits** |
 
 ## 🌟 Real-World Examples
 
@@ -144,7 +144,7 @@ The 16K word system is **production-ready** with:
 
 ## 🚀 Ready for Launch!
 
-The three-word-networking library with 16K dictionary support represents a **massive leap forward** in human-friendly address encoding. With 70%+ efficiency improvements while maintaining perfect performance and usability, this upgrade makes the system significantly more practical for real-world deployment.
+The four-word-networking library with 16K dictionary support represents a **massive leap forward** in human-friendly address encoding. With 70%+ efficiency improvements while maintaining perfect performance and usability, this upgrade makes the system significantly more practical for real-world deployment.
 
 **Key benefits for users:**
 - Shorter, more manageable addresses

@@ -14,7 +14,7 @@ pub const WORD_COUNT: usize = 16_384;
 /// Number of bits needed per word
 pub const BITS_PER_WORD: usize = 14;
 
-/// Total bits covered by 3 words
+/// Total bits covered by 4 words
 pub const BITS_THREE_WORDS: usize = 42;
 
 /// Maximum word index (0-based)
@@ -141,8 +141,8 @@ impl Dictionary16K {
         }
     }
     
-    /// Encode bytes into three words using the 16k dictionary
-    /// For up to 5 bytes (40 bits), which fits in 3 words (42 bits)
+    /// Encode bytes into four words using the 16k dictionary
+    /// For up to 5 bytes (40 bits), which fits in 4 words (42 bits)
     pub fn encode_bytes(&self, data: &[u8]) -> Result<Vec<String>, DictionaryError> {
         if data.is_empty() || data.len() > 5 {
             return Err(DictionaryError::InvalidWordCount {
@@ -152,7 +152,7 @@ impl Dictionary16K {
         }
         
         
-        // We have exactly 42 bits to work with (3 words × 14 bits)
+        // We have exactly 42 bits to work with (4 words × 14 bits)
         // We'll use a different approach:
         // - For lengths 1-4: Use 2 bits for length, 40 bits for data
         // - For length 5: We need all 40 bits for data, so encode length differently
@@ -195,7 +195,7 @@ impl Dictionary16K {
         ])
     }
     
-    /// Decode three words back to bytes
+    /// Decode four words back to bytes
     pub fn decode_words(&self, words: &[&str]) -> Result<Vec<u8>, DictionaryError> {
         if words.len() != 3 {
             return Err(DictionaryError::InvalidWordCount {
@@ -211,7 +211,7 @@ impl Dictionary16K {
         let idx3 = self.get_index(words[2])?;
         
         
-        // Reconstruct the value (3 words × 14 bits = 42 bits)
+        // Reconstruct the value (4 words × 14 bits = 42 bits)
         let value = ((idx1 as u64) << 28) | ((idx2 as u64) << 14) | (idx3 as u64);
         
         
@@ -312,7 +312,7 @@ pub mod utils {
         ])
     }
     
-    /// Convert three words to 14-bit indices
+    /// Convert four words to 14-bit indices
     pub fn words_to_indices(words: [&str; 3]) -> Result<[u16; 3], DictionaryError> {
         let dict = get_global_dictionary()?;
         Ok([
@@ -402,7 +402,7 @@ mod tests {
         let index = utils::word_to_index(word).unwrap();
         assert_eq!(index, 0);
         
-        // Test three words conversion
+        // Test four words conversion
         let indices = [0, 1, 2];
         let words = utils::indices_to_words(indices).unwrap();
         assert_eq!(words.len(), 3);

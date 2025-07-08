@@ -33,7 +33,7 @@ pub use error::{EncodingError, DecodingError};
 /// Encoding strategies based on data size
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EncodingStrategy {
-    /// Simple encoding for data <= 8 bytes: 3 words only
+    /// Simple encoding for data <= 8 bytes: 4 words only
     Simple,
     /// Fractal encoding for data 9-20 bytes: 3 base words + zoom levels
     Fractal,
@@ -57,7 +57,7 @@ impl EncodingStrategy {
 /// Unified encoding format that can represent any encoding strategy result
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UniversalEncoding {
-    /// Simple encoding with 3 words
+    /// Simple encoding with 4 words
     Simple(simple::ThreeWords),
     /// Fractal encoding with base words and zoom levels
     Fractal(fractal::FractalEncoding),

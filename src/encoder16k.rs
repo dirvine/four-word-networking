@@ -1,7 +1,7 @@
 //! 16,384 word encoder with hybrid approach
 //!
 //! This encoder uses the 16K dictionary to provide better encoding efficiency:
-//! - 3 words cover 42 bits (significantly more than the old 4K system)
+//! - 4 words cover 42 bits (significantly more than the old 4K system)
 //! - Additional digits used only when needed for larger data
 //! - Optimized for common address types (IPv4, IPv6, Bitcoin, Ethereum)
 
@@ -46,11 +46,11 @@ pub enum DecodingError {
 /// Encoding result that can represent different strategies
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Encoding16K {
-    /// Simple: 3 words only (≤42 bits)
+    /// Simple: 4 words only (≤42 bits)
     Simple {
         words: [String; 3],
     },
-    /// Hybrid: 3 words + digit groups (>42 bits)
+    /// Hybrid: 4 words + digit groups (>42 bits)
     Hybrid {
         words: [String; 3],
         digits: Vec<String>,
@@ -128,7 +128,7 @@ impl UniversalEncoder16K {
         let data_bits = data.len() * 8;
         
         if data_bits <= 42 {
-            // Fits perfectly in 3 words
+            // Fits perfectly in 4 words
             self.encode_simple(data)
         } else {
             // Need hybrid approach
@@ -136,7 +136,7 @@ impl UniversalEncoder16K {
         }
     }
     
-    /// Encode using simple strategy (≤42 bits → 3 words)
+    /// Encode using simple strategy (≤42 bits → 4 words)
     fn encode_simple(&self, data: &[u8]) -> Result<Encoding16K, EncodingError> {
         // Pad data to exactly 42 bits (5.25 bytes, so we use 6 bytes with padding)
         let mut padded = [0u8; 6];
@@ -171,9 +171,9 @@ impl UniversalEncoder16K {
         Ok(Encoding16K::Simple { words })
     }
     
-    /// Encode using hybrid strategy (>42 bits → 3 words + digits)
+    /// Encode using hybrid strategy (>42 bits → 4 words + digits)
     fn encode_hybrid(&self, data: &[u8]) -> Result<Encoding16K, EncodingError> {
-        // Use first 5.25 bytes (42 bits) for the 3 words
+        // Use first 5.25 bytes (42 bits) for the 4 words
         let word_bytes = &data[..5.min(data.len())];
         let simple_encoding = self.encode_simple(word_bytes)?;
         
@@ -250,7 +250,7 @@ impl UniversalEncoder16K {
     
     /// Decode hybrid encoding
     fn decode_hybrid(&self, words: &[String; 3], digits: &[String]) -> Result<Vec<u8>, DecodingError> {
-        // Decode the base 3 words
+        // Decode the base 4 words
         let mut result = self.decode_simple(words)?;
         
         // Decode digit groups
@@ -272,16 +272,16 @@ impl UniversalEncoder16K {
         let original_size = data.len();
         
         if data_bits <= 42 {
-            // Simple encoding: just 3 words
+            // Simple encoding: just 4 words
             EncodingEfficiency {
                 original_bytes: original_size,
                 encoded_words: 3,
                 encoded_digits: 0,
                 efficiency_rating: EfficiencyRating::Excellent,
-                description: "Perfect fit in 3 words".to_string(),
+                description: "Perfect fit in 4 words".to_string(),
             }
         } else {
-            // Hybrid encoding: 3 words + digits
+            // Hybrid encoding: 4 words + digits
             let remaining_bytes = original_size.saturating_sub(5);
             let digit_groups = (remaining_bytes + 1) / 2;
             
@@ -298,7 +298,7 @@ impl UniversalEncoder16K {
                 encoded_words: 3,
                 encoded_digits: digit_groups * 4,
                 efficiency_rating: rating,
-                description: format!("3 words + {} digits", digit_groups * 4),
+                description: format!("4 words + {} digits", digit_groups * 4),
             }
         }
     }
@@ -317,11 +317,11 @@ pub struct EncodingEfficiency {
 /// Efficiency rating scale
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EfficiencyRating {
-    Excellent,  // ≤5 bytes: 3 words only or minimal digits
-    VeryGood,   // 6-10 bytes: 3 words + few digits
-    Good,       // 11-16 bytes: 3 words + moderate digits
-    Fair,       // 17-24 bytes: 3 words + many digits
-    Poor,       // 25+ bytes: 3 words + very many digits
+    Excellent,  // ≤5 bytes: 4 words only or minimal digits
+    VeryGood,   // 6-10 bytes: 4 words + few digits
+    Good,       // 11-16 bytes: 4 words + moderate digits
+    Fair,       // 17-24 bytes: 4 words + many digits
+    Poor,       // 25+ bytes: 4 words + very many digits
 }
 
 impl fmt::Display for EfficiencyRating {
@@ -350,7 +350,7 @@ mod tests {
     fn test_simple_encoding() {
         let encoder = UniversalEncoder16K::new().unwrap();
         
-        // Test small data that fits in 3 words
+        // Test small data that fits in 4 words
         let data = vec![0x12, 0x34, 0x56, 0x78]; // 32 bits
         let encoded = encoder.encode(&data).unwrap();
         

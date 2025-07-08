@@ -6,7 +6,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use crate::{
     simple_perfect_encoder::{SimplePerfectEncoder, SimpleEncoding, SimpleDictionary},
-    ThreeWordError, Result,
+    FourWordError, Result,
 };
 
 /// Main encoder that provides perfect reconstruction for all IP addresses
@@ -23,7 +23,7 @@ impl SimpleAdaptiveEncoder {
         })
     }
     
-    /// Encode any IP address with port to three words
+    /// Encode any IP address with port to four words
     pub fn encode(&self, address: &str) -> Result<String> {
         let (ip, port) = self.parse_address(address)?;
         
@@ -54,7 +54,7 @@ impl SimpleAdaptiveEncoder {
         Ok(encoding.to_string())
     }
     
-    /// Decode three words back to IP address with port
+    /// Decode four words back to IP address with port
     pub fn decode(&self, words: &str) -> Result<String> {
         let encoding = SimpleEncoding::from_string(words, &self.dictionary)?;
         let data = self.encoder.decode_48_bits(&encoding)?;
@@ -94,11 +94,11 @@ impl SimpleAdaptiveEncoder {
                 };
                 
                 let ip = addr_part.parse::<Ipv6Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
                 
                 let port = if let Some(port_str) = port_part {
                     port_str.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_str)))?
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?
                 } else {
                     0
                 };
@@ -118,7 +118,7 @@ impl SimpleAdaptiveEncoder {
                 
                 if let Ok(ip) = addr_part.parse::<Ipv4Addr>() {
                     let port = port_part.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
                     
                     return Ok((IpAddr::V4(ip), port));
                 }
@@ -129,7 +129,7 @@ impl SimpleAdaptiveEncoder {
         if let Ok(ip) = input.parse::<IpAddr>() {
             Ok((ip, 0))
         } else {
-            Err(ThreeWordError::InvalidInput(format!("Invalid IP address: {}", input)))
+            Err(FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))
         }
     }
 }

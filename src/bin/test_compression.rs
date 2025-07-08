@@ -13,7 +13,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
             if stats.fits_in_three_words {
                 match encoder.encode(address) {
                     Ok(words) => {
-                        println!("✓ Three words: {}", words);
+                        println!("✓ Four words: {}", words);
                         
                         // Test round-trip
                         match encoder.decode(&words) {
@@ -30,7 +30,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
                     Err(e) => println!("✗ Encode error: {}", e),
                 }
             } else {
-                println!("✗ Cannot encode in three words (needs {} bits)", stats.compressed_bits);
+                println!("✗ Cannot encode in four words (needs {} bits)", stats.compressed_bits);
             }
         }
         Err(e) => println!("✗ Compression analysis error: {}", e),
@@ -38,7 +38,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
 }
 
 fn main() {
-    println!("Three-Word Networking: Advanced Compression Test");
+    println!("Four-Word Networking: Advanced Compression Test");
     println!("================================================");
     
     let encoder = match CompressedEncoder::new() {
@@ -102,7 +102,7 @@ fn main() {
     
     println!("\n## Summary");
     println!("═══════════════════════════════════════════════════");
-    println!("✓ Private networks compress to fit in 3 words");
+    println!("✓ Private networks compress to fit in 4 words");
     println!("✓ Common ports (80, 443, 22, etc.) use only 4 bits");
     println!("✓ IPv6 localhost is supported");
     println!("✗ Public IPv4 addresses need 35+ bits (too large)");

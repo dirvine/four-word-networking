@@ -3,7 +3,7 @@
 use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
-    println!("=== IP+Port Three-Word Encoder V2 Demo ===");
+    println!("=== IP+Port Four-Word Encoder V2 Demo ===");
     println!("Direct dictionary encoding for perfect round-trip conversion\n");
     
     let encoder = IpPortEncoderV2::new()?;
@@ -142,7 +142,7 @@ fn demo_compression_stats(encoder: &IpPortEncoderV2) -> Result<(), IpPortErrorV2
     }
     
     println!("\nKey Features:");
-    println!("- Always produces exactly 3 words");
+    println!("- Always produces exactly 4 words");
     println!("- Perfect round-trip for localhost and private networks");
     println!("- High compression ratios (33-83%)");
     println!("- No multiaddr overhead");

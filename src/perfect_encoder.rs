@@ -1,4 +1,4 @@
-//! Perfect Multi-Dimensional Encoder for Three-Word Networking
+//! Perfect Multi-Dimensional Encoder for Four-Word Networking
 //!
 //! This module implements a perfect encoding scheme that achieves 100% reconstruction
 //! by utilizing multiple orthogonal dimensions of word representation:
@@ -8,7 +8,7 @@
 //! - Separator variations (1-3 bits)
 
 use std::collections::HashMap;
-use crate::{ThreeWordError, Result};
+use crate::{FourWordError, Result};
 
 /// Supported separators for encoding additional bits
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -137,7 +137,7 @@ impl MultiDimEncoding {
         }
         
         if separators.len() != 2 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Expected 2 separators, found {}", separators.len())
             ));
         }
@@ -145,8 +145,8 @@ impl MultiDimEncoding {
         // Split into words
         let parts: Vec<&str> = s.split(|c: char| ".-_+".contains(c)).collect();
         if parts.len() != 3 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Expected 3 words, found {}", parts.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Expected 4 words, found {}", parts.len())
             ));
         }
         
@@ -157,7 +157,7 @@ impl MultiDimEncoding {
         for part in &parts {
             let normalized = part.to_lowercase();
             let word_index = dictionary.find_word(&normalized)
-                .ok_or_else(|| ThreeWordError::InvalidInput(
+                .ok_or_else(|| FourWordError::InvalidInput(
                     format!("Word '{}' not in dictionary", normalized)
                 ))?;
             normalized_words.push(dictionary.get_word(word_index));
@@ -226,7 +226,7 @@ impl PerfectDictionary {
             .collect();
         
         if words.len() != 16384 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Expected 16384 words, found {}", words.len())
             ));
         }
@@ -263,7 +263,7 @@ impl PerfectEncoder {
         })
     }
     
-    /// Encode 48 bits into multi-dimensional three-word format
+    /// Encode 48 bits into multi-dimensional four-word format
     pub fn encode_48_bits(&self, data: u64) -> Result<MultiDimEncoding> {
         // Ensure we only have 48 bits
         let data = data & 0xFFFF_FFFF_FFFF;
@@ -317,11 +317,11 @@ impl PerfectEncoder {
     pub fn decode_48_bits(&self, encoding: &MultiDimEncoding) -> Result<u64> {
         // Get word indices
         let word1_idx = self.dictionary.find_word(&encoding.words[0])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 1 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 1 not found".to_string()))? as u64;
         let word2_idx = self.dictionary.find_word(&encoding.words[1])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 2 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 2 not found".to_string()))? as u64;
         let word3_idx = self.dictionary.find_word(&encoding.words[2])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 3 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 3 not found".to_string()))? as u64;
         
         // Encode order (3 bits)
         let order_bits = (encoding.order as u64) & 0x7;

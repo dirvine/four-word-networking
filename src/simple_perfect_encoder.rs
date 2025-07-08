@@ -1,12 +1,12 @@
 //! Simple Perfect Encoder - Direct 48-bit encoding without complex permutations
 //!
 //! This module provides a simpler perfect encoding that maps 48 bits directly
-//! to three words without using word order permutations.
+//! to four words without using word order permutations.
 
-use crate::{ThreeWordError, Result};
+use crate::{FourWordError, Result};
 use std::collections::HashMap;
 
-/// Simple encoding using just three words
+/// Simple encoding using just four words
 #[derive(Debug, Clone)]
 pub struct SimpleEncoding {
     pub words: [String; 3],
@@ -41,8 +41,8 @@ impl SimpleEncoding {
         };
         
         if parts.len() != 3 {
-            return Err(ThreeWordError::InvalidInput(
-                format!("Expected 3 words, found {}", parts.len())
+            return Err(FourWordError::InvalidInput(
+                format!("Expected 4 words, found {}", parts.len())
             ));
         }
         
@@ -56,7 +56,7 @@ impl SimpleEncoding {
         // Verify all words exist in dictionary
         for word in &words {
             if dictionary.find_word(word).is_none() {
-                return Err(ThreeWordError::InvalidInput(
+                return Err(FourWordError::InvalidInput(
                     format!("Word '{}' not in dictionary", word)
                 ));
             }
@@ -83,7 +83,7 @@ impl SimpleDictionary {
             .collect();
         
         if words.len() != 16384 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Expected 16384 words, found {}", words.len())
             ));
         }
@@ -120,7 +120,7 @@ impl SimplePerfectEncoder {
         })
     }
     
-    /// Encode 48 bits into three words
+    /// Encode 48 bits into four words
     pub fn encode_48_bits(&self, data: u64, is_ipv6: bool) -> Result<SimpleEncoding> {
         // We have 16384 words (14 bits), so we can use 14 bits per word
         // But for 48-bit data, we need 16 bits per word
@@ -139,15 +139,15 @@ impl SimplePerfectEncoder {
         })
     }
     
-    /// Decode three words back to 48 bits
+    /// Decode four words back to 48 bits
     pub fn decode_48_bits(&self, encoding: &SimpleEncoding) -> Result<u64> {
         // Get word indices
         let word1_idx = self.dictionary.find_word(&encoding.words[0])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 1 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 1 not found".to_string()))? as u64;
         let word2_idx = self.dictionary.find_word(&encoding.words[1])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 2 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 2 not found".to_string()))? as u64;
         let word3_idx = self.dictionary.find_word(&encoding.words[2])
-            .ok_or_else(|| ThreeWordError::InvalidInput("Word 3 not found".to_string()))? as u64;
+            .ok_or_else(|| FourWordError::InvalidInput("Word 3 not found".to_string()))? as u64;
         
         // Reconstruct what we can (only 42 bits out of 48)
         // This means we lose 6 bits of precision

@@ -23,7 +23,7 @@ impl SimpleEncoder {
         Self { dictionaries }
     }
     
-    /// Encode data into three words
+    /// Encode data into four words
     pub fn encode(&self, data: &[u8]) -> EncodingResult<ThreeWords> {
         if data.is_empty() {
             return Err(EncodingError::DataTooSmall(0));
@@ -62,7 +62,7 @@ impl SimpleEncoder {
         Ok(ThreeWords { actor, action, object })
     }
     
-    /// Decode three words back to original data
+    /// Decode four words back to original data
     pub fn decode(&self, words: &ThreeWords) -> DecodingResult<Vec<u8>> {
         // Get word indices
         let actor_index = self.dictionaries.get_actor_index(&words.actor)?;
@@ -136,7 +136,7 @@ impl ThreeWords {
         let parts: Vec<&str> = s.split('.').collect();
         if parts.len() != 3 {
             return Err(DecodingError::InvalidFormat(
-                format!("Expected 3 words separated by dots, got {}", parts.len())
+                format!("Expected 4 words separated by dots, got {}", parts.len())
             ));
         }
         

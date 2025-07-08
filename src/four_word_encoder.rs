@@ -1,10 +1,11 @@
-//! Four-Word Perfect Encoder for IPv4 and Adaptive IPv6
+//! Four-Word Perfect Encoder for IPv4 and Perfect IPv6
 //!
 //! This module provides perfect 4-word encoding for IPv4 addresses (with ports)
-//! and adaptive 4-6 word encoding for IPv6 addresses using compression.
+//! and perfect 4-5 word encoding for IPv6 addresses using advanced pattern detection
+//! and multi-dimensional encoding techniques.
 
-use crate::{ThreeWordError, Result};
-use crate::ipv6_compression::Ipv6Compressor;
+use crate::{FourWordError, Result};
+use crate::ipv6_perfect_encoder::{IPv6PerfectEncoder, IPv6PerfectEncoding};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::collections::HashMap;
 
@@ -43,7 +44,7 @@ impl FourWordEncoding {
         };
         
         if parts.len() < 4 || parts.len() > 6 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Expected 4-6 words, found {}", parts.len())
             ));
         }
@@ -56,7 +57,7 @@ impl FourWordEncoding {
         // Verify all words exist in dictionary
         for word in &words {
             if dictionary.find_word(word).is_none() {
-                return Err(ThreeWordError::InvalidInput(
+                return Err(FourWordError::InvalidInput(
                     format!("Word '{}' not in dictionary", word)
                 ));
             }
@@ -83,7 +84,7 @@ impl FourWordDictionary {
             .collect();
         
         if words.len() != 16384 {
-            return Err(ThreeWordError::InvalidInput(
+            return Err(FourWordError::InvalidInput(
                 format!("Expected 16384 words, found {}", words.len())
             ));
         }
@@ -108,15 +109,17 @@ impl FourWordDictionary {
     }
 }
 
-/// Perfect encoder with 4 words for IPv4 and adaptive for IPv6
+/// Perfect encoder with 4 words for IPv4 and perfect 4-5 words for IPv6
 pub struct FourWordPerfectEncoder {
     dictionary: FourWordDictionary,
+    ipv6_encoder: IPv6PerfectEncoder,
 }
 
 impl FourWordPerfectEncoder {
     pub fn new() -> Result<Self> {
         Ok(Self {
             dictionary: FourWordDictionary::new()?,
+            ipv6_encoder: IPv6PerfectEncoder::new()?,
         })
     }
     
@@ -148,14 +151,14 @@ impl FourWordPerfectEncoder {
     /// Decode IPv4 from 4 words with perfect reconstruction
     pub fn decode_ipv4(&self, encoding: &FourWordEncoding) -> Result<(Ipv4Addr, u16)> {
         if encoding.words.len() != 4 {
-            return Err(ThreeWordError::InvalidInput("IPv4 requires exactly 4 words".to_string()));
+            return Err(FourWordError::InvalidInput("IPv4 requires exactly 4 words".to_string()));
         }
         
         // Get word indices
         let mut indices = Vec::new();
         for word in &encoding.words {
             let idx = self.dictionary.find_word(word)
-                .ok_or_else(|| ThreeWordError::InvalidInput(format!("Word '{}' not found", word)))?;
+                .ok_or_else(|| FourWordError::InvalidInput(format!("Word '{}' not found", word)))?;
             indices.push(idx as u64);
         }
         
@@ -171,45 +174,17 @@ impl FourWordPerfectEncoder {
         Ok((ip, port))
     }
     
-    /// Encode IPv6 using compression (4-6 words)
+    /// Encode IPv6 using perfect compression (4-5 words)
     pub fn encode_ipv6(&self, ip: Ipv6Addr, port: u16) -> Result<FourWordEncoding> {
-        // Use the existing IPv6 compressor
-        let compressed = Ipv6Compressor::compress(ip, Some(port))?;
-        let word_count = compressed.recommended_word_count();
+        // Use the new IPv6 perfect encoder
+        let perfect_encoding = self.ipv6_encoder.encode(ip, Some(port))?;
         
-        // Encode the compressed data into words
-        let mut data_bits = 0u128;
+        // Convert IPv6PerfectEncoding to FourWordEncoding
+        let encoding_str = perfect_encoding.to_string();
         
-        // Pack category (3 bits)
-        data_bits |= match compressed.category {
-            crate::ipv6_compression::Ipv6Category::Loopback => 0,
-            crate::ipv6_compression::Ipv6Category::LinkLocal => 1,
-            crate::ipv6_compression::Ipv6Category::UniqueLocal => 2,
-            crate::ipv6_compression::Ipv6Category::Documentation => 3,
-            crate::ipv6_compression::Ipv6Category::GlobalUnicast => 4,
-            crate::ipv6_compression::Ipv6Category::Unspecified => 5,
-            crate::ipv6_compression::Ipv6Category::Special => 6,
-        } as u128;
-        
-        // Pack compressed data
-        for (i, &byte) in compressed.compressed_data.iter().enumerate() {
-            if i < 15 { // Limit to fit in our word count
-                data_bits |= (byte as u128) << (3 + i * 8);
-            }
-        }
-        
-        // Pack port at the end if present
-        if let Some(p) = compressed.port {
-            data_bits |= (p as u128) << (compressed.compressed_bits);
-        }
-        
-        // Split into words (14 bits each)
-        let mut words = Vec::new();
-        for i in 0..word_count {
-            let shift = (word_count - 1 - i) * 14;
-            let word_idx = ((data_bits >> shift) & 0x3FFF) as usize;
-            words.push(self.dictionary.get_word(word_idx));
-        }
+        // Parse the multi-dimensional encoding
+        let parts: Vec<&str> = encoding_str.split('-').collect();
+        let words: Vec<String> = parts.iter().map(|s| s.to_lowercase()).collect();
         
         Ok(FourWordEncoding {
             words,
@@ -217,56 +192,35 @@ impl FourWordPerfectEncoder {
         })
     }
     
-    /// Decode IPv6 from 4-6 words
+    /// Decode IPv6 from 4-6 words using perfect reconstruction
     pub fn decode_ipv6(&self, encoding: &FourWordEncoding) -> Result<(Ipv6Addr, Option<u16>)> {
         if encoding.words.len() < 4 || encoding.words.len() > 6 {
-            return Err(ThreeWordError::InvalidInput("IPv6 requires 4-6 words".to_string()));
+            return Err(FourWordError::InvalidInput("IPv6 requires 4-6 words".to_string()));
         }
         
-        // Get word indices and reconstruct data
-        let mut data_bits = 0u128;
-        for (i, word) in encoding.words.iter().enumerate() {
-            let idx = self.dictionary.find_word(word)
-                .ok_or_else(|| ThreeWordError::InvalidInput(format!("Word '{}' not found", word)))? as u128;
-            let shift = (encoding.words.len() - 1 - i) * 14;
-            data_bits |= idx << shift;
-        }
+        // Convert FourWordEncoding back to IPv6PerfectEncoding format
+        let words_str = encoding.words.iter()
+            .map(|w| capitalize(w))
+            .collect::<Vec<_>>()
+            .join("-");
         
-        // Extract category (3 bits)
-        let category_bits = (data_bits & 0x7) as u8;
-        let category = match category_bits {
-            0 => crate::ipv6_compression::Ipv6Category::Loopback,
-            1 => crate::ipv6_compression::Ipv6Category::LinkLocal,
-            2 => crate::ipv6_compression::Ipv6Category::UniqueLocal,
-            3 => crate::ipv6_compression::Ipv6Category::Documentation,
-            4 => crate::ipv6_compression::Ipv6Category::GlobalUnicast,
-            5 => crate::ipv6_compression::Ipv6Category::Unspecified,
-            6 => crate::ipv6_compression::Ipv6Category::Special,
-            _ => return Err(ThreeWordError::InvalidInput("Invalid IPv6 category".to_string())),
+        // Parse using the IPv6 multi-dimensional decoder
+        use crate::ipv6_multi_dimensional::{IPv6MultiDimEncoding, IPv6Dictionary};
+        let ipv6_dict = IPv6Dictionary::new()?;
+        let multi_dim_encoding = IPv6MultiDimEncoding::from_string(&words_str, &ipv6_dict)?;
+        
+        // Create IPv6PerfectEncoding from the multi-dimensional encoding
+        // Note: We need to reverse-engineer the pattern from the encoding
+        let perfect_encoding = IPv6PerfectEncoding {
+            encoding: multi_dim_encoding,
+            pattern: crate::ipv6_perfect_patterns::IPv6Pattern::Unstructured, // Will be determined during decoding
+            word_count: encoding.words.len(),
+            compression_ratio: 0.0, // Not needed for decoding
+            is_perfect: true,
         };
         
-        // For demo purposes, return simplified addresses based on category
-        let (ip, port) = match category {
-            crate::ipv6_compression::Ipv6Category::Loopback => (Ipv6Addr::LOCALHOST, Some(443)),
-            crate::ipv6_compression::Ipv6Category::Unspecified => (Ipv6Addr::UNSPECIFIED, None),
-            crate::ipv6_compression::Ipv6Category::LinkLocal => {
-                // fe80::1
-                let segments = [0xfe80, 0, 0, 0, 0, 0, 0, 1];
-                (Ipv6Addr::from(segments), Some(22))
-            }
-            crate::ipv6_compression::Ipv6Category::Documentation => {
-                // 2001:db8::1
-                let segments = [0x2001, 0x0db8, 0, 0, 0, 0, 0, 1];
-                (Ipv6Addr::from(segments), Some(80))
-            }
-            _ => {
-                // Simplified reconstruction for other categories
-                let segments = [0x2001, 0x0db8, 0, 0, 0, 0, 0, 1];
-                (Ipv6Addr::from(segments), Some(443))
-            }
-        };
-        
-        Ok((ip, port))
+        // Use the IPv6 perfect encoder to decode
+        self.ipv6_encoder.decode(&perfect_encoding)
     }
 }
 
@@ -326,11 +280,11 @@ impl FourWordAdaptiveEncoder {
                 };
                 
                 let ip = addr_part.parse::<Ipv6Addr>()
-                    .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
+                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
                 
                 let port = if let Some(port_str) = port_part {
                     port_str.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_str)))?
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?
                 } else {
                     0
                 };
@@ -350,7 +304,7 @@ impl FourWordAdaptiveEncoder {
                 
                 if let Ok(ip) = addr_part.parse::<Ipv4Addr>() {
                     let port = port_part.parse::<u16>()
-                        .map_err(|_| ThreeWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
                     
                     return Ok((IpAddr::V4(ip), port));
                 }
@@ -361,7 +315,7 @@ impl FourWordAdaptiveEncoder {
         if let Ok(ip) = input.parse::<IpAddr>() {
             Ok((ip, 0))
         } else {
-            Err(ThreeWordError::InvalidInput(format!("Invalid IP address: {}", input)))
+            Err(FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))
         }
     }
 }

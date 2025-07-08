@@ -6,7 +6,7 @@
 use std::net::Ipv6Addr;
 use crate::{
     perfect_encoder::{PerfectEncoder, MultiDimEncoding, Separator, CasePattern},
-    ThreeWordError, Result,
+    FourWordError, Result,
 };
 
 /// IPv6 compression categories
@@ -126,7 +126,7 @@ impl IPv6PerfectCodec {
             IPv6Category::Loopback => [0, 0, 0, 0, 0, 0, 0, 1],
             IPv6Category::LinkLocal => {
                 if compressed.compressed_data.len() < 8 {
-                    return Err(ThreeWordError::InvalidInput("Invalid link-local data".to_string()));
+                    return Err(FourWordError::InvalidInput("Invalid link-local data".to_string()));
                 }
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfe80;
@@ -140,7 +140,7 @@ impl IPv6PerfectCodec {
             }
             IPv6Category::UniqueLocal => {
                 if compressed.compressed_data.len() < 13 {
-                    return Err(ThreeWordError::InvalidInput("Invalid unique-local data".to_string()));
+                    return Err(FourWordError::InvalidInput("Invalid unique-local data".to_string()));
                 }
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfc00;
@@ -157,7 +157,7 @@ impl IPv6PerfectCodec {
             }
             IPv6Category::IPv4Mapped => {
                 if compressed.compressed_data.len() < 4 {
-                    return Err(ThreeWordError::InvalidInput("Invalid IPv4-mapped data".to_string()));
+                    return Err(FourWordError::InvalidInput("Invalid IPv4-mapped data".to_string()));
                 }
                 let mut segments = [0u16; 8];
                 segments[5] = 0xffff;
@@ -168,7 +168,7 @@ impl IPv6PerfectCodec {
             _ => {
                 // For hash-compressed addresses, we can only reconstruct approximately
                 // This is a limitation we document
-                return Err(ThreeWordError::InvalidInput(
+                return Err(FourWordError::InvalidInput(
                     "Cannot perfectly reconstruct hash-compressed IPv6 addresses".to_string()
                 ));
             }
@@ -247,7 +247,7 @@ impl IPv6PerfectCodec {
             5 => IPv6Category::IPv4Mapped,
             6 => IPv6Category::Documentation,
             7 => IPv6Category::GlobalUnicast,
-            _ => return Err(ThreeWordError::InvalidInput("Invalid category".to_string())),
+            _ => return Err(FourWordError::InvalidInput("Invalid category".to_string())),
         };
         
         // Reconstruct compressed data based on category

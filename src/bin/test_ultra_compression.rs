@@ -4,7 +4,7 @@ use std::collections::HashMap;
 fn main() {
     let encoder = UniversalEncoder16K::new().expect("Failed to create encoder");
     
-    println!("Testing: Ultra-aggressive compression for 3-word encoding");
+    println!("Testing: Ultra-aggressive compression for 4-word encoding");
     println!("=========================================================");
     
     // Create ultra-compact encoding for common multiaddr patterns
@@ -37,8 +37,8 @@ fn main() {
         if ultra_compressed.len() <= 5 {
             match encoder.encode(&ultra_compressed) {
                 Ok(encoded) => {
-                    println!("   ✅ PERFECT! 3-word encoding: {}", encoded);
-                    println!("   🎯 Result: {:.1}% compression + 3 words total", 
+                    println!("   ✅ PERFECT! 4-word encoding: {}", encoded);
+                    println!("   🎯 Result: {:.1}% compression + 4 words total", 
                         (multiaddr.len() as f64 - ultra_compressed.len() as f64) / multiaddr.len() as f64 * 100.0);
                 }
                 Err(e) => {
@@ -65,7 +65,7 @@ fn main() {
     println!("   • Use single bits for protocol types (ip4=0, ip6=1)");
     println!("   • Pack IP addresses more efficiently");
     println!("   • Use lookup tables for common ports");
-    println!("   • Target ≤5 bytes for perfect 3-word encoding");
+    println!("   • Target ≤5 bytes for perfect 4-word encoding");
 }
 
 fn ultra_compress_multiaddr(multiaddr: &str) -> Vec<u8> {

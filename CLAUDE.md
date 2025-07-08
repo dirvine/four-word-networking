@@ -106,7 +106,7 @@ cargo run --bin debug_aim_issue
 ### Universal Encoding Module (`src/universal/`)
 
 Experimental system for encoding arbitrary 32-byte data:
-- **`simple.rs`**: ≤8 byte encoding (3 words only)
+- **`simple.rs`**: ≤8 byte encoding (4 words only)
 - **`fractal.rs`**: 9-20 byte encoding (base + zoom levels)
 - **`holographic.rs`**: 21-32 byte encoding (multiple story views)
 - **`dictionaries.rs`**: Four specialized 4,096-word dictionaries
