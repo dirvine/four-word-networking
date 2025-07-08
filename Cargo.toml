@@ -9,7 +9,7 @@ description = "Convert IP addresses to memorable words. IPv4 = 4 words (perfect)
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dirvine/four-word-networking"
 readme = "README.md"
-keywords = ["networking", "ip-address", "human-readable", "encoding", "cli", "four-word"]
+keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
 categories = ["network-programming", "command-line-utilities"]
 exclude = ["src/bin/debug_*", "src/bin/test_*", "*.disabled"]
 
