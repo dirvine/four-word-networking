@@ -1,6 +1,6 @@
 //! Test compression capabilities and demonstrate efficiency
 
-use three_word_networking::{CompressedEncoder, CompressionStats};
+use four_word_networking::{CompressedEncoder, CompressionStats};
 
 fn test_address(encoder: &CompressedEncoder, address: &str) {
     println!("\nTesting: {}", address);

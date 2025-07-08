@@ -4,7 +4,7 @@
 //! for IPv6 addresses, taking advantage of their hierarchical structure and
 //! common patterns to achieve optimal compression ratios.
 
-use std::net::{Ipv6Addr, IpAddr};
+use std::net::Ipv6Addr;
 use crate::error::ThreeWordError;
 
 /// IPv6 address categories for compression optimization

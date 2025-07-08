@@ -3,8 +3,8 @@
 //! This tool validates and demonstrates the performance improvements
 //! of the new 16,384 word dictionary system.
 
-use three_word_networking::dictionary16k::Dictionary16K;
-use three_word_networking::encoder16k::UniversalEncoder16K;
+use four_word_networking::dictionary16k::Dictionary16K;
+use four_word_networking::encoder16k::UniversalEncoder16K;
 use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

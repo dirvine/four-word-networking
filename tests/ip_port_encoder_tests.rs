@@ -1,6 +1,6 @@
 //! Comprehensive tests for IP+Port encoder
 
-use three_word_networking::ip_port_encoder::{IpPortEncoder, IpPortError};
+use four_word_networking::ip_port_encoder::{IpPortEncoder, IpPortError};
 
 #[test]
 fn test_ipv4_localhost_all_ports() {

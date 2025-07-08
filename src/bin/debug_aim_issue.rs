@@ -1,4 +1,4 @@
-use three_word_networking::{
+use four_word_networking::{
     ultra_compact_encoder::UltraCompactEncoder,
     ultra_compression::UltraCompressor,
     encoder16k::UniversalEncoder16K,

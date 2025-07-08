@@ -1,6 +1,6 @@
 //! Demonstration of IP+Port encoder v2 with perfect round-trip encoding
 
-use three_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
+use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
     println!("=== IP+Port Three-Word Encoder V2 Demo ===");

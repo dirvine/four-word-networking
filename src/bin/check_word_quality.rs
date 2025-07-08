@@ -1,4 +1,4 @@
-use three_word_networking::{UltraCompactEncoder, dictionary16k::Dictionary16K};
+use four_word_networking::{UltraCompactEncoder, dictionary16k::Dictionary16K};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 CHECKING WORD QUALITY IN DICTIONARY");

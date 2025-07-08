@@ -4,7 +4,7 @@
 //! and adaptive 4-6 word encoding for IPv6 addresses using compression.
 
 use crate::{ThreeWordError, Result};
-use crate::ipv6_compression::{Ipv6Compressor, CompressedIpv6};
+use crate::ipv6_compression::Ipv6Compressor;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::collections::HashMap;
 

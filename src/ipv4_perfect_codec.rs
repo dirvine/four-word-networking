@@ -5,8 +5,7 @@
 
 use std::net::Ipv4Addr;
 use crate::{
-    perfect_encoder::{PerfectEncoder, MultiDimEncoding, Separator},
-    ThreeWordError, Result,
+    perfect_encoder::{PerfectEncoder, MultiDimEncoding}, Result,
 };
 
 /// IPv4 codec that guarantees perfect reconstruction

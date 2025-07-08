@@ -3,7 +3,7 @@
 //! This example demonstrates the dramatic improvements achieved by upgrading
 //! from 4,096 words (12 bits per word) to 16,384 words (14 bits per word).
 
-use three_word_networking::encoder16k::{UniversalEncoder16K, Encoding16K};
+use four_word_networking::encoder16k::{UniversalEncoder16K, Encoding16K};
 use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

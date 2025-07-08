@@ -3,7 +3,7 @@
 //! This example demonstrates encoding IP addresses with ports directly
 //! into three memorable words, without multiaddr overhead.
 
-use three_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
+use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
     println!("=== Pure IP+Port Three-Word Encoding ===\n");

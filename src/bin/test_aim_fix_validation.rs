@@ -1,4 +1,4 @@
-use three_word_networking::UltraCompactEncoder;
+use four_word_networking::UltraCompactEncoder;
 use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -3,7 +3,7 @@
 //! Shows the multiaddress compression + balanced encoding producing the expected
 //! output format: "ocean.thunder.falcon · mystic.aurora.nebula"
 
-use three_word_networking::balanced_encoder::BalancedEncoder;
+use four_word_networking::balanced_encoder::BalancedEncoder;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🌟 Balanced Encoding Demo - Multiaddress Compression + 3-Word Grouping");

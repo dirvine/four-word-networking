@@ -1,4 +1,4 @@
-use three_word_networking::encoder16k::UniversalEncoder16K;
+use four_word_networking::encoder16k::UniversalEncoder16K;
 use std::collections::HashMap;
 
 fn main() {
@@ -49,8 +49,8 @@ fn main() {
             match encoder.encode(&ultra_compressed) {
                 Ok(encoded) => {
                     let word_count = match &encoded {
-                        three_word_networking::encoder16k::Encoding16K::Simple { .. } => 3,
-                        three_word_networking::encoder16k::Encoding16K::Hybrid { digits, .. } => 3 + digits.len() * 4,
+                        four_word_networking::encoder16k::Encoding16K::Simple { .. } => 3,
+                        four_word_networking::encoder16k::Encoding16K::Hybrid { digits, .. } => 3 + digits.len() * 4,
                     };
                     println!("   📈 Encoded: {} ({} total components)", encoded, word_count);
                 }

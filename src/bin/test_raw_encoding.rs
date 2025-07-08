@@ -1,4 +1,4 @@
-use three_word_networking::encoder16k::UniversalEncoder16K;
+use four_word_networking::encoder16k::UniversalEncoder16K;
 
 fn main() {
     let encoder = UniversalEncoder16K::new().expect("Failed to create encoder");
@@ -30,8 +30,8 @@ fn main() {
         match encoder.encode(&data) {
             Ok(encoded) => {
                 let word_count = match &encoded {
-                    three_word_networking::encoder16k::Encoding16K::Simple { words } => 3,
-                    three_word_networking::encoder16k::Encoding16K::Hybrid { words, digits } => 3 + digits.len() * 3,
+                    four_word_networking::encoder16k::Encoding16K::Simple { words } => 3,
+                    four_word_networking::encoder16k::Encoding16K::Hybrid { words, digits } => 3 + digits.len() * 3,
                 };
                 
                 println!("   Encoded: {}", encoded);

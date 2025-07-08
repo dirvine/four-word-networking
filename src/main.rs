@@ -4,7 +4,7 @@
 //! word combinations with perfect IPv4 reconstruction and adaptive IPv6 compression.
 
 use clap::{Parser, Subcommand};
-use four_word_networking::{IpPortEncoder, CompressedEncoder, UniversalEncoder, FourWordAdaptiveEncoder, Result};
+use four_word_networking::{IpPortEncoder, CompressedEncoder, UniversalEncoder, FourWordAdaptiveEncoder, SimpleAdaptiveEncoder, Result};
 
 #[derive(Parser)]
 #[command(name = "four-word-networking")]
