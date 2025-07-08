@@ -124,12 +124,16 @@ impl FourWordPerfectEncoder {
     }
     
     /// Encode IPv4 with perfect reconstruction (4 words = 56 bits)
-    pub fn encode_ipv4(&self, ip: Ipv4Addr, port: u16) -> Result<FourWordEncoding> {
+    pub fn encode_ipv4(&self, ip: Ipv4Addr, port: Option<u16>) -> Result<FourWordEncoding> {
         // IPv4: 32 bits + port: 16 bits = 48 bits total
         // We have 4 words × 14 bits = 56 bits available
+        // We use bit 48 as a flag: 1 = has port, 0 = no port
         let ip_bits = u32::from_be_bytes(ip.octets()) as u64;
-        let port_bits = port as u64;
-        let combined = (ip_bits << 16) | port_bits;
+        let (port_bits, has_port_flag) = match port {
+            Some(p) => (p as u64, 1u64),
+            None => (0u64, 0u64),
+        };
+        let combined = (has_port_flag << 48) | (ip_bits << 16) | port_bits;
         
         // Split into 4 × 14-bit chunks
         let word1_idx = ((combined >> 42) & 0x3FFF) as usize;
@@ -149,7 +153,7 @@ impl FourWordPerfectEncoder {
     }
     
     /// Decode IPv4 from 4 words with perfect reconstruction
-    pub fn decode_ipv4(&self, encoding: &FourWordEncoding) -> Result<(Ipv4Addr, u16)> {
+    pub fn decode_ipv4(&self, encoding: &FourWordEncoding) -> Result<(Ipv4Addr, Option<u16>)> {
         if encoding.words.len() != 4 {
             return Err(FourWordError::InvalidInput("IPv4 requires exactly 4 words".to_string()));
         }
@@ -162,14 +166,21 @@ impl FourWordPerfectEncoder {
             indices.push(idx as u64);
         }
         
-        // Reconstruct 48 bits
+        // Reconstruct bits
         let combined = (indices[0] << 42) | (indices[1] << 28) | (indices[2] << 14) | indices[3];
         
-        // Extract IP and port
-        let ip_bits = (combined >> 16) as u32;
-        let port = (combined & 0xFFFF) as u16;
+        // Check port flag (bit 48)
+        let has_port = (combined >> 48) & 1 == 1;
         
+        // Extract IP and port
+        let ip_bits = ((combined >> 16) & 0xFFFFFFFF) as u32;
         let ip = Ipv4Addr::from(ip_bits);
+        
+        let port = if has_port {
+            Some((combined & 0xFFFF) as u16)
+        } else {
+            None
+        };
         
         Ok((ip, port))
     }
@@ -244,7 +255,7 @@ impl FourWordAdaptiveEncoder {
         
         let encoding = match ip {
             IpAddr::V4(ipv4) => self.encoder.encode_ipv4(ipv4, port)?,
-            IpAddr::V6(ipv6) => self.encoder.encode_ipv6(ipv6, port)?,
+            IpAddr::V6(ipv6) => self.encoder.encode_ipv6(ipv6, port.unwrap_or(0))?,
         };
         
         Ok(encoding.to_string())
@@ -263,12 +274,16 @@ impl FourWordAdaptiveEncoder {
             }
         } else {
             let (ip, port) = self.encoder.decode_ipv4(&encoding)?;
-            Ok(format!("{}:{}", ip, port))
+            if let Some(p) = port {
+                Ok(format!("{}:{}", ip, p))
+            } else {
+                Ok(ip.to_string())
+            }
         }
     }
     
     /// Parse address string into IP and port
-    fn parse_address(&self, input: &str) -> Result<(IpAddr, u16)> {
+    fn parse_address(&self, input: &str) -> Result<(IpAddr, Option<u16>)> {
         // Handle IPv6 with port: [addr]:port
         if input.starts_with('[') {
             if let Some(close_idx) = input.find(']') {
@@ -283,10 +298,10 @@ impl FourWordAdaptiveEncoder {
                     .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
                 
                 let port = if let Some(port_str) = port_part {
-                    port_str.parse::<u16>()
-                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?
+                    Some(port_str.parse::<u16>()
+                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
                 } else {
-                    0
+                    None
                 };
                 
                 return Ok((IpAddr::V6(ip), port));
@@ -306,14 +321,14 @@ impl FourWordAdaptiveEncoder {
                     let port = port_part.parse::<u16>()
                         .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
                     
-                    return Ok((IpAddr::V4(ip), port));
+                    return Ok((IpAddr::V4(ip), Some(port)));
                 }
             }
         }
         
         // Try parsing as standalone IP
         if let Ok(ip) = input.parse::<IpAddr>() {
-            Ok((ip, 0))
+            Ok((ip, None))
         } else {
             Err(FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))
         }
