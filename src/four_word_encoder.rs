@@ -236,12 +236,37 @@ impl FourWordPerfectEncoder {
 }
 
 /// Main adaptive encoder that automatically handles IPv4/IPv6
+/// 
+/// This is the primary encoder for converting IP addresses to four-word format.
+/// It automatically detects IPv4 vs IPv6 and applies the appropriate encoding strategy.
+/// 
+/// # Examples
+/// 
+/// ```
+/// use four_word_networking::FourWordAdaptiveEncoder;
+/// 
+/// let encoder = FourWordAdaptiveEncoder::new()?;
+/// 
+/// // IPv4 encoding (always 4 words, perfect reconstruction)
+/// let ipv4_words = encoder.encode("192.168.1.1:443")?;
+/// assert_eq!(ipv4_words.split('.').count(), 4);
+/// 
+/// // IPv6 encoding (4-6 words, adaptive compression)
+/// let ipv6_words = encoder.encode("[::1]:443")?;
+/// assert!(ipv6_words.split('-').count() >= 4);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 pub struct FourWordAdaptiveEncoder {
     encoder: FourWordPerfectEncoder,
     dictionary: FourWordDictionary,
 }
 
 impl FourWordAdaptiveEncoder {
+    /// Create a new four-word adaptive encoder
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if the dictionary fails to load
     pub fn new() -> Result<Self> {
         Ok(Self {
             encoder: FourWordPerfectEncoder::new()?,
@@ -249,7 +274,34 @@ impl FourWordAdaptiveEncoder {
         })
     }
     
-    /// Encode any IP address with port
+    /// Encode any IP address with optional port into four words
+    /// 
+    /// # Arguments
+    /// 
+    /// * `address` - An IP address string in any of these formats:
+    ///   - IPv4: `"192.168.1.1"` or `"192.168.1.1:443"`
+    ///   - IPv6: `"::1"`, `"[::1]:443"`, `"2001:db8::1"`, etc.
+    /// 
+    /// # Returns
+    /// 
+    /// A four-word string using dots for IPv4 or dashes for IPv6
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use four_word_networking::FourWordAdaptiveEncoder;
+    /// 
+    /// let encoder = FourWordAdaptiveEncoder::new()?;
+    /// 
+    /// // IPv4 without port
+    /// let words = encoder.encode("192.168.1.1")?;
+    /// assert_eq!(words.split('.').count(), 4);
+    /// 
+    /// // IPv4 with port
+    /// let words = encoder.encode("192.168.1.1:443")?;
+    /// assert_eq!(words.split('.').count(), 4);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
     pub fn encode(&self, address: &str) -> Result<String> {
         let (ip, port) = self.parse_address(address)?;
         
@@ -261,7 +313,36 @@ impl FourWordAdaptiveEncoder {
         Ok(encoding.to_string())
     }
     
-    /// Decode words back to IP address with port
+    /// Decode four words back to IP address with optional port
+    /// 
+    /// # Arguments
+    /// 
+    /// * `words` - A four-word string in either format:
+    ///   - IPv4: `"word.word.word.word"` (dots, lowercase)
+    ///   - IPv6: `"Word-Word-Word-Word"` (dashes, title case)
+    /// 
+    /// # Returns
+    /// 
+    /// The original IP address string, with port if one was encoded
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use four_word_networking::FourWordAdaptiveEncoder;
+    /// 
+    /// let encoder = FourWordAdaptiveEncoder::new()?;
+    /// 
+    /// // Decode IPv4
+    /// let ipv4_words = "paper.broaden.smith.book";
+    /// let decoded = encoder.decode(ipv4_words)?;
+    /// assert_eq!(decoded, "192.168.1.1");
+    /// 
+    /// // Decode IPv6
+    /// let ipv6_words = "Bully-Book-Book-Book";
+    /// let decoded = encoder.decode(ipv6_words)?;
+    /// assert_eq!(decoded, "[::1]:443");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
     pub fn decode(&self, words: &str) -> Result<String> {
         let encoding = FourWordEncoding::from_string(words, &self.dictionary)?;
         

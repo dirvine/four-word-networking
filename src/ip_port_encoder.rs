@@ -37,7 +37,7 @@ pub struct IpPortAddress {
 }
 
 impl IpPortAddress {
-    /// Parse from string formats like "192.168.1.1:8080" or "[2001:db8::1]:443"
+    /// Parse from string formats like "192.168.1.1:8080" or "\[2001:db8::1\]:443"
     pub fn parse(input: &str) -> Result<Self, FourWordError> {
         // Handle IPv6 with port: [addr]:port
         if input.starts_with('[') {

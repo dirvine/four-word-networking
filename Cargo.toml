@@ -8,6 +8,8 @@ authors = ["David Irvine <david.irvine@autonomi.com>"]
 description = "Convert IP addresses to memorable words. IPv4 = 4 words (perfect), IPv6 = 4-6 words (adaptive). Always reversible."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dirvine/four-word-networking"
+documentation = "https://docs.rs/four-word-networking"
+homepage = "https://github.com/dirvine/four-word-networking"
 readme = "README.md"
 keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
 categories = ["network-programming", "command-line-utilities"]
@@ -42,3 +44,7 @@ path = "src/bin/4wn.rs"
 [lib]
 name = "four_word_networking"
 path = "src/lib.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
