@@ -13,8 +13,8 @@
 //!   4wn Ocean-Thunder-Falcon-Star    # Decodes to IPv6 (note dashes and case)
 
 use clap::Parser;
-use std::process;
 use four_word_networking::{FourWordAdaptiveEncoder, Result};
+use std::process;
 
 #[derive(Parser)]
 #[command(
@@ -40,7 +40,7 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    
+
     if let Err(e) = run(cli) {
         eprintln!("Error: {}", e);
         process::exit(1);
@@ -50,7 +50,7 @@ fn main() {
 fn run(cli: Cli) -> Result<()> {
     let encoder = FourWordAdaptiveEncoder::new()?;
     let input = cli.input.trim();
-    
+
     // Detect input type based on content
     if looks_like_words(input) {
         // Input is words, decode to IP:port
@@ -64,29 +64,35 @@ fn run(cli: Cli) -> Result<()> {
 /// Check if input looks like words (contains dots or dashes, all alphabetic)
 fn looks_like_words(input: &str) -> bool {
     // Check for word separators
-    let has_separators = input.contains('.') || input.contains('-') || input.contains('_') || input.contains('+');
+    let has_separators =
+        input.contains('.') || input.contains('-') || input.contains('_') || input.contains('+');
     if !has_separators {
         return false;
     }
-    
+
     // Split by any separator and count
     let segments: Vec<&str> = input.split(|c: char| ".-_+".contains(c)).collect();
-    
+
     // Must be 3-6 segments (3 for legacy, 4 for IPv4, 4-6 for IPv6)
     if segments.len() < 3 || segments.len() > 6 {
         return false;
     }
-    
+
     // Check if all segments are alphabetic
-    segments.iter().all(|segment| {
-        !segment.is_empty() && segment.chars().all(|c| c.is_alphabetic())
-    })
+    segments
+        .iter()
+        .all(|segment| !segment.is_empty() && segment.chars().all(|c| c.is_alphabetic()))
 }
 
 /// Encode IP address to words
-fn encode_address(encoder: &FourWordAdaptiveEncoder, address: &str, verbose: bool, quiet: bool) -> Result<()> {
+fn encode_address(
+    encoder: &FourWordAdaptiveEncoder,
+    address: &str,
+    verbose: bool,
+    quiet: bool,
+) -> Result<()> {
     let words = encoder.encode(address)?;
-    
+
     if quiet {
         // Minimal output for scripting
         println!("{}", words);
@@ -95,13 +101,13 @@ fn encode_address(encoder: &FourWordAdaptiveEncoder, address: &str, verbose: boo
         println!("Input: {}", address);
         println!("Words: {}", words);
         println!("Encoding: Perfect (100% reversible)");
-        
+
         if words.contains('.') && !words.contains('-') {
             println!("Type: IPv4 (dot separators, lowercase)");
         } else if words.contains('-') {
             println!("Type: IPv6 (dash separators, title case)");
         }
-        
+
         println!("Features:");
         println!("  • Perfect IPv4 reconstruction (4 words)");
         println!("  • Adaptive IPv6 compression (4-6 words)");
@@ -110,14 +116,19 @@ fn encode_address(encoder: &FourWordAdaptiveEncoder, address: &str, verbose: boo
         // Normal output
         println!("{}", words);
     }
-    
+
     Ok(())
 }
 
 /// Decode words to IP address
-fn decode_words(encoder: &FourWordAdaptiveEncoder, words: &str, verbose: bool, quiet: bool) -> Result<()> {
+fn decode_words(
+    encoder: &FourWordAdaptiveEncoder,
+    words: &str,
+    verbose: bool,
+    quiet: bool,
+) -> Result<()> {
     let address = encoder.decode(words)?;
-    
+
     if quiet {
         // Minimal output for scripting
         println!("{}", address);
@@ -126,7 +137,7 @@ fn decode_words(encoder: &FourWordAdaptiveEncoder, words: &str, verbose: bool, q
         println!("Input: {}", words);
         println!("Address: {}", address);
         println!("Decoding: Perfect reconstruction");
-        
+
         if words.contains('.') && !words.contains('-') {
             println!("Type: IPv4 (detected from dot separators)");
         } else if words.contains('-') {
@@ -136,7 +147,7 @@ fn decode_words(encoder: &FourWordAdaptiveEncoder, words: &str, verbose: bool, q
         // Normal output
         println!("{}", address);
     }
-    
+
     Ok(())
 }
 
@@ -148,17 +159,17 @@ mod tests {
     fn test_looks_like_words() {
         // Valid words - dots
         assert!(looks_like_words("ocean.thunder.falcon"));
-        
+
         // Valid words - dashes
         assert!(looks_like_words("Ocean-Thunder-Falcon"));
-        
+
         // Valid words - mixed separators
         assert!(looks_like_words("ocean_thunder_falcon"));
-        
+
         // Invalid - wrong count
         assert!(!looks_like_words("ocean.thunder"));
         assert!(!looks_like_words("a.b.c.d"));
-        
+
         // Invalid - contains non-alphabetic
         assert!(!looks_like_words("ocean.thunder.123"));
         assert!(!looks_like_words("192.168.1.1"));

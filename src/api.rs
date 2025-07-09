@@ -3,9 +3,9 @@
 //! This module provides a simple, intuitive API for converting between
 //! network addresses and four-word combinations.
 
+use crate::{AdaptiveEncoder, FourWordError, Result};
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
-use crate::{AdaptiveEncoder, FourWordError, Result};
 
 /// Main interface for Four-Word Networking
 ///
@@ -15,13 +15,13 @@ use crate::{AdaptiveEncoder, FourWordError, Result};
 ///
 /// ```rust
 /// use four_word_networking::FourWordNetworking;
-/// 
+///
 /// let twn = FourWordNetworking::new()?;
-/// 
+///
 /// // Convert IP to words
 /// let words = twn.encode("192.168.1.1:80")?;
 /// println!("{}", words); // e.g. "ocean.thunder.falcon"
-/// 
+///
 /// // Convert words back to IP
 /// let addr = twn.decode("ocean.thunder.falcon")?;
 /// println!("{}", addr); // "192.168.1.1:80"
@@ -51,7 +51,7 @@ impl FourWordNetworking {
     pub fn encode<T: Into<AddressInput>>(&self, input: T) -> Result<String> {
         let address_input = input.into();
         let address_str = address_input.to_address_string();
-        
+
         let result = self.encoder.encode(&address_str)?;
         Ok(result.words())
     }
@@ -62,20 +62,20 @@ impl FourWordNetworking {
     /// 4 words always decode to IPv4, 4-6 words always decode to IPv6.
     pub fn decode(&self, words: &str) -> Result<SocketAddr> {
         let address_str = self.encoder.decode(words)?;
-        
+
         // Parse the decoded string into a SocketAddr
         // The adaptive encoder returns strings like "192.168.1.1:80" or "[::1]:443"
-        SocketAddr::from_str(&address_str)
-            .or_else(|_| {
-                // Try parsing as IP without port, then add default port
-                if let Ok(ip) = address_str.parse::<IpAddr>() {
-                    Ok(SocketAddr::new(ip, 0))
-                } else {
-                    Err(FourWordError::InvalidInput(
-                        format!("Could not parse decoded address: {}", address_str)
-                    ))
-                }
-            })
+        SocketAddr::from_str(&address_str).or_else(|_| {
+            // Try parsing as IP without port, then add default port
+            if let Ok(ip) = address_str.parse::<IpAddr>() {
+                Ok(SocketAddr::new(ip, 0))
+            } else {
+                Err(FourWordError::InvalidInput(format!(
+                    "Could not parse decoded address: {}",
+                    address_str
+                )))
+            }
+        })
     }
 
     /// Get the number of words needed for an address
@@ -86,7 +86,7 @@ impl FourWordNetworking {
     pub fn word_count<T: Into<AddressInput>>(&self, input: T) -> Result<usize> {
         let address_input = input.into();
         let address_str = address_input.to_address_string();
-        
+
         let result = self.encoder.encode(&address_str)?;
         Ok(result.encoding.word_count)
     }
@@ -96,25 +96,25 @@ impl FourWordNetworking {
     /// Returns true if the input is 3-6 dot-separated dictionary words.
     pub fn is_valid_words(&self, words: &str) -> bool {
         let parts: Vec<&str> = words.split('.').collect();
-        
+
         // Must be 3-6 words
         if parts.len() < 3 || parts.len() > 6 {
             return false;
         }
-        
+
         // All parts must be non-empty alphabetic strings
-        parts.iter().all(|&part| {
-            !part.is_empty() && part.chars().all(|c| c.is_alphabetic())
-        })
+        parts
+            .iter()
+            .all(|&part| !part.is_empty() && part.chars().all(|c| c.is_alphabetic()))
     }
 
     /// Get information about an address encoding
     pub fn analyze<T: Into<AddressInput>>(&self, input: T) -> Result<EncodingInfo> {
         let address_input = input.into();
         let address_str = address_input.to_address_string();
-        
+
         let analysis = self.encoder.analyze(&address_str)?;
-        
+
         Ok(EncodingInfo {
             word_count: analysis.word_count,
             address_type: match analysis.address_type {
@@ -234,11 +234,11 @@ mod tests {
     #[test]
     fn test_basic_encoding() {
         let twn = FourWordNetworking::new().unwrap();
-        
+
         // Test IPv4
         let words = twn.encode("192.168.1.1:80").unwrap();
         assert_eq!(words.split('.').count(), 3);
-        
+
         // Test IPv6
         let words = twn.encode("[::1]:443").unwrap();
         assert_eq!(words.split('.').count(), 4); // Minimum 4 for IPv6
@@ -247,7 +247,7 @@ mod tests {
     #[test]
     fn test_socket_addr_encoding() {
         let twn = FourWordNetworking::new().unwrap();
-        
+
         let addr: SocketAddr = "192.168.1.1:80".parse().unwrap();
         let words = twn.encode(addr).unwrap();
         assert_eq!(words.split('.').count(), 3);
@@ -256,7 +256,7 @@ mod tests {
     #[test]
     fn test_ip_addr_encoding() {
         let twn = FourWordNetworking::new().unwrap();
-        
+
         let ip: IpAddr = "192.168.1.1".parse().unwrap();
         let words = twn.encode(ip).unwrap();
         assert_eq!(words.split('.').count(), 3);
@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn test_word_validation() {
         let twn = FourWordNetworking::new().unwrap();
-        
+
         assert!(twn.is_valid_words("ocean.thunder.falcon"));
         assert!(twn.is_valid_words("book.book.smell.book"));
         assert!(!twn.is_valid_words("ocean.thunder")); // Too few
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn test_word_count() {
         let twn = FourWordNetworking::new().unwrap();
-        
+
         assert_eq!(twn.word_count("192.168.1.1:80").unwrap(), 3);
         assert!(twn.word_count("[::1]:443").unwrap() >= 4);
     }

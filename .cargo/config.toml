@@ -1,0 +1,30 @@
+[build]
+# Enable all warnings by default
+rustflags = ["-D", "warnings"]
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[alias]
+# Testing aliases
+test-all = "test --all-features"
+test-unit = "test --lib"
+test-integration = "test --tests"
+test-doc = "test --doc"
+test-bench = "bench --no-run"
+test-examples = "test --examples"
+
+# Quality aliases
+lint = "clippy --all-targets --all-features -- -D warnings"
+format = "fmt --all"
+check-format = "fmt --all -- --check"
+
+# Coverage aliases
+coverage = "tarpaulin --out html --output-dir target/tarpaulin"
+coverage-lcov = "tarpaulin --out lcov --output-dir target/tarpaulin"
+
+# Fuzzing aliases
+fuzz-setup = "fuzz init"
+fuzz-build = "fuzz build"
+fuzz-list = "fuzz list"

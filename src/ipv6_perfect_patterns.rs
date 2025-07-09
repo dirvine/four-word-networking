@@ -4,39 +4,39 @@
 //! perfect compression in 4-5 words. It leverages real-world IPv6 allocation patterns
 //! from BGP data and provider-specific address structures.
 
-use std::net::Ipv6Addr;
 use crate::error::FourWordError;
+use std::net::Ipv6Addr;
 
 /// IPv6 pattern categories optimized for compression
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IPv6Pattern {
     /// ::1 - IPv6 loopback (4 words - 35 bits)
     Loopback,
-    
+
     /// :: - Unspecified address (4 words - 35 bits)
     Unspecified,
-    
+
     /// fe80::/10 - Link-local addresses (4 words - 40 bits)
     LinkLocal(LinkLocalPattern),
-    
+
     /// 2001:db8::/32 - Documentation addresses (4 words - 40 bits)
     Documentation(DocumentationPattern),
-    
+
     /// fc00::/7 - Unique local addresses (4-5 words - 50-65 bits)
     UniqueLocal(UniqueLocalPattern),
-    
+
     /// Major cloud providers with known prefixes (4-5 words - 45-60 bits)
     CloudProvider(CloudProviderPattern),
-    
+
     /// Common IPv6 providers with allocated prefixes (4-5 words - 50-65 bits)
     CommonProvider(CommonProviderPattern),
-    
+
     /// 2000::/3 - Global unicast with pattern optimization (5 words - 65-70 bits)
     GlobalUnicast(GlobalUnicastPattern),
-    
+
     /// ff00::/8 - Multicast addresses (5 words - 60-70 bits)
     Multicast(MulticastPattern),
-    
+
     /// Fallback for unstructured addresses (6+ words - full 144 bits)
     Unstructured,
 }
@@ -101,11 +101,18 @@ pub enum CloudProviderPattern {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommonProviderPattern {
     /// Major ISP with known prefix
-    ISP { provider_id: u16, customer: u16, allocation: u16 },
+    ISP {
+        provider_id: u16,
+        customer: u16,
+        allocation: u16,
+    },
     /// Hosting provider
     Hosting { provider_id: u16, customer: u32 },
     /// Academic/research networks
-    Academic { institution_id: u16, department: u16 },
+    Academic {
+        institution_id: u16,
+        department: u16,
+    },
     /// Government networks
     Government { agency_id: u16, network: u16 },
 }
@@ -114,11 +121,24 @@ pub enum CommonProviderPattern {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GlobalUnicastPattern {
     /// Common prefix with customer allocation
-    CommonPrefix { prefix_id: u16, customer: u32, subnet: u16 },
+    CommonPrefix {
+        prefix_id: u16,
+        customer: u32,
+        subnet: u16,
+    },
     /// Regional allocation pattern
-    Regional { region: u8, provider: u16, customer: u32 },
+    Regional {
+        region: u8,
+        provider: u16,
+        customer: u32,
+    },
     /// Structured global unicast
-    Structured { tier1: u16, tier2: u16, tier3: u16, host: u16 },
+    Structured {
+        tier1: u16,
+        tier2: u16,
+        tier3: u16,
+        host: u16,
+    },
     /// Unstructured global unicast (fallback)
     Unstructured,
 }
@@ -147,20 +167,23 @@ pub struct IPv6ProviderDictionary {
 /// Cloud provider entry with prefix and metadata
 #[derive(Debug, Clone)]
 struct CloudProviderEntry {
+    #[allow(dead_code)]
     name: &'static str,
-    prefix: [u16; 2],           // First 32 bits of prefix
-    prefix_len: u8,             // Prefix length
-    provider_id: u8,            // Unique provider ID
-    regions: Vec<RegionEntry>,  // Known regions
+    prefix: [u16; 2],          // First 32 bits of prefix
+    prefix_len: u8,            // Prefix length
+    provider_id: u8,           // Unique provider ID
+    regions: Vec<RegionEntry>, // Known regions
 }
 
 /// ISP entry from BGP data
 #[derive(Debug, Clone)]
 struct ISPEntry {
+    #[allow(dead_code)]
     name: &'static str,
     prefix: [u16; 2],
     prefix_len: u8,
     provider_id: u16,
+    #[allow(dead_code)]
     country: &'static str,
     allocation_type: AllocationType,
 }
@@ -168,26 +191,31 @@ struct ISPEntry {
 /// Academic network entry
 #[derive(Debug, Clone)]
 struct AcademicEntry {
+    #[allow(dead_code)]
     name: &'static str,
     prefix: [u16; 2],
     prefix_len: u8,
     institution_id: u16,
+    #[allow(dead_code)]
     country: &'static str,
 }
 
 /// Government network entry
 #[derive(Debug, Clone)]
 struct GovernmentEntry {
+    #[allow(dead_code)]
     name: &'static str,
     prefix: [u16; 2],
     prefix_len: u8,
     agency_id: u16,
+    #[allow(dead_code)]
     country: &'static str,
 }
 
 /// Region entry for cloud providers
 #[derive(Debug, Clone)]
 struct RegionEntry {
+    #[allow(dead_code)]
     name: &'static str,
     region_id: u8,
     prefix_suffix: u16,
@@ -195,6 +223,7 @@ struct RegionEntry {
 
 /// Allocation type for ISPs
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 enum AllocationType {
     Residential,
     Business,
@@ -223,11 +252,31 @@ impl IPv6ProviderDictionary {
                 prefix_len: 32,
                 provider_id: 0,
                 regions: vec![
-                    RegionEntry { name: "us-central1", region_id: 0, prefix_suffix: 0x4000 },
-                    RegionEntry { name: "us-east1", region_id: 1, prefix_suffix: 0x4001 },
-                    RegionEntry { name: "us-west1", region_id: 2, prefix_suffix: 0x4002 },
-                    RegionEntry { name: "europe-west1", region_id: 3, prefix_suffix: 0x4003 },
-                    RegionEntry { name: "asia-east1", region_id: 4, prefix_suffix: 0x4004 },
+                    RegionEntry {
+                        name: "us-central1",
+                        region_id: 0,
+                        prefix_suffix: 0x4000,
+                    },
+                    RegionEntry {
+                        name: "us-east1",
+                        region_id: 1,
+                        prefix_suffix: 0x4001,
+                    },
+                    RegionEntry {
+                        name: "us-west1",
+                        region_id: 2,
+                        prefix_suffix: 0x4002,
+                    },
+                    RegionEntry {
+                        name: "europe-west1",
+                        region_id: 3,
+                        prefix_suffix: 0x4003,
+                    },
+                    RegionEntry {
+                        name: "asia-east1",
+                        region_id: 4,
+                        prefix_suffix: 0x4004,
+                    },
                 ],
             },
             CloudProviderEntry {
@@ -236,10 +285,26 @@ impl IPv6ProviderDictionary {
                 prefix_len: 24,
                 provider_id: 1,
                 regions: vec![
-                    RegionEntry { name: "us-east-1", region_id: 0, prefix_suffix: 0x1000 },
-                    RegionEntry { name: "us-west-2", region_id: 1, prefix_suffix: 0x1001 },
-                    RegionEntry { name: "eu-west-1", region_id: 2, prefix_suffix: 0x1002 },
-                    RegionEntry { name: "ap-southeast-1", region_id: 3, prefix_suffix: 0x1003 },
+                    RegionEntry {
+                        name: "us-east-1",
+                        region_id: 0,
+                        prefix_suffix: 0x1000,
+                    },
+                    RegionEntry {
+                        name: "us-west-2",
+                        region_id: 1,
+                        prefix_suffix: 0x1001,
+                    },
+                    RegionEntry {
+                        name: "eu-west-1",
+                        region_id: 2,
+                        prefix_suffix: 0x1002,
+                    },
+                    RegionEntry {
+                        name: "ap-southeast-1",
+                        region_id: 3,
+                        prefix_suffix: 0x1003,
+                    },
                 ],
             },
             CloudProviderEntry {
@@ -248,10 +313,26 @@ impl IPv6ProviderDictionary {
                 prefix_len: 24,
                 provider_id: 2,
                 regions: vec![
-                    RegionEntry { name: "East US", region_id: 0, prefix_suffix: 0x2000 },
-                    RegionEntry { name: "West US", region_id: 1, prefix_suffix: 0x2001 },
-                    RegionEntry { name: "West Europe", region_id: 2, prefix_suffix: 0x2002 },
-                    RegionEntry { name: "Southeast Asia", region_id: 3, prefix_suffix: 0x2003 },
+                    RegionEntry {
+                        name: "East US",
+                        region_id: 0,
+                        prefix_suffix: 0x2000,
+                    },
+                    RegionEntry {
+                        name: "West US",
+                        region_id: 1,
+                        prefix_suffix: 0x2001,
+                    },
+                    RegionEntry {
+                        name: "West Europe",
+                        region_id: 2,
+                        prefix_suffix: 0x2002,
+                    },
+                    RegionEntry {
+                        name: "Southeast Asia",
+                        region_id: 3,
+                        prefix_suffix: 0x2003,
+                    },
                 ],
             },
             CloudProviderEntry {
@@ -259,18 +340,22 @@ impl IPv6ProviderDictionary {
                 prefix: [0x2606, 0x4700],
                 prefix_len: 32,
                 provider_id: 3,
-                regions: vec![
-                    RegionEntry { name: "global", region_id: 0, prefix_suffix: 0x0000 },
-                ],
+                regions: vec![RegionEntry {
+                    name: "global",
+                    region_id: 0,
+                    prefix_suffix: 0x0000,
+                }],
             },
             CloudProviderEntry {
                 name: "Hurricane Electric",
                 prefix: [0x2001, 0x0470],
                 prefix_len: 32,
                 provider_id: 4,
-                regions: vec![
-                    RegionEntry { name: "tunnel-broker", region_id: 0, prefix_suffix: 0x0000 },
-                ],
+                regions: vec![RegionEntry {
+                    name: "tunnel-broker",
+                    region_id: 0,
+                    prefix_suffix: 0x0000,
+                }],
             },
         ]
     }
@@ -394,7 +479,7 @@ impl IPv6ProviderDictionary {
                     CommonProviderPattern::Academic {
                         institution_id: academic.institution_id,
                         department: segments[2],
-                    }
+                    },
                 ));
             }
         }
@@ -406,7 +491,7 @@ impl IPv6ProviderDictionary {
                     CommonProviderPattern::Government {
                         agency_id: gov.agency_id,
                         network: segments[2],
-                    }
+                    },
                 ));
             }
         }
@@ -415,7 +500,11 @@ impl IPv6ProviderDictionary {
     }
 
     /// Check if prefix matches with given prefix length
-    fn prefix_matches(address_prefix: &[u16; 2], provider_prefix: &[u16; 2], prefix_len: u8) -> bool {
+    fn prefix_matches(
+        address_prefix: &[u16; 2],
+        provider_prefix: &[u16; 2],
+        prefix_len: u8,
+    ) -> bool {
         match prefix_len {
             24 => (address_prefix[0] & 0xFF00) == (provider_prefix[0] & 0xFF00),
             32 => address_prefix[0] == provider_prefix[0],
@@ -444,7 +533,11 @@ impl IPv6ProviderDictionary {
     }
 
     /// Classify cloud provider pattern
-    fn classify_cloud_provider(&self, provider: &CloudProviderEntry, segments: &[u16; 8]) -> IPv6Pattern {
+    fn classify_cloud_provider(
+        &self,
+        provider: &CloudProviderEntry,
+        segments: &[u16; 8],
+    ) -> IPv6Pattern {
         match provider.provider_id {
             0 => IPv6Pattern::CloudProvider(CloudProviderPattern::Google {
                 region: self.find_region_id(provider, segments[2]).unwrap_or(0),
@@ -478,25 +571,25 @@ impl IPv6ProviderDictionary {
     /// Classify ISP pattern
     fn classify_isp(&self, isp: &ISPEntry, segments: &[u16; 8]) -> IPv6Pattern {
         match isp.allocation_type {
-            AllocationType::Hosting => IPv6Pattern::CommonProvider(
-                CommonProviderPattern::Hosting {
+            AllocationType::Hosting => {
+                IPv6Pattern::CommonProvider(CommonProviderPattern::Hosting {
                     provider_id: isp.provider_id,
                     customer: ((segments[2] as u32) << 16) | (segments[3] as u32),
-                }
-            ),
-            _ => IPv6Pattern::CommonProvider(
-                CommonProviderPattern::ISP {
-                    provider_id: isp.provider_id,
-                    customer: segments[2],
-                    allocation: segments[3],
-                }
-            ),
+                })
+            }
+            _ => IPv6Pattern::CommonProvider(CommonProviderPattern::ISP {
+                provider_id: isp.provider_id,
+                customer: segments[2],
+                allocation: segments[3],
+            }),
         }
     }
 
     /// Find region ID for a provider
     fn find_region_id(&self, provider: &CloudProviderEntry, segment: u16) -> Option<u8> {
-        provider.regions.iter()
+        provider
+            .regions
+            .iter()
             .find(|region| region.prefix_suffix == segment)
             .map(|region| region.region_id)
     }
@@ -535,12 +628,16 @@ impl IPv6PatternDetector {
 
         // Check for unique local addresses (fc00::/7)
         if segments[0] & 0xFE00 == 0xFC00 {
-            return Ok(IPv6Pattern::UniqueLocal(self.classify_unique_local(&segments)));
+            return Ok(IPv6Pattern::UniqueLocal(
+                self.classify_unique_local(&segments),
+            ));
         }
 
         // Check for documentation addresses (2001:db8::/32)
         if segments[0] == 0x2001 && segments[1] == 0x0DB8 {
-            return Ok(IPv6Pattern::Documentation(self.classify_documentation(&segments)));
+            return Ok(IPv6Pattern::Documentation(
+                self.classify_documentation(&segments),
+            ));
         }
 
         // Check for multicast addresses (ff00::/8)
@@ -555,7 +652,9 @@ impl IPv6PatternDetector {
 
         // Check for global unicast patterns (2000::/3)
         if segments[0] & 0xE000 == 0x2000 {
-            return Ok(IPv6Pattern::GlobalUnicast(self.classify_global_unicast(&segments)));
+            return Ok(IPv6Pattern::GlobalUnicast(
+                self.classify_global_unicast(&segments),
+            ));
         }
 
         // Fallback to unstructured
@@ -589,9 +688,9 @@ impl IPv6PatternDetector {
 
     /// Classify unique local address pattern
     fn classify_unique_local(&self, segments: &[u16; 8]) -> UniqueLocalPattern {
-        let global_id = ((segments[0] as u32 & 0xFF) << 24) |
-                       ((segments[1] as u32) << 8) |
-                       (segments[2] as u32 >> 8);
+        let global_id = ((segments[0] as u32 & 0xFF) << 24)
+            | ((segments[1] as u32) << 8)
+            | (segments[2] as u32 >> 8);
 
         // Check for simple subnet pattern
         if segments[3] <= 255 && segments[4] == 0 && segments[5] == 0 && segments[6] == 0 {
@@ -615,14 +714,23 @@ impl IPv6PatternDetector {
     /// Classify documentation address pattern
     fn classify_documentation(&self, segments: &[u16; 8]) -> DocumentationPattern {
         // Check for base documentation address (2001:db8::)
-        if segments[2] == 0 && segments[3] == 0 && segments[4] == 0 && 
-           segments[5] == 0 && segments[6] == 0 && segments[7] == 0 {
+        if segments[2] == 0
+            && segments[3] == 0
+            && segments[4] == 0
+            && segments[5] == 0
+            && segments[6] == 0
+            && segments[7] == 0
+        {
             return DocumentationPattern::Base;
         }
 
         // Check for sequential pattern (2001:db8::1, 2001:db8::2, etc.)
-        if segments[2] == 0 && segments[3] == 0 && segments[4] == 0 && 
-           segments[5] == 0 && segments[6] == 0 && segments[7] <= 65535 {
+        if segments[2] == 0
+            && segments[3] == 0
+            && segments[4] == 0
+            && segments[5] == 0
+            && segments[6] == 0
+        {
             return DocumentationPattern::Sequential(segments[7]);
         }
 
@@ -645,8 +753,13 @@ impl IPv6PatternDetector {
         }
 
         // Check for solicited-node multicast (ff02::1:ffxx:xxxx)
-        if segments[0] == 0xFF02 && segments[1] == 0 && segments[2] == 0 && 
-           segments[3] == 0 && segments[4] == 0 && segments[5] == 1 {
+        if segments[0] == 0xFF02
+            && segments[1] == 0
+            && segments[2] == 0
+            && segments[3] == 0
+            && segments[4] == 0
+            && segments[5] == 1
+        {
             let suffix = ((segments[6] as u32) << 16) | (segments[7] as u32);
             return MulticastPattern::SolicitedNode(suffix);
         }
@@ -732,12 +845,12 @@ impl IPv6PatternDetector {
         // Simple heuristic: check if interface ID has good entropy
         let mut ones = 0;
         let mut zeros = 0;
-        
+
         for &segment in interface_id {
             ones += segment.count_ones();
             zeros += segment.count_zeros();
         }
-        
+
         // If the distribution is reasonably balanced, it's likely privacy
         let total = ones + zeros;
         let ones_ratio = ones as f64 / total as f64;
@@ -763,7 +876,7 @@ mod tests {
         let detector = IPv6PatternDetector::new();
         let ip = Ipv6Addr::from_str("fe80::1").unwrap();
         let pattern = detector.detect_pattern(&ip).unwrap();
-        
+
         if let IPv6Pattern::LinkLocal(LinkLocalPattern::SmallInteger(val)) = pattern {
             assert_eq!(val, 1);
         } else {
@@ -776,7 +889,7 @@ mod tests {
         let detector = IPv6PatternDetector::new();
         let ip = Ipv6Addr::from_str("2001:db8::1").unwrap();
         let pattern = detector.detect_pattern(&ip).unwrap();
-        
+
         if let IPv6Pattern::Documentation(DocumentationPattern::Sequential(val)) = pattern {
             assert_eq!(val, 1);
         } else {
@@ -789,8 +902,12 @@ mod tests {
         let detector = IPv6PatternDetector::new();
         let ip = Ipv6Addr::from_str("2001:4860:4001:801::1").unwrap();
         let pattern = detector.detect_pattern(&ip).unwrap();
-        
-        if let IPv6Pattern::CloudProvider(CloudProviderPattern::Google { region, instance: _ }) = pattern {
+
+        if let IPv6Pattern::CloudProvider(CloudProviderPattern::Google {
+            region,
+            instance: _,
+        }) = pattern
+        {
             assert_eq!(region, 1); // us-east1
         } else {
             panic!("Expected Google cloud provider pattern");
@@ -808,10 +925,18 @@ mod tests {
     fn test_prefix_matching() {
         let addr_prefix = [0x2001, 0x4860];
         let provider_prefix = [0x2001, 0x4860];
-        assert!(IPv6ProviderDictionary::prefix_matches(&addr_prefix, &provider_prefix, 32));
-        
+        assert!(IPv6ProviderDictionary::prefix_matches(
+            &addr_prefix,
+            &provider_prefix,
+            32
+        ));
+
         let addr_prefix = [0x2600, 0x1f00];
         let provider_prefix = [0x2600, 0x0000];
-        assert!(IPv6ProviderDictionary::prefix_matches(&addr_prefix, &provider_prefix, 24));
+        assert!(IPv6ProviderDictionary::prefix_matches(
+            &addr_prefix,
+            &provider_prefix,
+            24
+        ));
     }
 }

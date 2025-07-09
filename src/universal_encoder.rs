@@ -3,13 +3,13 @@
 //! This module provides a high-level interface for compressing any IPv4+port
 //! combination into four words using multiple compression strategies.
 
-use std::net::Ipv4Addr;
 use crate::{
     dictionary16k::Dictionary16K,
-    pure_ip_compression::{PureIpCompressor, MathematicalCompressor},
-    universal_ip_compression::UniversalIpCompressor,
     error::FourWordError,
+    pure_ip_compression::{MathematicalCompressor, PureIpCompressor},
+    universal_ip_compression::UniversalIpCompressor,
 };
+use std::net::Ipv4Addr;
 
 /// High-level encoder that attempts multiple compression strategies
 pub struct UniversalEncoder {
@@ -27,15 +27,17 @@ impl UniversalEncoder {
     /// Encode IPv4+port to four words using best available strategy
     pub fn encode(&self, address: &str) -> Result<String, FourWordError> {
         let (ip, port) = self.parse_ip_port(address)?;
-        
+
         // Try multiple compression strategies in order of preference
         let compressed = self.try_compression_strategies(ip, port)?;
-        
+
         // Convert compressed value to four words
         let packed = self.pack_42_bits(compressed);
-        let words = self.dictionary.encode_bytes(&packed)
+        let words = self
+            .dictionary
+            .encode_bytes(&packed)
             .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
-        
+
         Ok(words.join("."))
     }
 
@@ -43,21 +45,24 @@ impl UniversalEncoder {
     pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
         let word_vec: Vec<&str> = words.split('.').collect();
         if word_vec.len() != 3 {
-            return Err(FourWordError::InvalidInput(
-                format!("Expected 4 words, got {}", word_vec.len())
-            ));
+            return Err(FourWordError::InvalidInput(format!(
+                "Expected 4 words, got {}",
+                word_vec.len()
+            )));
         }
 
         // Decode words to bytes
-        let packed = self.dictionary.decode_words(&word_vec)
+        let packed = self
+            .dictionary
+            .decode_words(&word_vec)
             .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
-        
+
         // Unpack to 42-bit value
         let compressed = self.unpack_42_bits(&packed);
-        
+
         // Decompress using strategy detection
         let (ip, port) = self.decompress_with_strategy_detection(compressed)?;
-        
+
         // Format result
         Ok(format!("{}:{}", ip, port))
     }
@@ -65,7 +70,7 @@ impl UniversalEncoder {
     /// Get compression statistics for an address
     pub fn compression_stats(&self, address: &str) -> Result<CompressionAnalysis, FourWordError> {
         let (ip, port) = self.parse_ip_port(address)?;
-        
+
         let mut analysis = CompressionAnalysis {
             original_bits: 48, // 32 bits IP + 16 bits port
             address: format!("{}:{}", ip, port),
@@ -93,7 +98,7 @@ impl UniversalEncoder {
 
         // Strategy 3: Mathematical transformations
         let ip_u32 = u32::from(ip);
-        
+
         // Try Cantor pairing
         let cantor = MathematicalCompressor::cantor_pair_compress(ip_u32, port);
         if cantor <= ((1u64 << 42) - 1) {
@@ -113,11 +118,14 @@ impl UniversalEncoder {
         }
 
         Err(FourWordError::InvalidInput(
-            "No compression strategy succeeded for this address".to_string()
+            "No compression strategy succeeded for this address".to_string(),
         ))
     }
 
-    fn decompress_with_strategy_detection(&self, compressed: u64) -> Result<(Ipv4Addr, u16), FourWordError> {
+    fn decompress_with_strategy_detection(
+        &self,
+        compressed: u64,
+    ) -> Result<(Ipv4Addr, u16), FourWordError> {
         // Extract strategy marker (top 2 bits for simplified detection)
         // For now, try universal decompression strategies
 
@@ -134,7 +142,7 @@ impl UniversalEncoder {
         // Fallback: assume it's a hash and provide approximation
         let scaled_ip = ((compressed >> 16) * 0xFFFFFFFF / ((1u64 << 26) - 1)) as u32;
         let port = (compressed & 0xFFFF) as u16;
-        
+
         Ok((Ipv4Addr::from(scaled_ip), port))
     }
 
@@ -142,18 +150,21 @@ impl UniversalEncoder {
         if let Some(colon_pos) = input.rfind(':') {
             let ip_part = &input[..colon_pos];
             let port_part = &input[colon_pos + 1..];
-            
-            let ip = ip_part.parse::<Ipv4Addr>()
+
+            let ip = ip_part
+                .parse::<Ipv4Addr>()
                 .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", ip_part)))?;
-            
-            let port = port_part.parse::<u16>()
+
+            let port = port_part
+                .parse::<u16>()
                 .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
-            
+
             Ok((ip, port))
         } else {
-            let ip = input.parse::<Ipv4Addr>()
+            let ip = input
+                .parse::<Ipv4Addr>()
                 .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", input)))?;
-            
+
             Ok((ip, 0)) // Default port
         }
     }
@@ -175,13 +186,13 @@ impl UniversalEncoder {
         if bytes.len() < 6 {
             return 0;
         }
-        
-        (bytes[0] as u64) << 34 |
-        (bytes[1] as u64) << 26 |
-        (bytes[2] as u64) << 18 |
-        (bytes[3] as u64) << 10 |
-        (bytes[4] as u64) << 2 |
-        (bytes[5] as u64) >> 6
+
+        (bytes[0] as u64) << 34
+            | (bytes[1] as u64) << 26
+            | (bytes[2] as u64) << 18
+            | (bytes[3] as u64) << 10
+            | (bytes[4] as u64) << 2
+            | (bytes[5] as u64) >> 6
     }
 
     fn test_pure_compression(&self, analysis: &mut CompressionAnalysis, ip: Ipv4Addr, port: u16) {
@@ -205,7 +216,12 @@ impl UniversalEncoder {
         }
     }
 
-    fn test_universal_compression(&self, analysis: &mut CompressionAnalysis, ip: Ipv4Addr, port: u16) {
+    fn test_universal_compression(
+        &self,
+        analysis: &mut CompressionAnalysis,
+        ip: Ipv4Addr,
+        port: u16,
+    ) {
         if let Ok(compressed) = UniversalIpCompressor::new().compress(ip, port) {
             let bits_used = 64 - compressed.leading_zeros();
             analysis.strategies.push(StrategyResult {
@@ -226,16 +242,21 @@ impl UniversalEncoder {
         }
     }
 
-    fn test_mathematical_compression(&self, analysis: &mut CompressionAnalysis, ip: Ipv4Addr, port: u16) {
+    fn test_mathematical_compression(
+        &self,
+        analysis: &mut CompressionAnalysis,
+        ip: Ipv4Addr,
+        port: u16,
+    ) {
         let ip_u32 = u32::from(ip);
-        
+
         // Test mathematical methods
         let cantor = MathematicalCompressor::cantor_pair_compress(ip_u32, port);
         let interleaved = MathematicalCompressor::bit_interleave_compress(ip_u32, port);
         let gray = MathematicalCompressor::gray_code_compress(ip_u32, port);
-        
+
         let max_42_bits = (1u64 << 42) - 1;
-        
+
         if cantor <= max_42_bits {
             let bits_used = 64 - cantor.leading_zeros();
             analysis.strategies.push(StrategyResult {
@@ -246,7 +267,7 @@ impl UniversalEncoder {
                 method: "Mathematical pairing function".to_string(),
             });
         }
-        
+
         if interleaved <= max_42_bits {
             let bits_used = 64 - interleaved.leading_zeros();
             analysis.strategies.push(StrategyResult {
@@ -257,7 +278,7 @@ impl UniversalEncoder {
                 method: "Interleaved bit patterns".to_string(),
             });
         }
-        
+
         if gray <= max_42_bits {
             let bits_used = 64 - gray.leading_zeros();
             analysis.strategies.push(StrategyResult {
@@ -281,9 +302,11 @@ pub struct CompressionAnalysis {
 
 impl CompressionAnalysis {
     pub fn best_strategy(&self) -> Option<&StrategyResult> {
-        self.strategies.iter()
-            .filter(|s| s.success)
-            .max_by(|a, b| a.compression_ratio.partial_cmp(&b.compression_ratio).unwrap())
+        self.strategies.iter().filter(|s| s.success).max_by(|a, b| {
+            a.compression_ratio
+                .partial_cmp(&b.compression_ratio)
+                .unwrap()
+        })
     }
 
     pub fn summary(&self) -> String {
@@ -318,21 +341,21 @@ mod tests {
     #[test]
     fn test_universal_encoder() {
         let encoder = UniversalEncoder::new().unwrap();
-        
+
         let test_cases = vec![
             "192.168.1.100:80",
             "10.0.0.1:22",
             "8.8.8.8:53",
             "203.45.67.89:12345",
         ];
-        
+
         for address in test_cases {
             println!("\nTesting: {}", address);
-            
+
             match encoder.encode(address) {
                 Ok(words) => {
                     println!("  Encoded: {}", words);
-                    
+
                     match encoder.decode(&words) {
                         Ok(decoded) => {
                             println!("  Decoded: {}", decoded);
@@ -342,14 +365,17 @@ mod tests {
                 }
                 Err(e) => println!("  Encode error: {}", e),
             }
-            
+
             // Show compression analysis
             if let Ok(analysis) = encoder.compression_stats(address) {
                 println!("  Analysis: {}", analysis.summary());
                 for strategy in &analysis.strategies {
                     if strategy.success {
-                        println!("    ✓ {}: {:.1}% compression", 
-                                strategy.name, strategy.compression_ratio * 100.0);
+                        println!(
+                            "    ✓ {}: {:.1}% compression",
+                            strategy.name,
+                            strategy.compression_ratio * 100.0
+                        );
                     }
                 }
             }

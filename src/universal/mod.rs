@@ -1,15 +1,15 @@
 //! Universal Word Encoding System
 //!
-//! This module provides a universal encoding system that can encode ANY data 
+//! This module provides a universal encoding system that can encode ANY data
 //! from network addresses up to 32-byte hashes into human-memorable word sequences,
 //! with 100% accurate encode/decode capability.
 
-pub mod encoder;
 pub mod dictionaries;
-pub mod simple;
+pub mod encoder;
+pub mod error;
 pub mod fractal;
 pub mod holographic;
-pub mod error;
+pub mod simple;
 
 #[cfg(test)]
 pub mod real_world_tests;
@@ -26,9 +26,9 @@ pub mod fast_exhaustive_tests;
 #[cfg(test)]
 pub mod ultra_tests;
 
-pub use encoder::UniversalEncoder;
 pub use dictionaries::Dictionaries;
-pub use error::{EncodingError, DecodingError};
+pub use encoder::UniversalEncoder;
+pub use error::{DecodingError, EncodingError};
 
 /// Encoding strategies based on data size
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,7 +74,7 @@ impl UniversalEncoding {
             UniversalEncoding::Holographic(encoding) => encoding.all_words(),
         }
     }
-    
+
     /// Convert to human-readable string representation
     pub fn to_string(&self) -> String {
         match self {
@@ -100,17 +100,35 @@ mod tests {
         // Test edge cases
         assert!(EncodingStrategy::for_data_length(0).is_err());
         assert!(EncodingStrategy::for_data_length(33).is_err());
-        
+
         // Test simple encoding range
-        assert_eq!(EncodingStrategy::for_data_length(1).unwrap(), EncodingStrategy::Simple);
-        assert_eq!(EncodingStrategy::for_data_length(8).unwrap(), EncodingStrategy::Simple);
-        
+        assert_eq!(
+            EncodingStrategy::for_data_length(1).unwrap(),
+            EncodingStrategy::Simple
+        );
+        assert_eq!(
+            EncodingStrategy::for_data_length(8).unwrap(),
+            EncodingStrategy::Simple
+        );
+
         // Test fractal encoding range
-        assert_eq!(EncodingStrategy::for_data_length(9).unwrap(), EncodingStrategy::Fractal);
-        assert_eq!(EncodingStrategy::for_data_length(20).unwrap(), EncodingStrategy::Fractal);
-        
+        assert_eq!(
+            EncodingStrategy::for_data_length(9).unwrap(),
+            EncodingStrategy::Fractal
+        );
+        assert_eq!(
+            EncodingStrategy::for_data_length(20).unwrap(),
+            EncodingStrategy::Fractal
+        );
+
         // Test holographic encoding range
-        assert_eq!(EncodingStrategy::for_data_length(21).unwrap(), EncodingStrategy::Holographic);
-        assert_eq!(EncodingStrategy::for_data_length(32).unwrap(), EncodingStrategy::Holographic);
+        assert_eq!(
+            EncodingStrategy::for_data_length(21).unwrap(),
+            EncodingStrategy::Holographic
+        );
+        assert_eq!(
+            EncodingStrategy::for_data_length(32).unwrap(),
+            EncodingStrategy::Holographic
+        );
     }
 }

@@ -7,7 +7,7 @@
 
 #[cfg(test)]
 mod tests {
-    
+
     // Tests temporarily disabled while balanced encoder is updated for new IP compression system
     #[allow(unused)]
 
@@ -19,10 +19,10 @@ mod tests {
             .map(|decoded| decoded[..decoded.len() - 4].to_vec()) // Remove checksum
     }
 
+    #[allow(dead_code)]
     fn decode_ethereum_address(address: &str) -> Result<Vec<u8>, String> {
         let address_clean = address.trim_start_matches("0x");
-        hex::decode(address_clean)
-            .map_err(|e| format!("Hex decode error: {}", e))
+        hex::decode(address_clean).map_err(|e| format!("Hex decode error: {}", e))
     }
 
     #[ignore] // Disabled until balanced encoder is updated

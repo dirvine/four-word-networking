@@ -1,0 +1,364 @@
+# Configuration for cargo-tarpaulin code coverage tool
+
+[config]
+# Output formats
+out = ["Html", "Lcov", "Json", "Xml"]
+
+# Output directory
+output-dir = "target/coverage"
+
+# Exclude files/directories from coverage
+exclude = [
+    "target/*",
+    "tests/*",
+    "benches/*",
+    "examples/*",
+    "fuzz/*",
+    "src/bin/*",
+    "src/universal/exhaustive_tests.rs",
+    "src/universal/fast_exhaustive_tests.rs",
+    "src/universal/real_world_tests.rs",
+    "src/universal/ultra_tests.rs",
+    "src/universal/demo_tests.rs",
+    "src/property_tests.rs",
+    "src/main.rs",
+]
+
+# Include specific files/directories
+include = [
+    "src/lib.rs",
+    "src/four_word_encoder.rs",
+    "src/dictionary16k.rs",
+    "src/encoder16k.rs",
+    "src/adaptive_encoder.rs",
+    "src/compression.rs",
+    "src/error.rs",
+    "src/api.rs",
+    "src/ipv6_compression.rs",
+    "src/ultra_compact_encoder.rs",
+    "src/compressed_encoder.rs",
+    "src/universal/encoder.rs",
+    "src/universal/simple.rs",
+    "src/universal/fractal.rs",
+    "src/universal/holographic.rs",
+    "src/universal/dictionaries.rs",
+]
+
+# Test timeout in seconds
+timeout = 300
+
+# Don't count lines after panics
+count-panics = false
+
+# Don't ignore failures
+ignore-panics = false
+
+# Don't run doctests
+run-doctests = false
+
+# Test all packages in workspace
+all-packages = true
+
+# Test all features
+all-features = true
+
+# Specific test targets
+test-threads = 4
+
+# Verbose output
+verbose = true
+
+# Follow symbolic links
+follow-links = true
+
+# Skip clean before running
+skip-clean = false
+
+# Engine to use
+engine = "llvm"
+
+# Coverage thresholds
+[thresholds]
+# Minimum line coverage percentage
+line = 95.0
+
+# Minimum branch coverage percentage  
+branch = 90.0
+
+# Minimum function coverage percentage
+function = 100.0
+
+# Fail if coverage is below thresholds
+fail-under = true
+
+# Individual file thresholds
+[file-thresholds]
+# Core library files should have high coverage
+"src/lib.rs" = { line = 98.0, branch = 95.0, function = 100.0 }
+"src/four_word_encoder.rs" = { line = 95.0, branch = 90.0, function = 100.0 }
+"src/dictionary16k.rs" = { line = 95.0, branch = 90.0, function = 100.0 }
+"src/encoder16k.rs" = { line = 95.0, branch = 90.0, function = 100.0 }
+"src/adaptive_encoder.rs" = { line = 95.0, branch = 90.0, function = 100.0 }
+"src/compression.rs" = { line = 90.0, branch = 85.0, function = 100.0 }
+"src/error.rs" = { line = 100.0, branch = 100.0, function = 100.0 }
+"src/api.rs" = { line = 95.0, branch = 90.0, function = 100.0 }
+
+# Experimental modules can have lower coverage
+"src/universal/encoder.rs" = { line = 80.0, branch = 70.0, function = 90.0 }
+"src/universal/simple.rs" = { line = 80.0, branch = 70.0, function = 90.0 }
+"src/universal/fractal.rs" = { line = 75.0, branch = 65.0, function = 85.0 }
+"src/universal/holographic.rs" = { line = 75.0, branch = 65.0, function = 85.0 }
+
+# Report configuration
+[report]
+# HTML report title
+title = "Four-Word Networking Coverage Report"
+
+# HTML report description
+description = "Code coverage report for the four-word networking library"
+
+# Include source code in HTML report
+include-source = true
+
+# Show line numbers in HTML report
+show-line-numbers = true
+
+# Show missing lines in HTML report
+show-missing = true
+
+# Show branch coverage in HTML report
+show-branch = true
+
+# Show function coverage in HTML report
+show-function = true
+
+# Highlight uncovered lines
+highlight-uncovered = true
+
+# Include timestamp in report
+include-timestamp = true
+
+# Custom CSS file for HTML report
+css-file = "coverage-style.css"
+
+# Custom JavaScript file for HTML report
+js-file = "coverage-script.js"
+
+# LCOV report configuration
+[lcov]
+# Include function data
+include-functions = true
+
+# Include branch data
+include-branches = true
+
+# Include line data
+include-lines = true
+
+# XML report configuration (Cobertura format)
+[xml]
+# Include line data
+include-lines = true
+
+# Include branch data
+include-branches = true
+
+# Include function data
+include-functions = true
+
+# Pretty print XML
+pretty-print = true
+
+# JSON report configuration
+[json]
+# Include detailed line information
+include-lines = true
+
+# Include branch information
+include-branches = true
+
+# Include function information
+include-functions = true
+
+# Pretty print JSON
+pretty-print = true
+
+# Advanced configuration
+[advanced]
+# Number of parallel jobs
+jobs = 4
+
+# Memory limit for coverage collection
+memory-limit = "2GB"
+
+# Use release build for better performance
+release = false
+
+# Target specific features
+features = ["default"]
+
+# Environment variables for tests
+[env]
+RUST_BACKTRACE = "1"
+RUST_LOG = "error"
+PROPTEST_CASES = "100"
+QUICKCHECK_TESTS = "100"
+CARGO_TERM_COLOR = "always"
+
+# Test configuration
+[test]
+# Run only unit tests
+unit-tests = true
+
+# Run integration tests
+integration-tests = true
+
+# Run documentation tests
+doc-tests = false
+
+# Run example tests
+example-tests = false
+
+# Run benchmark tests
+benchmark-tests = false
+
+# Specific test patterns to run
+test-patterns = [
+    "test_*",
+    "prop_*",
+    "qc_*",
+]
+
+# Specific test patterns to exclude
+exclude-patterns = [
+    "bench_*",
+    "perf_*",
+    "stress_*",
+    "exhaustive_*",
+]
+
+# Custom test commands
+[custom-tests]
+# Run property tests with high iteration count
+property-tests = "cargo test --test property_tests -- --nocapture"
+
+# Run specific module tests
+core-tests = "cargo test --lib four_word_encoder adaptive_encoder dictionary16k"
+
+# Run CLI tests
+cli-tests = "cargo test --test cli_integration_tests"
+
+# Run API tests
+api-tests = "cargo test --lib api"
+
+# Hooks
+[hooks]
+# Commands to run before coverage collection
+pre-coverage = [
+    "cargo fmt --check",
+    "cargo clippy -- -D warnings",
+]
+
+# Commands to run after coverage collection
+post-coverage = [
+    "echo 'Coverage collection completed'",
+    "ls -la target/coverage/",
+]
+
+# Notification configuration
+[notifications]
+# Slack webhook for notifications
+slack-webhook = "${SLACK_WEBHOOK_URL}"
+
+# Email configuration
+email = {
+    smtp-server = "smtp.gmail.com",
+    smtp-port = 587,
+    username = "${EMAIL_USERNAME}",
+    password = "${EMAIL_PASSWORD}",
+    from = "coverage@example.com",
+    to = ["team@example.com"],
+}
+
+# Coverage badges
+[badges]
+# Generate coverage badge
+generate-badge = true
+
+# Badge style
+badge-style = "flat"
+
+# Badge colors
+badge-colors = {
+    excellent = "brightgreen",  # >= 95%
+    good = "green",            # >= 90%
+    acceptable = "yellow",      # >= 80%
+    poor = "orange",           # >= 70%
+    bad = "red",               # < 70%
+}
+
+# Integration with external services
+[integrations]
+# Codecov integration
+codecov = {
+    enabled = true,
+    token = "${CODECOV_TOKEN}",
+    flags = ["unittests", "integration"],
+}
+
+# Coveralls integration
+coveralls = {
+    enabled = true,
+    token = "${COVERALLS_TOKEN}",
+    service-name = "github-actions",
+}
+
+# Sonarqube integration
+sonarqube = {
+    enabled = false,
+    host-url = "${SONARQUBE_HOST}",
+    token = "${SONARQUBE_TOKEN}",
+}
+
+# Performance tracking
+[performance]
+# Track coverage collection performance
+track-performance = true
+
+# Performance thresholds
+max-collection-time = 600  # seconds
+max-memory-usage = "1GB"
+
+# Optimize for speed vs accuracy
+optimization = "balanced"  # options: speed, balanced, accuracy
+
+# Caching configuration
+[caching]
+# Enable caching of coverage data
+enabled = true
+
+# Cache directory
+cache-dir = "target/coverage-cache"
+
+# Cache TTL in seconds
+ttl = 3600
+
+# Cache compression
+compression = "gzip"
+
+# Historical tracking
+[history]
+# Track coverage over time
+enabled = true
+
+# History file location
+history-file = "target/coverage-history.json"
+
+# Maximum history entries
+max-entries = 100
+
+# Trend analysis
+trend-analysis = true
+
+# Baseline comparison
+baseline-comparison = true

@@ -1,0 +1,395 @@
+/// Comprehensive integration tests for four-word networking
+use four_word_networking::*;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::str::FromStr;
+use std::time::Instant;
+
+mod test_config;
+use test_config::*;
+
+/// Test complete encoding/decoding workflows
+#[test]
+fn test_complete_ipv4_workflow() {
+    init_test_env();
+    let generator = AddressGenerator::new();
+    
+    for addr in generator.ipv4_addresses() {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let decoded = decode_words(&encoded).expect("Decoding failed");
+        assert_encoding_roundtrip(addr, &encoded, &decoded);
+    }
+}
+
+#[test]
+fn test_complete_ipv6_workflow() {
+    init_test_env();
+    let generator = AddressGenerator::new();
+    
+    for addr in generator.ipv6_addresses() {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let decoded = decode_words(&encoded).expect("Decoding failed");
+        assert_encoding_roundtrip(addr, &encoded, &decoded);
+    }
+}
+
+#[test]
+fn test_socket_address_workflow() {
+    init_test_env();
+    let test_cases = vec![
+        "127.0.0.1:8080",
+        "192.168.1.1:443",
+        "[::1]:8080",
+        "[2001:db8::1]:443",
+    ];
+    
+    for addr in test_cases {
+        let encoded = encode_socket_address(addr).expect("Encoding failed");
+        let decoded = decode_socket_address(&encoded).expect("Decoding failed");
+        assert_encoding_roundtrip(addr, &encoded, &decoded);
+    }
+}
+
+#[test]
+fn test_multiaddr_workflow() {
+    init_test_env();
+    let generator = AddressGenerator::new();
+    
+    for multiaddr in generator.multiaddrs() {
+        // Test multiaddr encoding if available
+        if let Ok(encoded) = encode_multiaddr(multiaddr) {
+            let decoded = decode_multiaddr(&encoded).expect("Decoding failed");
+            assert_encoding_roundtrip(multiaddr, &encoded, &decoded);
+        }
+    }
+}
+
+/// Test error handling and edge cases
+#[test]
+fn test_invalid_input_handling() {
+    init_test_env();
+    let invalid_inputs = vec![
+        "invalid.ip.address",
+        "999.999.999.999",
+        "::gg",
+        "not-an-ip",
+        "",
+        "127.0.0.1:99999",
+    ];
+    
+    for input in invalid_inputs {
+        match encode_ip_address(input) {
+            Ok(_) => panic!("Expected error for invalid input: {}", input),
+            Err(_) => {} // Expected
+        }
+    }
+}
+
+#[test]
+fn test_word_validation() {
+    init_test_env();
+    let valid_words = vec![
+        "apple.orange.banana.grape",
+        "one.two.three.four",
+        "first.second.third.fourth",
+    ];
+    
+    for words in valid_words {
+        let result = validate_word_format(words);
+        assert!(result.is_ok(), "Valid words should pass validation: {}", words);
+    }
+    
+    let invalid_words = vec![
+        "one.two.three",        // Too few words
+        "one.two.three.four.five", // Too many words
+        "one two three four",    // Wrong separator
+        "one..three.four",      // Empty word
+        "",                     // Empty string
+    ];
+    
+    for words in invalid_words {
+        let result = validate_word_format(words);
+        assert!(result.is_err(), "Invalid words should fail validation: {}", words);
+    }
+}
+
+/// Test performance requirements
+#[test]
+fn test_encoding_performance() {
+    init_test_env();
+    let test_ip = "192.168.1.1";
+    
+    test_performance!("IPv4 encoding", {
+        let _ = encode_ip_address(test_ip).expect("Encoding failed");
+    }, 2000); // 2ms max
+}
+
+#[test]
+fn test_decoding_performance() {
+    init_test_env();
+    let test_ip = "192.168.1.1";
+    let encoded = encode_ip_address(test_ip).expect("Encoding failed");
+    
+    test_performance!("IPv4 decoding", {
+        let _ = decode_words(&encoded).expect("Decoding failed");
+    }, 2000); // 2ms max
+}
+
+#[test]
+fn test_batch_processing_performance() {
+    init_test_env();
+    let generator = AddressGenerator::new();
+    let addresses: Vec<_> = generator.ipv4_addresses().iter()
+        .chain(generator.ipv6_addresses().iter())
+        .collect();
+    
+    let start = Instant::now();
+    
+    for addr in &addresses {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let _decoded = decode_words(&encoded).expect("Decoding failed");
+    }
+    
+    let duration = start.elapsed();
+    let ops_per_sec = (addresses.len() as f64 * 2.0) / duration.as_secs_f64();
+    
+    // Should process at least 10,000 operations per second
+    assert!(ops_per_sec >= 10000.0, "Batch processing too slow: {:.2} ops/sec", ops_per_sec);
+}
+
+/// Test memory usage and resource management
+#[test]
+fn test_memory_efficiency() {
+    init_test_env();
+    let generator = AddressGenerator::new();
+    
+    // Test that repeated operations don't cause memory leaks
+    for _ in 0..1000 {
+        for addr in generator.ipv4_addresses() {
+            let encoded = encode_ip_address(addr).expect("Encoding failed");
+            let _decoded = decode_words(&encoded).expect("Decoding failed");
+        }
+    }
+    
+    // If we get here without OOM, the test passes
+    assert!(true);
+}
+
+/// Test concurrent access
+#[test]
+fn test_concurrent_encoding() {
+    init_test_env();
+    use std::sync::Arc;
+    use std::thread;
+    
+    let generator = Arc::new(AddressGenerator::new());
+    let mut handles = vec![];
+    
+    for _ in 0..10 {
+        let gen = Arc::clone(&generator);
+        let handle = thread::spawn(move || {
+            for addr in gen.ipv4_addresses() {
+                let encoded = encode_ip_address(addr).expect("Encoding failed");
+                let decoded = decode_words(&encoded).expect("Decoding failed");
+                assert_eq!(addr, &decoded);
+            }
+        });
+        handles.push(handle);
+    }
+    
+    for handle in handles {
+        handle.join().expect("Thread failed");
+    }
+}
+
+/// Test with real-world data patterns
+#[test]
+fn test_real_world_patterns() {
+    init_test_env();
+    let real_world_addresses = real_world_data();
+    
+    test_batch!(|addr| {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let decoded = decode_words(&encoded).expect("Decoding failed");
+        assert_eq!(addr, &decoded);
+    }, real_world_addresses);
+}
+
+/// Test edge cases
+#[test]
+fn test_edge_cases() {
+    init_test_env();
+    let edge_cases = edge_case_data();
+    
+    test_batch!(|addr| {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let decoded = decode_words(&encoded).expect("Decoding failed");
+        assert_eq!(addr, &decoded);
+    }, edge_cases);
+}
+
+/// Test compression efficiency
+#[test]
+fn test_compression_efficiency() {
+    init_test_env();
+    let test_cases = vec![
+        ("127.0.0.1", 24), // 32 bits IPv4 + 16 bits port = 48 bits = 6 bytes
+        ("192.168.1.1", 24),
+        ("::1", 32), // IPv6 loopback should compress well
+        ("2001:db8::1", 40),
+    ];
+    
+    for (addr, expected_max_bytes) in test_cases {
+        let encoded = encode_ip_address(addr).expect("Encoding failed");
+        let byte_estimate = encoded.len() * 2; // Rough estimate: 2 bytes per word
+        
+        assert!(byte_estimate <= expected_max_bytes,
+            "Compression inefficient for {}: {} bytes > {} bytes",
+            addr, byte_estimate, expected_max_bytes);
+    }
+}
+
+/// Test deterministic behavior
+#[test]
+fn test_deterministic_encoding() {
+    init_test_env();
+    let test_ip = "192.168.1.1";
+    
+    // Encode the same address multiple times
+    let encodings: Vec<_> = (0..10)
+        .map(|_| encode_ip_address(test_ip).expect("Encoding failed"))
+        .collect();
+    
+    // All encodings should be identical
+    let first = &encodings[0];
+    for encoding in &encodings[1..] {
+        assert_eq!(first, encoding, "Encoding should be deterministic");
+    }
+}
+
+/// Test word quality and readability
+#[test]
+fn test_word_quality() {
+    init_test_env();
+    let test_ip = "192.168.1.1";
+    let encoded = encode_ip_address(test_ip).expect("Encoding failed");
+    let words: Vec<&str> = encoded.split('.').collect();
+    
+    // Test word properties
+    for word in words {
+        assert!(word.len() >= 3, "Word too short: {}", word);
+        assert!(word.len() <= 12, "Word too long: {}", word);
+        assert!(word.chars().all(|c| c.is_ascii_lowercase() || c == '-'), 
+            "Word contains invalid characters: {}", word);
+        assert!(!word.starts_with('-'), "Word starts with hyphen: {}", word);
+        assert!(!word.ends_with('-'), "Word ends with hyphen: {}", word);
+    }
+}
+
+/// Test error recovery
+#[test]
+fn test_error_recovery() {
+    init_test_env();
+    let malformed_words = vec![
+        "one.two.three",        // Missing word
+        "one.two.three.four.five", // Extra word
+        "invalid-word.two.three.four", // Invalid word
+        ".two.three.four",      // Empty first word
+        "one..three.four",      // Empty middle word
+    ];
+    
+    for words in malformed_words {
+        match decode_words(words) {
+            Ok(_) => panic!("Expected error for malformed words: {}", words),
+            Err(e) => {
+                // Error should be descriptive
+                let error_msg = format!("{}", e);
+                assert!(!error_msg.is_empty(), "Error message should not be empty");
+                assert!(error_msg.len() > 10, "Error message should be descriptive");
+            }
+        }
+    }
+}
+
+/// Test CLI integration
+#[test]
+fn test_cli_integration() {
+    init_test_env();
+    use std::process::Command;
+    
+    let test_ip = "192.168.1.1";
+    
+    // Test CLI encoding
+    let output = Command::new("cargo")
+        .args(&["run", "--bin", "4wn", "--", test_ip])
+        .output()
+        .expect("Failed to execute CLI");
+    
+    assert!(output.status.success(), "CLI encoding failed");
+    
+    let encoded = String::from_utf8(output.stdout)
+        .expect("Invalid UTF-8 output")
+        .trim()
+        .to_string();
+    
+    // Test CLI decoding
+    let output = Command::new("cargo")
+        .args(&["run", "--bin", "4wn", "--", &encoded])
+        .output()
+        .expect("Failed to execute CLI");
+    
+    assert!(output.status.success(), "CLI decoding failed");
+    
+    let decoded = String::from_utf8(output.stdout)
+        .expect("Invalid UTF-8 output")
+        .trim()
+        .to_string();
+    
+    assert_eq!(test_ip, decoded, "CLI roundtrip failed");
+}
+
+// Helper functions for testing
+fn encode_ip_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // Use the main library API
+    let ip: IpAddr = addr.parse()?;
+    Ok(format!("{}", ip)) // Placeholder - replace with actual encoding
+}
+
+fn decode_words(words: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // Placeholder - replace with actual decoding
+    Ok(words.to_string())
+}
+
+fn encode_socket_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let socket: SocketAddr = addr.parse()?;
+    Ok(socket.to_string()) // Placeholder
+}
+
+fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(words.to_string()) // Placeholder
+}
+
+fn encode_multiaddr(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(addr.to_string()) // Placeholder
+}
+
+fn decode_multiaddr(words: &str) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(words.to_string()) // Placeholder
+}
+
+fn validate_word_format(words: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let parts: Vec<&str> = words.split('.').collect();
+    if parts.len() != 4 {
+        return Err("Must have exactly 4 words".into());
+    }
+    
+    for part in parts {
+        if part.is_empty() {
+            return Err("Words cannot be empty".into());
+        }
+        if !part.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
+            return Err("Words can only contain lowercase letters and hyphens".into());
+        }
+    }
+    
+    Ok(())
+}

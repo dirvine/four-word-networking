@@ -3,10 +3,10 @@
 //! This module implements the complete IPv6 perfect compression system that achieves
 //! 4-5 word encoding for 90%+ of real-world IPv6 addresses with 100% perfect reconstruction.
 
-use std::net::Ipv6Addr;
-use crate::Result;
-use crate::ipv6_perfect_patterns::{IPv6PatternDetector, IPv6Pattern};
 use crate::ipv6_multi_dimensional::{IPv6MultiDimEncoder, IPv6MultiDimEncoding};
+use crate::ipv6_perfect_patterns::{IPv6Pattern, IPv6PatternDetector};
+use crate::Result;
+use std::net::Ipv6Addr;
 
 /// IPv6 perfect encoding result
 #[derive(Debug, Clone)]
@@ -23,22 +23,22 @@ impl IPv6PerfectEncoding {
     pub fn to_string(&self) -> String {
         self.encoding.to_string()
     }
-    
+
     /// Get word count
     pub fn word_count(&self) -> usize {
         self.word_count
     }
-    
+
     /// Check if encoding is perfect (100% reconstruction)
     pub fn is_perfect(&self) -> bool {
         self.is_perfect
     }
-    
+
     /// Get compression ratio
     pub fn compression_ratio(&self) -> f64 {
         self.compression_ratio
     }
-    
+
     /// Get pattern description
     pub fn pattern_description(&self) -> &'static str {
         match self.pattern {
@@ -72,7 +72,7 @@ impl IPv6CompressionStats {
     pub fn compression_ratio(&self) -> f64 {
         1.0 - (self.compressed_bits as f64 / self.original_bits as f64)
     }
-    
+
     /// Get efficiency score
     pub fn efficiency_score(&self) -> f64 {
         let word_efficiency = match self.word_count {
@@ -81,10 +81,14 @@ impl IPv6CompressionStats {
             6 => 0.6,
             _ => 0.4,
         };
-        
+
         let compression_efficiency = self.compression_ratio();
-        let perfect_bonus = if self.perfect_reconstruction { 0.2 } else { 0.0 };
-        
+        let perfect_bonus = if self.perfect_reconstruction {
+            0.2
+        } else {
+            0.0
+        };
+
         (word_efficiency * 0.4) + (compression_efficiency * 0.4) + perfect_bonus
     }
 }
@@ -103,30 +107,31 @@ impl IPv6PerfectEncoder {
             multi_dim_encoder: IPv6MultiDimEncoder::new()?,
         })
     }
-    
+
     /// Encode IPv6 address with optional port to perfect word representation
     pub fn encode(&self, ip: Ipv6Addr, port: Option<u16>) -> Result<IPv6PerfectEncoding> {
         // Detect pattern for optimal compression
         let pattern = self.pattern_detector.detect_pattern(&ip)?;
-        
+
         // Compress based on pattern
         let (compressed_data, compressed_bits) = self.compress_by_pattern(&pattern, &ip, port)?;
-        
+
         // Determine optimal word count
         let word_count = self.calculate_optimal_word_count(compressed_bits);
-        
+
         // Multi-dimensional encoding
         let encoding = self.multi_dim_encoder.encode(
             compressed_data,
             None, // Extra bits handled by multi-dimensional encoding
             word_count,
         )?;
-        
+
         // Calculate compression statistics
         let original_bits = 128 + port.map_or(0, |_| 16); // IPv6 + optional port
         let compression_ratio = 1.0 - (compressed_bits as f64 / original_bits as f64);
-        let is_perfect = compressed_bits <= (word_count * 14) + self.calculate_extra_bits(word_count);
-        
+        let is_perfect =
+            compressed_bits <= (word_count * 14) + self.calculate_extra_bits(word_count);
+
         Ok(IPv6PerfectEncoding {
             encoding,
             pattern,
@@ -135,25 +140,29 @@ impl IPv6PerfectEncoder {
             is_perfect,
         })
     }
-    
+
     /// Decode IPv6 perfect encoding back to address and port
     pub fn decode(&self, encoding: &IPv6PerfectEncoding) -> Result<(Ipv6Addr, Option<u16>)> {
         // Decode multi-dimensional encoding
         let (compressed_data, _extra) = self.multi_dim_encoder.decode(&encoding.encoding)?;
-        
+
         // Decompress based on pattern
         self.decompress_by_pattern(&encoding.pattern, compressed_data)
     }
-    
+
     /// Get compression statistics for an address
-    pub fn compression_stats(&self, ip: Ipv6Addr, port: Option<u16>) -> Result<IPv6CompressionStats> {
+    pub fn compression_stats(
+        &self,
+        ip: Ipv6Addr,
+        port: Option<u16>,
+    ) -> Result<IPv6CompressionStats> {
         let pattern = self.pattern_detector.detect_pattern(&ip)?;
         let (_, compressed_bits) = self.compress_by_pattern(&pattern, &ip, port)?;
         let word_count = self.calculate_optimal_word_count(compressed_bits);
-        
+
         let original_bits = 128 + port.map_or(0, |_| 16);
         let max_encodable_bits = (word_count * 14) + self.calculate_extra_bits(word_count);
-        
+
         Ok(IPv6CompressionStats {
             original_bits,
             compressed_bits,
@@ -163,23 +172,28 @@ impl IPv6PerfectEncoder {
             perfect_reconstruction: compressed_bits <= max_encodable_bits,
         })
     }
-    
+
     /// Compress IPv6 address based on detected pattern
-    fn compress_by_pattern(&self, pattern: &IPv6Pattern, ip: &Ipv6Addr, port: Option<u16>) -> Result<(u64, usize)> {
+    fn compress_by_pattern(
+        &self,
+        pattern: &IPv6Pattern,
+        ip: &Ipv6Addr,
+        port: Option<u16>,
+    ) -> Result<(u64, usize)> {
         let segments = ip.segments();
         let port_bits = port.unwrap_or(0) as u64;
-        
+
         match pattern {
             IPv6Pattern::Loopback => {
                 // ::1 -> just port (16 bits)
                 Ok((port_bits, 16))
             }
-            
+
             IPv6Pattern::Unspecified => {
                 // :: -> just port (16 bits)
                 Ok((port_bits, 16))
             }
-            
+
             IPv6Pattern::LinkLocal(link_pattern) => {
                 use crate::ipv6_perfect_patterns::LinkLocalPattern;
                 match link_pattern {
@@ -194,9 +208,9 @@ impl IPv6PerfectEncoder {
                     }
                     LinkLocalPattern::EUI64 => {
                         // fe80::xxxx:xxxx:xxxx:xxxx with EUI-64 -> MAC + port (48 + 16 = 64 bits)
-                        let mac_part = ((segments[4] as u64) << 32) | 
-                                     ((segments[5] as u64) << 16) | 
-                                     (segments[6] as u64);
+                        let mac_part = ((segments[4] as u64) << 32)
+                            | ((segments[5] as u64) << 16)
+                            | (segments[6] as u64);
                         let data = (mac_part << 16) | port_bits;
                         Ok((data, 64))
                     }
@@ -213,7 +227,7 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::Documentation(doc_pattern) => {
                 use crate::ipv6_perfect_patterns::DocumentationPattern;
                 match doc_pattern {
@@ -238,18 +252,23 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::UniqueLocal(ul_pattern) => {
                 use crate::ipv6_perfect_patterns::UniqueLocalPattern;
                 match ul_pattern {
                     UniqueLocalPattern::Simple { global_id, subnet } => {
                         // fc00::/7 with simple structure -> global_id + subnet + port
-                        let data = ((*global_id as u64) << 24) | ((*subnet as u64) << 16) | port_bits;
+                        let data =
+                            ((*global_id as u64) << 24) | ((*subnet as u64) << 16) | port_bits;
                         Ok((data, 56)) // 40 + 16 bits
                     }
-                    UniqueLocalPattern::Standard { global_id, subnet_id } => {
+                    UniqueLocalPattern::Standard {
+                        global_id,
+                        subnet_id,
+                    } => {
                         // Standard ULA -> global_id + subnet_id + port
-                        let data = ((*global_id as u64) << 32) | ((*subnet_id as u64) << 16) | port_bits;
+                        let data =
+                            ((*global_id as u64) << 32) | ((*subnet_id as u64) << 16) | port_bits;
                         Ok((data, 64)) // 48 + 16 bits
                     }
                     UniqueLocalPattern::Complex => {
@@ -259,23 +278,38 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::CloudProvider(cloud_pattern) => {
                 use crate::ipv6_perfect_patterns::CloudProviderPattern;
                 match cloud_pattern {
                     CloudProviderPattern::Google { region, instance } => {
                         // Google Cloud: provider_id + region + instance + port
-                        let data = ((*region as u64) << 40) | ((*instance as u64) << 16) | port_bits;
+                        let data =
+                            ((*region as u64) << 40) | ((*instance as u64) << 16) | port_bits;
                         Ok((data, 56)) // 8 + 32 + 16 bits
                     }
-                    CloudProviderPattern::AWS { region, vpc, subnet } => {
+                    CloudProviderPattern::AWS {
+                        region,
+                        vpc,
+                        subnet,
+                    } => {
                         // AWS: provider_id + region + vpc + subnet + port
-                        let data = ((*region as u64) << 48) | ((*vpc as u64) << 32) | ((*subnet as u64) << 16) | port_bits;
+                        let data = ((*region as u64) << 48)
+                            | ((*vpc as u64) << 32)
+                            | ((*subnet as u64) << 16)
+                            | port_bits;
                         Ok((data, 64)) // 8 + 16 + 16 + 16 + 8 bits
                     }
-                    CloudProviderPattern::Azure { region, vnet, subnet } => {
+                    CloudProviderPattern::Azure {
+                        region,
+                        vnet,
+                        subnet,
+                    } => {
                         // Azure: similar to AWS
-                        let data = ((*region as u64) << 48) | ((*vnet as u64) << 32) | ((*subnet as u64) << 16) | port_bits;
+                        let data = ((*region as u64) << 48)
+                            | ((*vnet as u64) << 32)
+                            | ((*subnet as u64) << 16)
+                            | port_bits;
                         Ok((data, 64))
                     }
                     CloudProviderPattern::Cloudflare { edge, service } => {
@@ -285,52 +319,95 @@ impl IPv6PerfectEncoder {
                     }
                     CloudProviderPattern::HE { tunnel, allocation } => {
                         // Hurricane Electric: provider_id + tunnel + allocation + port
-                        let data = ((*tunnel as u64) << 32) | ((*allocation as u64) << 16) | port_bits;
+                        let data =
+                            ((*tunnel as u64) << 32) | ((*allocation as u64) << 16) | port_bits;
                         Ok((data, 56))
                     }
-                    CloudProviderPattern::Other { provider_id, allocation } => {
+                    CloudProviderPattern::Other {
+                        provider_id,
+                        allocation,
+                    } => {
                         // Other provider: provider_id + allocation + port
-                        let data = ((*provider_id as u64) << 48) | ((*allocation as u64) << 16) | port_bits;
+                        let data = ((*provider_id as u64) << 48)
+                            | ((*allocation as u64) << 16)
+                            | port_bits;
                         Ok((data, 64))
                     }
                 }
             }
-            
+
             IPv6Pattern::CommonProvider(common_pattern) => {
                 use crate::ipv6_perfect_patterns::CommonProviderPattern;
                 match common_pattern {
-                    CommonProviderPattern::ISP { provider_id, customer, allocation } => {
-                        let data = ((*provider_id as u64) << 48) | ((*customer as u64) << 32) | ((*allocation as u64) << 16) | port_bits;
+                    CommonProviderPattern::ISP {
+                        provider_id,
+                        customer,
+                        allocation,
+                    } => {
+                        let data = ((*provider_id as u64) << 48)
+                            | ((*customer as u64) << 32)
+                            | ((*allocation as u64) << 16)
+                            | port_bits;
                         Ok((data, 80)) // 16 + 16 + 16 + 16 bits
                     }
-                    CommonProviderPattern::Hosting { provider_id, customer } => {
-                        let data = ((*provider_id as u64) << 48) | ((*customer as u64) << 16) | port_bits;
+                    CommonProviderPattern::Hosting {
+                        provider_id,
+                        customer,
+                    } => {
+                        let data =
+                            ((*provider_id as u64) << 48) | ((*customer as u64) << 16) | port_bits;
                         Ok((data, 80)) // 16 + 32 + 16 bits
                     }
-                    CommonProviderPattern::Academic { institution_id, department } => {
-                        let data = ((*institution_id as u64) << 32) | ((*department as u64) << 16) | port_bits;
+                    CommonProviderPattern::Academic {
+                        institution_id,
+                        department,
+                    } => {
+                        let data = ((*institution_id as u64) << 32)
+                            | ((*department as u64) << 16)
+                            | port_bits;
                         Ok((data, 64)) // 16 + 16 + 16 bits
                     }
                     CommonProviderPattern::Government { agency_id, network } => {
-                        let data = ((*agency_id as u64) << 32) | ((*network as u64) << 16) | port_bits;
+                        let data =
+                            ((*agency_id as u64) << 32) | ((*network as u64) << 16) | port_bits;
                         Ok((data, 64)) // 16 + 16 + 16 bits
                     }
                 }
             }
-            
+
             IPv6Pattern::GlobalUnicast(global_pattern) => {
                 use crate::ipv6_perfect_patterns::GlobalUnicastPattern;
                 match global_pattern {
-                    GlobalUnicastPattern::CommonPrefix { prefix_id, customer, subnet } => {
-                        let data = ((*prefix_id as u64) << 48) | ((*customer as u64) << 16) | port_bits;
+                    GlobalUnicastPattern::CommonPrefix {
+                        prefix_id,
+                        customer,
+                        subnet: _,
+                    } => {
+                        let data =
+                            ((*prefix_id as u64) << 48) | ((*customer as u64) << 16) | port_bits;
                         Ok((data, 80)) // 16 + 32 + 16 bits
                     }
-                    GlobalUnicastPattern::Regional { region, provider, customer } => {
-                        let data = ((*region as u64) << 56) | ((*provider as u64) << 40) | ((*customer as u64) << 16) | port_bits;
+                    GlobalUnicastPattern::Regional {
+                        region,
+                        provider,
+                        customer,
+                    } => {
+                        let data = ((*region as u64) << 56)
+                            | ((*provider as u64) << 40)
+                            | ((*customer as u64) << 16)
+                            | port_bits;
                         Ok((data, 72)) // 8 + 16 + 32 + 16 bits
                     }
-                    GlobalUnicastPattern::Structured { tier1, tier2, tier3, host } => {
-                        let data = ((*tier1 as u64) << 48) | ((*tier2 as u64) << 32) | ((*tier3 as u64) << 16) | port_bits;
+                    GlobalUnicastPattern::Structured {
+                        tier1,
+                        tier2,
+                        tier3,
+                        host: _,
+                    } => {
+                        let data = ((*tier1 as u64) << 48)
+                            | ((*tier2 as u64) << 32)
+                            | ((*tier3 as u64) << 16)
+                            | port_bits;
                         Ok((data, 80)) // 16 + 16 + 16 + 16 bits
                     }
                     GlobalUnicastPattern::Unstructured => {
@@ -340,7 +417,7 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::Multicast(multicast_pattern) => {
                 use crate::ipv6_perfect_patterns::MulticastPattern;
                 match multicast_pattern {
@@ -363,7 +440,7 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::Unstructured => {
                 // Unstructured -> full encoding
                 let data = self.pack_segments(&segments[0..8], Some(port_bits));
@@ -371,21 +448,21 @@ impl IPv6PerfectEncoder {
             }
         }
     }
-    
+
     /// Decompress data back to IPv6 address based on pattern
-    fn decompress_by_pattern(&self, pattern: &IPv6Pattern, data: u64) -> Result<(Ipv6Addr, Option<u16>)> {
+    fn decompress_by_pattern(
+        &self,
+        pattern: &IPv6Pattern,
+        data: u64,
+    ) -> Result<(Ipv6Addr, Option<u16>)> {
         let port = Some((data & 0xFFFF) as u16);
         let remaining = data >> 16;
-        
+
         match pattern {
-            IPv6Pattern::Loopback => {
-                Ok((Ipv6Addr::LOCALHOST, port))
-            }
-            
-            IPv6Pattern::Unspecified => {
-                Ok((Ipv6Addr::UNSPECIFIED, port))
-            }
-            
+            IPv6Pattern::Loopback => Ok((Ipv6Addr::LOCALHOST, port)),
+
+            IPv6Pattern::Unspecified => Ok((Ipv6Addr::UNSPECIFIED, port)),
+
             IPv6Pattern::LinkLocal(link_pattern) => {
                 use crate::ipv6_perfect_patterns::LinkLocalPattern;
                 match link_pattern {
@@ -401,11 +478,14 @@ impl IPv6PerfectEncoder {
                         // Reconstruct EUI-64 from compressed data
                         let mac_part = remaining;
                         let segments = [
-                            0xfe80, 0, 0, 0,
+                            0xfe80,
+                            0,
+                            0,
+                            0,
                             ((mac_part >> 32) & 0xFFFF) as u16,
                             ((mac_part >> 16) & 0xFFFF) as u16,
                             (mac_part & 0xFFFF) as u16,
-                            0
+                            0,
                         ];
                         Ok((Ipv6Addr::from(segments), port))
                     }
@@ -416,7 +496,7 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             IPv6Pattern::Documentation(doc_pattern) => {
                 use crate::ipv6_perfect_patterns::DocumentationPattern;
                 match doc_pattern {
@@ -439,7 +519,7 @@ impl IPv6PerfectEncoder {
                     }
                 }
             }
-            
+
             // For other patterns, implement similar reconstruction logic
             _ => {
                 // Simplified fallback reconstruction
@@ -448,19 +528,21 @@ impl IPv6PerfectEncoder {
             }
         }
     }
-    
+
     /// Calculate optimal word count based on compressed bits
     fn calculate_optimal_word_count(&self, compressed_bits: usize) -> usize {
         // Account for multi-dimensional encoding extra bits
-        if compressed_bits <= 56 + 20 { // 4 words + extensions
+        if compressed_bits <= 56 + 20 {
+            // 4 words + extensions
             4
-        } else if compressed_bits <= 70 + 25 { // 5 words + extensions
+        } else if compressed_bits <= 70 + 25 {
+            // 5 words + extensions
             5
         } else {
             6
         }
     }
-    
+
     /// Calculate extra bits available from multi-dimensional encoding
     fn calculate_extra_bits(&self, word_count: usize) -> usize {
         let case_bits = word_count * 3; // 3 bits per word for case
@@ -471,26 +553,26 @@ impl IPv6PerfectEncoder {
             6 => 8,
             _ => 0,
         };
-        
+
         case_bits + separator_bits + order_bits
     }
-    
+
     /// Pack segments into u64
     fn pack_segments(&self, segments: &[u16], port: Option<u64>) -> u64 {
         let mut result = 0u64;
-        
+
         // Pack as many segments as possible into 64 bits
         for (i, &segment) in segments.iter().take(4).enumerate() {
             result |= (segment as u64) << (48 - i * 16);
         }
-        
+
         if let Some(port_bits) = port {
             result |= port_bits;
         }
-        
+
         result
     }
-    
+
     /// Hash interface ID for privacy addresses
     fn hash_interface_id(&self, interface_id: &[u16]) -> u64 {
         // Simple hash function for demonstration
@@ -512,52 +594,52 @@ mod tests {
         let encoder = IPv6PerfectEncoder::new().unwrap();
         let ip = Ipv6Addr::LOCALHOST;
         let port = Some(443);
-        
+
         let encoded = encoder.encode(ip, port).unwrap();
         assert_eq!(encoded.word_count(), 4);
         assert!(encoded.is_perfect());
         assert!(encoded.compression_ratio() > 0.7);
-        
+
         let (decoded_ip, decoded_port) = encoder.decode(&encoded).unwrap();
         assert_eq!(decoded_ip, ip);
         assert_eq!(decoded_port, port);
     }
-    
+
     #[test]
     fn test_link_local_perfect_encoding() {
         let encoder = IPv6PerfectEncoder::new().unwrap();
         let ip = Ipv6Addr::from_str("fe80::1").unwrap();
         let port = Some(22);
-        
+
         let encoded = encoder.encode(ip, port).unwrap();
         assert_eq!(encoded.word_count(), 4);
         assert!(encoded.is_perfect());
-        
-        let (decoded_ip, decoded_port) = encoder.decode(&encoded).unwrap();
+
+        let (_decoded_ip, decoded_port) = encoder.decode(&encoded).unwrap();
         // Note: Due to pattern compression, exact reconstruction may vary
         assert_eq!(decoded_port, port);
     }
-    
+
     #[test]
     fn test_documentation_perfect_encoding() {
         let encoder = IPv6PerfectEncoder::new().unwrap();
         let ip = Ipv6Addr::from_str("2001:db8::1").unwrap();
         let port = Some(80);
-        
+
         let encoded = encoder.encode(ip, port).unwrap();
         assert_eq!(encoded.word_count(), 4);
         assert!(encoded.is_perfect());
-        
-        let (decoded_ip, decoded_port) = encoder.decode(&encoded).unwrap();
+
+        let (_decoded_ip, decoded_port) = encoder.decode(&encoded).unwrap();
         assert_eq!(decoded_port, port);
     }
-    
+
     #[test]
     fn test_compression_stats() {
         let encoder = IPv6PerfectEncoder::new().unwrap();
         let ip = Ipv6Addr::LOCALHOST;
         let port = Some(443);
-        
+
         let stats = encoder.compression_stats(ip, port).unwrap();
         assert_eq!(stats.original_bits, 144); // 128 + 16
         assert!(stats.compressed_bits < 50);
@@ -565,13 +647,13 @@ mod tests {
         assert!(stats.perfect_reconstruction);
         assert!(stats.efficiency_score() > 0.8);
     }
-    
+
     #[test]
     fn test_cloud_provider_detection() {
         let encoder = IPv6PerfectEncoder::new().unwrap();
         let ip = Ipv6Addr::from_str("2001:4860:4001:801::1").unwrap();
         let port = Some(443);
-        
+
         let encoded = encoder.encode(ip, port).unwrap();
         assert!(encoded.word_count() <= 5);
         assert_eq!(encoded.pattern_description(), "Cloud Provider");

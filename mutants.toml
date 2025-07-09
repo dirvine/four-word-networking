@@ -1,0 +1,234 @@
+# Mutation testing configuration for cargo-mutants
+# This file configures how mutation testing is performed
+
+[options]
+# Exclude generated code and test files from mutation
+exclude_globs = [
+    "target/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "fuzz/**",
+    "src/bin/**",
+    "src/universal/exhaustive_tests.rs",
+    "src/universal/fast_exhaustive_tests.rs",
+    "src/universal/real_world_tests.rs",
+    "src/universal/ultra_tests.rs",
+    "src/universal/demo_tests.rs",
+    "src/property_tests.rs",
+]
+
+# Focus on core library code
+include_globs = [
+    "src/lib.rs",
+    "src/four_word_encoder.rs",
+    "src/dictionary16k.rs",
+    "src/encoder16k.rs",
+    "src/adaptive_encoder.rs",
+    "src/compression.rs",
+    "src/error.rs",
+    "src/api.rs",
+    "src/ipv6_compression.rs",
+    "src/ultra_compact_encoder.rs",
+    "src/compressed_encoder.rs",
+]
+
+# Test command timeout (in seconds)
+test_timeout = 300
+
+# Don't test mutants that would break the build
+skip_build_failures = true
+
+# Mutation operators to use
+mutate_operators = [
+    "arithmetic",
+    "boolean",
+    "comparison",
+    "conditional",
+    "function_call",
+    "literal",
+    "logical",
+    "relational",
+    "return",
+    "statement",
+    "variable",
+]
+
+# Specific mutations to skip
+skip_mutations = [
+    # Skip mutations that would break compilation
+    "replace_return_type",
+    "remove_pub",
+    "change_visibility",
+    
+    # Skip mutations in error handling that might cause panics
+    "remove_error_handling",
+    "replace_panic_with_return",
+    
+    # Skip mutations in constants that would break fundamental assumptions
+    "mutate_dictionary_size",
+    "mutate_word_length_limits",
+]
+
+# Test command to run
+test_command = ["cargo", "test", "--lib"]
+
+# Additional test commands for integration tests
+additional_test_commands = [
+    ["cargo", "test", "--tests"],
+    ["cargo", "test", "--doc"],
+]
+
+# Coverage threshold - mutants must kill at least this percentage of tests
+coverage_threshold = 80
+
+# Parallelization settings
+jobs = 4  # Number of parallel jobs
+
+# Output settings
+output_dir = "target/mutants"
+output_format = "json"
+show_diff = true
+show_line_numbers = true
+
+# Baseline configuration
+baseline_dir = "target/mutants/baseline"
+baseline_timeout = 120
+
+# Filtering options
+filter_patterns = [
+    # Focus on critical paths
+    "encode",
+    "decode",
+    "compress",
+    "dictionary",
+    "validate",
+    "convert",
+    "parse",
+    "format",
+]
+
+# Exclude patterns
+exclude_patterns = [
+    # Skip debug and development code
+    "debug",
+    "test",
+    "bench",
+    "example",
+    "demo",
+    
+    # Skip error messages (cosmetic)
+    "error_message",
+    "format_error",
+    
+    # Skip logging and metrics
+    "log",
+    "metric",
+    "stat",
+    
+    # Skip documentation
+    "doc",
+    "comment",
+]
+
+# Performance settings
+memory_limit = "2GB"
+cpu_limit = "80%"
+
+# Reporting options
+report_format = "html"
+report_output = "target/mutants/report.html"
+show_progress = true
+show_summary = true
+
+# Advanced options
+shuffle_order = true
+continue_on_failure = true
+fail_fast = false
+
+# Custom test selection
+test_selection = "all"  # Options: all, unit, integration, property
+
+# Mutation scoring
+scoring_method = "killed"  # Options: killed, survived, timeout, error
+
+# Quality gates
+quality_gates = [
+    { name = "mutation_score", threshold = 80, required = true },
+    { name = "test_coverage", threshold = 95, required = true },
+    { name = "performance_regression", threshold = 10, required = false },
+]
+
+# Specific function targeting
+target_functions = [
+    "FourWordAdaptiveEncoder::encode",
+    "FourWordAdaptiveEncoder::decode",
+    "FourWordDictionary::get_word",
+    "FourWordDictionary::get_index",
+    "compress_ipv4",
+    "compress_ipv6",
+    "validate_word_format",
+    "parse_socket_address",
+]
+
+# Ignore specific mutants by ID or pattern
+ignore_mutants = [
+    # Ignore mutants that would break fundamental assumptions
+    "dictionary_size_mutation",
+    "word_length_mutation",
+    "alphabet_mutation",
+    
+    # Ignore mutants in utility functions
+    "format_output_mutation",
+    "debug_print_mutation",
+    
+    # Ignore mutants that would cause infinite loops
+    "loop_condition_mutation",
+    "iterator_mutation",
+]
+
+# Custom test environment
+[test_env]
+RUST_BACKTRACE = "1"
+RUST_LOG = "error"
+PROPTEST_CASES = "1000"
+QUICKCHECK_TESTS = "1000"
+
+# Baseline performance metrics
+[baseline_metrics]
+ipv4_encode_time_us = 2000
+ipv4_decode_time_us = 2000
+ipv6_encode_time_us = 5000
+ipv6_decode_time_us = 5000
+memory_usage_mb = 100
+throughput_ops_per_sec = 10000
+
+# Mutation strategies
+[strategies]
+# Conservative strategy - focus on critical paths
+conservative = {
+    operators = ["arithmetic", "boolean", "comparison"],
+    coverage_threshold = 90,
+    timeout = 180,
+    target_functions = ["encode", "decode", "compress"]
+}
+
+# Aggressive strategy - test everything
+aggressive = {
+    operators = ["all"],
+    coverage_threshold = 70,
+    timeout = 600,
+    include_globs = ["src/**/*.rs"],
+    exclude_globs = ["tests/**", "benches/**"]
+}
+
+# Fast strategy - quick feedback
+fast = {
+    operators = ["boolean", "comparison"],
+    coverage_threshold = 60,
+    timeout = 60,
+    test_command = ["cargo", "test", "--lib", "--", "--test-threads=1"]
+}
+
+# Default strategy
+default = "conservative"

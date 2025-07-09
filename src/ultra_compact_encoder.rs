@@ -4,9 +4,9 @@
 //! with direct 16K dictionary encoding to achieve perfect 4-word outputs for
 //! most common multiaddress patterns.
 
-use crate::ultra_compression::UltraCompressor;
-use crate::encoder16k::{UniversalEncoder16K, Encoding16K};
+use crate::encoder16k::{Encoding16K, UniversalEncoder16K};
 use crate::error::{FourWordError, Result};
+use crate::ultra_compression::UltraCompressor;
 
 /// Ultra-compact encoding result optimized for 4-word outputs
 #[derive(Debug, Clone, PartialEq)]
@@ -39,22 +39,27 @@ impl UltraCompactEncoder {
                 .map_err(|e| FourWordError::InvalidInput(e.to_string()))?,
         })
     }
-    
+
     /// Encode multiaddress with ultra-compression for optimal word count
     pub fn encode(&self, multiaddr: &str) -> Result<UltraCompactEncoding> {
         let original_size = multiaddr.len();
-        
+
         // Step 1: Ultra-compress the multiaddress
-        let compressed = self.compressor.ultra_compress(multiaddr)
+        let compressed = self
+            .compressor
+            .ultra_compress(multiaddr)
             .map_err(|e| FourWordError::CompressionError(e.to_string()))?;
-        
+
         let compressed_size = compressed.len();
-        let compression_ratio = (original_size as f64 - compressed_size as f64) / original_size as f64;
-        
+        let compression_ratio =
+            (original_size as f64 - compressed_size as f64) / original_size as f64;
+
         // Step 2: Encode compressed data directly with 16K encoder
-        let encoding = self.encoder.encode(&compressed)
+        let encoding = self
+            .encoder
+            .encode(&compressed)
             .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
-        
+
         Ok(UltraCompactEncoding {
             encoding,
             original_multiaddr: Some(multiaddr.to_string()),
@@ -63,12 +68,14 @@ impl UltraCompactEncoder {
             compressed_size,
         })
     }
-    
+
     /// Encode raw bytes directly (for non-multiaddress data)
     pub fn encode_bytes(&self, data: &[u8]) -> Result<UltraCompactEncoding> {
-        let encoding = self.encoder.encode(data)
+        let encoding = self
+            .encoder
+            .encode(data)
             .map_err(|e| FourWordError::InvalidInput(e.to_string()))?;
-        
+
         Ok(UltraCompactEncoding {
             encoding,
             original_multiaddr: None,
@@ -77,27 +84,31 @@ impl UltraCompactEncoder {
             compressed_size: data.len(),
         })
     }
-    
+
     /// Decode ultra-compact encoding back to multiaddress
     pub fn decode(&self, encoding: &UltraCompactEncoding) -> Result<String> {
         // Step 1: Decode to compressed bytes
-        let compressed_data = self.encoder.decode(&encoding.encoding)
+        let compressed_data = self
+            .encoder
+            .decode(&encoding.encoding)
             .map_err(|e| FourWordError::DecompressionError(e.to_string()))?;
-        
+
         // Step 2: Decompress to original multiaddress
-        let multiaddr = self.compressor.ultra_decompress(&compressed_data)
+        let multiaddr = self
+            .compressor
+            .ultra_decompress(&compressed_data)
             .map_err(|e| FourWordError::DecompressionError(e.to_string()))?;
-        
+
         Ok(multiaddr)
     }
-    
+
     /// Get encoding efficiency information
     pub fn efficiency_info(&self, multiaddr: &str) -> EncodingEfficiencyInfo {
         match self.encode(multiaddr) {
             Ok(encoding) => {
                 let word_count = encoding.word_count();
                 let compression_pct = encoding.compression_ratio * 100.0;
-                
+
                 let efficiency_class = match (compression_pct as u32, word_count) {
                     (75..=100, 3) => EfficiencyClass::Perfect,
                     (60..=100, 3..=6) => EfficiencyClass::Excellent,
@@ -105,7 +116,7 @@ impl UltraCompactEncoder {
                     (20..=100, 3..=12) => EfficiencyClass::Good,
                     _ => EfficiencyClass::Fair,
                 };
-                
+
                 EncodingEfficiencyInfo {
                     original_bytes: encoding.original_size,
                     compressed_bytes: encoding.compressed_size,
@@ -122,7 +133,7 @@ impl UltraCompactEncoder {
                 compression_ratio: 0.0,
                 efficiency_class: EfficiencyClass::Failed,
                 is_perfect_3_words: false,
-            }
+            },
         }
     }
 }
@@ -135,17 +146,17 @@ impl UltraCompactEncoding {
             Encoding16K::Hybrid { digits, .. } => 3 + digits.len() * 4, // Each digit group = 4 characters
         }
     }
-    
+
     /// Check if this achieved perfect 4-word encoding
     pub fn is_perfect_3_words(&self) -> bool {
         matches!(self.encoding, Encoding16K::Simple { .. })
     }
-    
+
     /// Get compression ratio as percentage
     pub fn compression_percentage(&self) -> f64 {
         self.compression_ratio * 100.0
     }
-    
+
     /// Get the encoded words as a simple string
     pub fn to_words(&self) -> String {
         match &self.encoding {
@@ -162,12 +173,12 @@ impl UltraCompactEncoding {
             }
         }
     }
-    
+
     /// Get efficiency rating
     pub fn efficiency_rating(&self) -> String {
         let word_count = self.word_count();
         let compression_pct = self.compression_percentage();
-        
+
         let class = match (compression_pct as u32, word_count) {
             (75..=100, 3) => "Perfect",
             (60..=100, 3..=6) => "Excellent",
@@ -175,15 +186,18 @@ impl UltraCompactEncoding {
             (20..=100, 3..=12) => "Good",
             _ => "Fair",
         };
-        
-        format!("{} ({:.1}% compression, {} words)", class, compression_pct, word_count)
+
+        format!(
+            "{} ({:.1}% compression, {} words)",
+            class, compression_pct, word_count
+        )
     }
-    
+
     /// Get original multiaddress if available
     pub fn original_multiaddr(&self) -> Option<&str> {
         self.original_multiaddr.as_deref()
     }
-    
+
     /// Get compression ratio
     pub fn compression_ratio(&self) -> f64 {
         self.compression_ratio
@@ -210,12 +224,12 @@ pub struct EncodingEfficiencyInfo {
 /// Efficiency classification
 #[derive(Debug, Clone, PartialEq)]
 pub enum EfficiencyClass {
-    Perfect,    // 75%+ compression, 4 words
-    Excellent,  // 60%+ compression, ≤6 words
-    VeryGood,   // 40%+ compression, ≤9 words
-    Good,       // 20%+ compression, ≤12 words
-    Fair,       // Lower efficiency
-    Failed,     // Encoding failed
+    Perfect,   // 75%+ compression, 4 words
+    Excellent, // 60%+ compression, ≤6 words
+    VeryGood,  // 40%+ compression, ≤9 words
+    Good,      // 20%+ compression, ≤12 words
+    Fair,      // Lower efficiency
+    Failed,    // Encoding failed
 }
 
 impl std::fmt::Display for EfficiencyClass {
@@ -240,78 +254,103 @@ impl Default for UltraCompactEncoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_ultra_compact_encoding_localhost() {
         let encoder = UltraCompactEncoder::new().unwrap();
-        
+
         let result = encoder.encode("/ip4/127.0.0.1/tcp/4001").unwrap();
-        
+
         assert!(result.is_perfect_3_words());
         assert!(result.compression_percentage() > 70.0);
         assert_eq!(result.word_count(), 3);
-        
-        println!("Localhost: {} -> {}", "/ip4/127.0.0.1/tcp/4001", result.to_words());
+
+        println!(
+            "Localhost: {} -> {}",
+            "/ip4/127.0.0.1/tcp/4001",
+            result.to_words()
+        );
         println!("Efficiency: {}", result.efficiency_rating());
     }
-    
+
     #[test]
     fn test_ultra_compact_encoding_private_network() {
         let encoder = UltraCompactEncoder::new().unwrap();
-        
+
         let result = encoder.encode("/ip4/192.168.1.100/tcp/80").unwrap();
-        
+
         assert!(result.compression_percentage() > 70.0);
-        println!("Private network: {} -> {}", "/ip4/192.168.1.100/tcp/80", result.to_words());
+        println!(
+            "Private network: {} -> {}",
+            "/ip4/192.168.1.100/tcp/80",
+            result.to_words()
+        );
         println!("Efficiency: {}", result.efficiency_rating());
         println!("Word count: {}", result.word_count());
     }
-    
+
     #[test]
     fn test_ultra_compact_encoding_ipv6_localhost() {
         let encoder = UltraCompactEncoder::new().unwrap();
-        
+
         let result = encoder.encode("/ip6/::1/tcp/4001").unwrap();
-        
+
         assert!(result.is_perfect_3_words());
         assert!(result.compression_percentage() > 80.0);
         assert_eq!(result.word_count(), 3);
-        
-        println!("IPv6 localhost: {} -> {}", "/ip6/::1/tcp/4001", result.to_words());
+
+        println!(
+            "IPv6 localhost: {} -> {}",
+            "/ip6/::1/tcp/4001",
+            result.to_words()
+        );
         println!("Efficiency: {}", result.efficiency_rating());
     }
-    
+
     #[test]
     fn test_round_trip_encoding() {
         let encoder = UltraCompactEncoder::new().unwrap();
-        
+
         let original = "/ip4/127.0.0.1/tcp/4001";
         let encoded = encoder.encode(original).unwrap();
         let decoded = encoder.decode(&encoded).unwrap();
-        
+
         // Since decompression is simplified in demo, just check it contains key components
         assert!(decoded.contains("127.0.0.1") || decoded.contains("127"));
         assert!(decoded.contains("tcp"));
-        
-        println!("Round-trip: {} -> {} -> {}", original, encoded.to_words(), decoded);
+
+        println!(
+            "Round-trip: {} -> {} -> {}",
+            original,
+            encoded.to_words(),
+            decoded
+        );
     }
-    
+
     #[test]
     fn test_efficiency_info() {
         let encoder = UltraCompactEncoder::new().unwrap();
-        
+
         let test_cases = [
             "/ip4/127.0.0.1/tcp/4001",
-            "/ip4/192.168.1.1/tcp/80", 
+            "/ip4/192.168.1.1/tcp/80",
             "/ip6/::1/tcp/443",
         ];
-        
+
         for multiaddr in test_cases {
             let info = encoder.efficiency_info(multiaddr);
-            println!("Efficiency for {}: {} -> {} ({} words, {:.1}% compression)", 
-                multiaddr, info.efficiency_class, 
-                if info.is_perfect_3_words { "Perfect 4 words!" } else { "Multiple words" },
-                info.word_count, info.compression_ratio);
+            println!(
+                "Efficiency for {}: {} -> {} ({} words, {:.1}% compression)",
+                multiaddr,
+                info.efficiency_class,
+                if info.is_perfect_3_words {
+                    "Perfect 4 words!"
+                } else {
+                    "Multiple words"
+                },
+                info.word_count,
+                info.compression_ratio
+            );
         }
     }
 }

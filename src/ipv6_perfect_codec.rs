@@ -3,23 +3,23 @@
 //! This module implements aggressive compression for IPv6 addresses to fit within
 //! the enhanced multi-dimensional encoding space.
 
-use std::net::Ipv6Addr;
 use crate::{
-    perfect_encoder::{PerfectEncoder, MultiDimEncoding, Separator, CasePattern},
+    perfect_encoder::{CasePattern, MultiDimEncoding, PerfectEncoder, Separator},
     FourWordError, Result,
 };
+use std::net::Ipv6Addr;
 
 /// IPv6 compression categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IPv6Category {
-    Loopback,       // ::1
-    Unspecified,    // ::
-    LinkLocal,      // fe80::/10
-    UniqueLocal,    // fc00::/7
-    Multicast,      // ff00::/8
-    IPv4Mapped,     // ::ffff:0:0/96
-    Documentation,  // 2001:db8::/32
-    GlobalUnicast,  // Everything else
+    Loopback,      // ::1
+    Unspecified,   // ::
+    LinkLocal,     // fe80::/10
+    UniqueLocal,   // fc00::/7
+    Multicast,     // ff00::/8
+    IPv4Mapped,    // ::ffff:0:0/96
+    Documentation, // 2001:db8::/32
+    GlobalUnicast, // Everything else
 }
 
 /// Compressed IPv6 representation
@@ -40,11 +40,11 @@ impl IPv6PerfectCodec {
             encoder: PerfectEncoder::new()?,
         })
     }
-    
+
     /// Compress IPv6 address for encoding
     fn compress_ipv6(&self, ip: Ipv6Addr, port: u16) -> CompressedIPv6 {
         let segments = ip.segments();
-        
+
         // Categorize the address
         let category = if ip == Ipv6Addr::UNSPECIFIED {
             IPv6Category::Unspecified
@@ -56,15 +56,20 @@ impl IPv6PerfectCodec {
             IPv6Category::UniqueLocal
         } else if segments[0] >= 0xff00 {
             IPv6Category::Multicast
-        } else if segments[0] == 0 && segments[1] == 0 && segments[2] == 0 && 
-                  segments[3] == 0 && segments[4] == 0 && segments[5] == 0xffff {
+        } else if segments[0] == 0
+            && segments[1] == 0
+            && segments[2] == 0
+            && segments[3] == 0
+            && segments[4] == 0
+            && segments[5] == 0xffff
+        {
             IPv6Category::IPv4Mapped
         } else if segments[0] == 0x2001 && segments[1] == 0x0db8 {
             IPv6Category::Documentation
         } else {
             IPv6Category::GlobalUnicast
         };
-        
+
         // Compress based on category
         let compressed_data = match category {
             IPv6Category::Unspecified => vec![],
@@ -111,14 +116,14 @@ impl IPv6PerfectCodec {
                 data
             }
         };
-        
+
         CompressedIPv6 {
             category,
             compressed_data,
             port,
         }
     }
-    
+
     /// Decompress IPv6 address
     fn decompress_ipv6(&self, compressed: &CompressedIPv6) -> Result<Ipv6Addr> {
         let segments = match compressed.category {
@@ -126,7 +131,9 @@ impl IPv6PerfectCodec {
             IPv6Category::Loopback => [0, 0, 0, 0, 0, 0, 0, 1],
             IPv6Category::LinkLocal => {
                 if compressed.compressed_data.len() < 8 {
-                    return Err(FourWordError::InvalidInput("Invalid link-local data".to_string()));
+                    return Err(FourWordError::InvalidInput(
+                        "Invalid link-local data".to_string(),
+                    ));
                 }
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfe80;
@@ -140,13 +147,24 @@ impl IPv6PerfectCodec {
             }
             IPv6Category::UniqueLocal => {
                 if compressed.compressed_data.len() < 13 {
-                    return Err(FourWordError::InvalidInput("Invalid unique-local data".to_string()));
+                    return Err(FourWordError::InvalidInput(
+                        "Invalid unique-local data".to_string(),
+                    ));
                 }
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfc00;
-                segments[1] = u16::from_be_bytes([compressed.compressed_data[0], compressed.compressed_data[1]]);
-                segments[2] = u16::from_be_bytes([compressed.compressed_data[2], compressed.compressed_data[3]]);
-                segments[3] = u16::from_be_bytes([compressed.compressed_data[4], compressed.compressed_data[5]]);
+                segments[1] = u16::from_be_bytes([
+                    compressed.compressed_data[0],
+                    compressed.compressed_data[1],
+                ]);
+                segments[2] = u16::from_be_bytes([
+                    compressed.compressed_data[2],
+                    compressed.compressed_data[3],
+                ]);
+                segments[3] = u16::from_be_bytes([
+                    compressed.compressed_data[4],
+                    compressed.compressed_data[5],
+                ]);
                 for i in 0..4 {
                     segments[4 + i] = u16::from_be_bytes([
                         compressed.compressed_data[6 + i * 2],
@@ -157,39 +175,47 @@ impl IPv6PerfectCodec {
             }
             IPv6Category::IPv4Mapped => {
                 if compressed.compressed_data.len() < 4 {
-                    return Err(FourWordError::InvalidInput("Invalid IPv4-mapped data".to_string()));
+                    return Err(FourWordError::InvalidInput(
+                        "Invalid IPv4-mapped data".to_string(),
+                    ));
                 }
                 let mut segments = [0u16; 8];
                 segments[5] = 0xffff;
-                segments[6] = u16::from_be_bytes([compressed.compressed_data[0], compressed.compressed_data[1]]);
-                segments[7] = u16::from_be_bytes([compressed.compressed_data[2], compressed.compressed_data[3]]);
+                segments[6] = u16::from_be_bytes([
+                    compressed.compressed_data[0],
+                    compressed.compressed_data[1],
+                ]);
+                segments[7] = u16::from_be_bytes([
+                    compressed.compressed_data[2],
+                    compressed.compressed_data[3],
+                ]);
                 segments
             }
             _ => {
                 // For hash-compressed addresses, we can only reconstruct approximately
                 // This is a limitation we document
                 return Err(FourWordError::InvalidInput(
-                    "Cannot perfectly reconstruct hash-compressed IPv6 addresses".to_string()
+                    "Cannot perfectly reconstruct hash-compressed IPv6 addresses".to_string(),
                 ));
             }
         };
-        
+
         Ok(Ipv6Addr::from(segments))
     }
-    
+
     /// Encode IPv6 address + port using enhanced multi-dimensional encoding
     pub fn encode(&self, ip: Ipv6Addr, port: u16) -> Result<MultiDimEncoding> {
         let compressed = self.compress_ipv6(ip, port);
-        
+
         // Pack compressed data into bits we can encode
         let mut packed_bits = 0u64;
-        
+
         // Category (3 bits) - shifted down by 1 to make room for IPv6 flag at bit 47
         packed_bits |= (compressed.category as u64) << 44;
-        
+
         // Port (16 bits)
         packed_bits |= (compressed.port as u64) << 28;
-        
+
         // Compressed data (up to 29 bits for simple cases)
         let data_bits = match compressed.category {
             IPv6Category::Unspecified | IPv6Category::Loopback => 0u64,
@@ -214,30 +240,30 @@ impl IPv6PerfectCodec {
                 hash & 0x1FFFFFFF // 29 bits
             }
         };
-        
+
         packed_bits |= data_bits;
-        
+
         // Use enhanced encoding with all dimensions
         let mut encoding = self.encoder.encode_48_bits(packed_bits)?;
-        
+
         // Force IPv6 to always use dashes and title case
         // This ensures visual distinction from IPv4
         encoding.separators = [Separator::Dash, Separator::Dash];
         encoding.case_patterns = [CasePattern::Title, CasePattern::Title, CasePattern::Title];
-        
+
         Ok(encoding)
     }
-    
+
     /// Decode from multi-dimensional encoding
     pub fn decode(&self, encoding: &MultiDimEncoding) -> Result<(Ipv6Addr, u16)> {
         // Decode bits
         let packed_bits = self.encoder.decode_48_bits(encoding)?;
-        
+
         // Extract fields
         let category_bits = ((packed_bits >> 45) & 0x7) as u8;
         let port = ((packed_bits >> 29) & 0xFFFF) as u16;
         let data_bits = packed_bits & 0x1FFFFFFF;
-        
+
         let category = match category_bits {
             0 => IPv6Category::Unspecified,
             1 => IPv6Category::Loopback,
@@ -249,7 +275,7 @@ impl IPv6PerfectCodec {
             7 => IPv6Category::GlobalUnicast,
             _ => return Err(FourWordError::InvalidInput("Invalid category".to_string())),
         };
-        
+
         // Reconstruct compressed data based on category
         let compressed_data = match category {
             IPv6Category::Unspecified | IPv6Category::Loopback => vec![],
@@ -270,13 +296,13 @@ impl IPv6PerfectCodec {
                 vec![]
             }
         };
-        
+
         let compressed = CompressedIPv6 {
             category,
             compressed_data,
             port,
         };
-        
+
         let ip = self.decompress_ipv6(&compressed)?;
         Ok((ip, port))
     }
@@ -285,37 +311,37 @@ impl IPv6PerfectCodec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_ipv6_special_addresses() {
         let codec = IPv6PerfectCodec::new().unwrap();
-        
+
         // Test special addresses that can be perfectly reconstructed
         let test_cases = vec![
             (Ipv6Addr::UNSPECIFIED, 0),
             (Ipv6Addr::LOCALHOST, 80),
             (Ipv6Addr::LOCALHOST, 443),
         ];
-        
+
         for (ip, port) in test_cases {
             let encoded = codec.encode(ip, port).unwrap();
             let (decoded_ip, decoded_port) = codec.decode(&encoded).unwrap();
-            
+
             assert_eq!(ip, decoded_ip, "IP mismatch for {}", ip);
             assert_eq!(port, decoded_port, "Port mismatch for {}:{}", ip, port);
         }
     }
-    
+
     #[test]
     fn test_ipv6_encoding_format() {
         let codec = IPv6PerfectCodec::new().unwrap();
-        
+
         let encoded = codec.encode(Ipv6Addr::LOCALHOST, 443).unwrap();
         let encoded_str = encoded.to_string();
-        
+
         // Should use dashes for IPv6
         assert!(encoded_str.contains('-'), "IPv6 should use dash separators");
-        
+
         // Should have title case
         let parts: Vec<&str> = encoded_str.split('-').collect();
         for part in parts {

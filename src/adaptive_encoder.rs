@@ -4,13 +4,13 @@
 //! smart scaling: IPv4 gets exactly 4 words, IPv6 gets 3-6 words based on
 //! address complexity and compression efficiency.
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use crate::{
-    variable_dictionary::{VariableDictionary, AdaptiveEncoding},
-    ipv6_compression::{Ipv6Compressor, CompressedIpv6, Ipv6Category},
-    pure_ip_compression::PureIpCompressor,
     error::FourWordError,
+    ipv6_compression::{CompressedIpv6, Ipv6Category, Ipv6Compressor},
+    pure_ip_compression::PureIpCompressor,
+    variable_dictionary::{AdaptiveEncoding, VariableDictionary},
 };
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 /// Main adaptive encoder for Four-Word Networking
 pub struct AdaptiveEncoder {
@@ -27,7 +27,7 @@ impl AdaptiveEncoder {
     /// Encode any IP address + port using optimal word count
     pub fn encode(&self, address: &str) -> Result<AdaptiveResult, FourWordError> {
         let (ip, port) = self.parse_address(address)?;
-        
+
         match ip {
             IpAddr::V4(ipv4) => self.encode_ipv4(ipv4, port),
             IpAddr::V6(ipv6) => self.encode_ipv6(ipv6, port),
@@ -37,16 +37,17 @@ impl AdaptiveEncoder {
     /// Decode adaptive words back to IP address
     pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
         let word_list: Vec<String> = words.split('.').map(|s| s.to_string()).collect();
-        
+
         if word_list.len() < 3 || word_list.len() > 6 {
-            return Err(FourWordError::InvalidInput(
-                format!("Expected 3-6 words, got {}", word_list.len())
-            ));
+            return Err(FourWordError::InvalidInput(format!(
+                "Expected 3-6 words, got {}",
+                word_list.len()
+            )));
         }
 
         // Decode using variable dictionary
         let decoded_data = self.dictionary.decode_adaptive(&word_list)?;
-        
+
         // Try to reconstruct the address
         // This is simplified - in practice we'd need to store metadata about the original format
         self.reconstruct_address(&decoded_data, word_list.len())
@@ -55,7 +56,7 @@ impl AdaptiveEncoder {
     /// Get detailed analysis of compression for an address
     pub fn analyze(&self, address: &str) -> Result<CompressionAnalysis, FourWordError> {
         let (ip, port) = self.parse_address(address)?;
-        
+
         match ip {
             IpAddr::V4(ipv4) => self.analyze_ipv4(ipv4, port),
             IpAddr::V6(ipv6) => self.analyze_ipv6(ipv6, port),
@@ -63,7 +64,11 @@ impl AdaptiveEncoder {
     }
 
     /// Encode IPv4 address (always 4 words)
-    fn encode_ipv4(&self, ipv4: Ipv4Addr, port: Option<u16>) -> Result<AdaptiveResult, FourWordError> {
+    fn encode_ipv4(
+        &self,
+        ipv4: Ipv4Addr,
+        port: Option<u16>,
+    ) -> Result<AdaptiveResult, FourWordError> {
         // Use our proven IPv4 compression from pure_ip_compression
         match PureIpCompressor::compress(ipv4, port.unwrap_or(0)) {
             Ok(compressed_value) => {
@@ -75,10 +80,10 @@ impl AdaptiveEncoder {
                     (compressed_value >> 10) as u8,
                     (compressed_value >> 2) as u8,
                 ];
-                
+
                 // Force 4-word encoding
                 let words = self.dictionary.encode_fixed_length(&bytes, 3)?;
-                
+
                 Ok(AdaptiveResult {
                     encoding: AdaptiveEncoding {
                         words,
@@ -97,10 +102,10 @@ impl AdaptiveEncoder {
                 if let Some(p) = port {
                     data.extend_from_slice(&p.to_be_bytes());
                 }
-                
+
                 // For IPv4+port (6 bytes = 48 bits), we need 4 words minimum
                 let words = self.dictionary.encode_fixed_length(&data, 4)?;
-                
+
                 Ok(AdaptiveResult {
                     encoding: AdaptiveEncoding {
                         words,
@@ -117,14 +122,18 @@ impl AdaptiveEncoder {
     }
 
     /// Encode IPv6 address (3-6 words based on complexity)
-    fn encode_ipv6(&self, ipv6: Ipv6Addr, port: Option<u16>) -> Result<AdaptiveResult, FourWordError> {
+    fn encode_ipv6(
+        &self,
+        ipv6: Ipv6Addr,
+        port: Option<u16>,
+    ) -> Result<AdaptiveResult, FourWordError> {
         // Use hierarchical IPv6 compression
         let compressed_ipv6 = Ipv6Compressor::compress(ipv6, port)?;
-        
+
         // Create data payload: category byte + compressed data + port (if present)
         let mut data = vec![compressed_ipv6.category as u8];
         data.extend_from_slice(&compressed_ipv6.compressed_data);
-        
+
         // Add port bytes if present
         if let Some(p) = compressed_ipv6.port {
             data.extend_from_slice(&p.to_be_bytes());
@@ -132,7 +141,7 @@ impl AdaptiveEncoder {
 
         // Get adaptive encoding
         let encoding = self.dictionary.encode_adaptive(&data)?;
-        
+
         let compression_method = format!(
             "{} compression ({})",
             compressed_ipv6.category_description(),
@@ -148,9 +157,13 @@ impl AdaptiveEncoder {
     }
 
     /// Analyze IPv4 compression potential
-    fn analyze_ipv4(&self, ipv4: Ipv4Addr, port: Option<u16>) -> Result<CompressionAnalysis, FourWordError> {
+    fn analyze_ipv4(
+        &self,
+        ipv4: Ipv4Addr,
+        port: Option<u16>,
+    ) -> Result<CompressionAnalysis, FourWordError> {
         let original_bits = 32 + port.map_or(0, |_| 16);
-        
+
         Ok(CompressionAnalysis {
             address: format!("{}:{}", ipv4, port.unwrap_or(0)),
             address_type: AddressType::Ipv4,
@@ -166,7 +179,11 @@ impl AdaptiveEncoder {
     }
 
     /// Analyze IPv6 compression potential
-    fn analyze_ipv6(&self, ipv6: Ipv6Addr, port: Option<u16>) -> Result<CompressionAnalysis, FourWordError> {
+    fn analyze_ipv6(
+        &self,
+        ipv6: Ipv6Addr,
+        port: Option<u16>,
+    ) -> Result<CompressionAnalysis, FourWordError> {
         let compressed_ipv6 = Ipv6Compressor::compress(ipv6, port)?;
         let original_bits = 128 + port.map_or(0, |_| 16);
         let word_count = compressed_ipv6.recommended_word_count();
@@ -192,49 +209,55 @@ impl AdaptiveEncoder {
         if input.starts_with('[') {
             if let Some(close_idx) = input.find(']') {
                 let addr_part = &input[1..close_idx];
-                let port_part = if close_idx + 1 < input.len() && &input[close_idx + 1..close_idx + 2] == ":" {
-                    Some(&input[close_idx + 2..])
-                } else {
-                    None
-                };
-                
-                let ip = addr_part.parse::<Ipv6Addr>()
-                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part)))?;
-                
+                let port_part =
+                    if close_idx + 1 < input.len() && &input[close_idx + 1..close_idx + 2] == ":" {
+                        Some(&input[close_idx + 2..])
+                    } else {
+                        None
+                    };
+
+                let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
+                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part))
+                })?;
+
                 let port = if let Some(port_str) = port_part {
-                    Some(port_str.parse::<u16>()
-                        .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_str)))?)
+                    Some(port_str.parse::<u16>().map_err(|_| {
+                        FourWordError::InvalidInput(format!("Invalid port: {}", port_str))
+                    })?)
                 } else {
                     None
                 };
-                
+
                 return Ok((IpAddr::V6(ip), port));
             }
         }
-        
+
         // Handle IPv4 with port or IPv6 without brackets
         if let Some(last_colon) = input.rfind(':') {
             let colon_count = input.matches(':').count();
-            
+
             if colon_count == 1 {
                 // IPv4:port
                 let addr_part = &input[..last_colon];
                 let port_part = &input[last_colon + 1..];
-                
-                let ip = addr_part.parse::<Ipv4Addr>()
-                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part)))?;
-                
-                let port = port_part.parse::<u16>()
-                    .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
-                
+
+                let ip = addr_part.parse::<Ipv4Addr>().map_err(|_| {
+                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part))
+                })?;
+
+                let port = port_part.parse::<u16>().map_err(|_| {
+                    FourWordError::InvalidInput(format!("Invalid port: {}", port_part))
+                })?;
+
                 return Ok((IpAddr::V4(ip), Some(port)));
             }
         }
-        
+
         // Try parsing as standalone IP
-        let ip = input.parse::<IpAddr>()
+        let ip = input
+            .parse::<IpAddr>()
             .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
-        
+
         Ok((ip, None))
     }
 
@@ -244,12 +267,12 @@ impl AdaptiveEncoder {
             // IPv4 - decompress from mathematical compression
             if data.len() >= 5 {
                 // Reconstruct the compressed value from bytes (inverse of pack_42_bits)
-                let compressed_value = ((data[0] as u64) << 34) |
-                                     ((data[1] as u64) << 26) |
-                                     ((data[2] as u64) << 18) |
-                                     ((data[3] as u64) << 10) |
-                                     ((data[4] as u64) << 2);
-                
+                let compressed_value = ((data[0] as u64) << 34)
+                    | ((data[1] as u64) << 26)
+                    | ((data[2] as u64) << 18)
+                    | ((data[3] as u64) << 10)
+                    | ((data[4] as u64) << 2);
+
                 // Decompress using PureIpCompressor
                 match PureIpCompressor::decompress(compressed_value) {
                     Ok((ip, port)) => {
@@ -266,22 +289,28 @@ impl AdaptiveEncoder {
                             let port = u16::from_be_bytes([data[4], data[5]]);
                             Ok(format!("{}:{}", ip, port))
                         } else {
-                            Err(FourWordError::InvalidInput("Failed to decompress IPv4 address".to_string()))
+                            Err(FourWordError::InvalidInput(
+                                "Failed to decompress IPv4 address".to_string(),
+                            ))
                         }
                     }
                 }
             } else {
-                Err(FourWordError::InvalidInput("Insufficient data for IPv4".to_string()))
+                Err(FourWordError::InvalidInput(
+                    "Insufficient data for IPv4".to_string(),
+                ))
             }
         } else if word_count >= 4 && word_count <= 6 {
             // IPv6 - decompress based on category
             if data.is_empty() {
-                return Err(FourWordError::InvalidInput("No data for IPv6 decompression".to_string()));
+                return Err(FourWordError::InvalidInput(
+                    "No data for IPv6 decompression".to_string(),
+                ));
             }
-            
+
             let category = data[0];
             let compressed_data = &data[1..];
-            
+
             // Use IPv6 decompressor based on category
             match self.decompress_ipv6(category, compressed_data) {
                 Ok((ip, port)) => {
@@ -291,18 +320,18 @@ impl AdaptiveEncoder {
                         Ok(format!("[{}]:{}", ip, port))
                     }
                 }
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             }
         } else {
-            Err(FourWordError::InvalidInput(
-                format!("Invalid word count: {} (expected 3 for IPv4, 4-6 for IPv6)", word_count)
-            ))
+            Err(FourWordError::InvalidInput(format!(
+                "Invalid word count: {} (expected 3 for IPv4, 4-6 for IPv6)",
+                word_count
+            )))
         }
     }
 
     /// Decompress IPv6 based on category
     fn decompress_ipv6(&self, category: u8, data: &[u8]) -> Result<(Ipv6Addr, u16), FourWordError> {
-        
         let category = match category {
             0 => Ipv6Category::Unspecified,
             1 => Ipv6Category::Loopback,
@@ -311,9 +340,14 @@ impl AdaptiveEncoder {
             4 => Ipv6Category::Documentation,
             5 => Ipv6Category::GlobalUnicast,
             6 => Ipv6Category::Special,
-            _ => return Err(FourWordError::InvalidInput(format!("Unknown IPv6 category: {}", category)))
+            _ => {
+                return Err(FourWordError::InvalidInput(format!(
+                    "Unknown IPv6 category: {}",
+                    category
+                )))
+            }
         };
-        
+
         // For now, return a placeholder based on category
         // In a full implementation, we'd reverse the compression for each category
         let (ip, port) = match category {
@@ -327,18 +361,17 @@ impl AdaptiveEncoder {
                 };
                 (Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), port)
             }
-            Ipv6Category::Unspecified => {
-                (Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0), 0)
-            }
+            Ipv6Category::Unspecified => (Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0), 0),
             _ => {
                 // For other categories, we'd need to implement proper decompression
                 // For now, return a representative address
-                return Err(FourWordError::InvalidInput(
-                    format!("IPv6 decompression not fully implemented for {:?}", category)
-                ));
+                return Err(FourWordError::InvalidInput(format!(
+                    "IPv6 decompression not fully implemented for {:?}",
+                    category
+                )));
             }
         };
-        
+
         Ok((ip, port))
     }
 
@@ -348,14 +381,18 @@ impl AdaptiveEncoder {
             crate::ipv6_compression::Ipv6Category::Loopback => "Null compression",
             crate::ipv6_compression::Ipv6Category::LinkLocal => "Interface ID compression",
             crate::ipv6_compression::Ipv6Category::UniqueLocal => "Prefix + Global ID compression",
-            crate::ipv6_compression::Ipv6Category::Documentation => "Documentation prefix compression",
+            crate::ipv6_compression::Ipv6Category::Documentation => {
+                "Documentation prefix compression"
+            }
             crate::ipv6_compression::Ipv6Category::GlobalUnicast => "Provider pattern compression",
             crate::ipv6_compression::Ipv6Category::Unspecified => "Null compression",
             crate::ipv6_compression::Ipv6Category::Special => "Full storage",
-        }.to_string()
+        }
+        .to_string()
     }
 
     /// Pack 42-bit value into bytes for dictionary encoding
+    #[allow(dead_code)]
     fn pack_42_bits(&self, value: u64) -> Vec<u8> {
         vec![
             (value >> 34) as u8,
@@ -464,7 +501,11 @@ impl CompressionAnalysis {
             self.compression_ratio * 100.0,
             self.efficiency * 100.0,
             self.method,
-            if self.guaranteed_fit { "✓ Yes" } else { "✗ No" }
+            if self.guaranteed_fit {
+                "✓ Yes"
+            } else {
+                "✗ No"
+            }
         )
     }
 }
@@ -476,31 +517,26 @@ mod tests {
     #[test]
     fn test_ipv4_encoding() {
         let encoder = AdaptiveEncoder::new().unwrap();
-        
+
         let result = encoder.encode("192.168.1.100:80").unwrap();
         assert_eq!(result.encoding.word_count, 3);
         assert_eq!(result.address_type as usize, AddressType::Ipv4 as usize);
         assert!(result.guaranteed);
-        
+
         println!("IPv4 result: {}", result.summary());
     }
 
     #[test]
     fn test_ipv6_encoding() {
         let encoder = AdaptiveEncoder::new().unwrap();
-        
-        let test_cases = vec![
-            "::1",
-            "[::1]:443", 
-            "fe80::1",
-            "2001:db8::1",
-        ];
-        
+
+        let test_cases = vec!["::1", "[::1]:443", "fe80::1", "2001:db8::1"];
+
         for address in test_cases {
             let result = encoder.encode(address).unwrap();
             assert!(result.encoding.word_count >= 3 && result.encoding.word_count <= 6);
             assert_eq!(result.address_type as usize, AddressType::Ipv6 as usize);
-            
+
             println!("IPv6 {}: {}", address, result.summary());
         }
     }
@@ -508,18 +544,18 @@ mod tests {
     #[test]
     fn test_compression_analysis() {
         let encoder = AdaptiveEncoder::new().unwrap();
-        
+
         let addresses = vec![
             "192.168.1.100:80",
             "::1",
             "fe80::1234:5678:9abc:def0",
             "2001:db8::1:2:3:4",
         ];
-        
+
         for address in addresses {
             let analysis = encoder.analyze(address).unwrap();
             println!("\n{}", analysis.detailed_report());
-            
+
             assert!(analysis.guaranteed_fit);
             assert!(analysis.word_count >= 3 && analysis.word_count <= 6);
         }
@@ -528,15 +564,15 @@ mod tests {
     #[test]
     fn test_word_count_scaling() {
         let encoder = AdaptiveEncoder::new().unwrap();
-        
+
         // IPv4 should always be 4 words
         let ipv4_result = encoder.encode("10.0.0.1:22").unwrap();
         assert_eq!(ipv4_result.encoding.word_count, 3);
-        
+
         // IPv6 localhost should be 4 words minimum (to distinguish from IPv4)
         let ipv6_simple = encoder.encode("::1").unwrap();
         assert_eq!(ipv6_simple.encoding.word_count, 4);
-        
+
         // More complex IPv6 should use more words (but still fit in our compression)
         let ipv6_complex = encoder.encode("fe80::1234").unwrap();
         assert!(ipv6_complex.encoding.word_count > 3 && ipv6_complex.encoding.word_count <= 6);
