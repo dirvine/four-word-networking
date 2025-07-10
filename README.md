@@ -92,7 +92,7 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 > - Conducting extensive real-world testing and security analysis
 > - Gathering community feedback on word selection and international usage
 > 
-> **Note on Word Readability**: We are continuously improving our word list. The Feistel network used for cryptographic bit diffusion selects from all positions in our 65,536-word dictionary with equal probability. This means every single word must be readable and memorable. We're working to replace any remaining obscure words to ensure consistently high-quality three-word addresses.
+> **Note on Word Readability**: We are continuously improving our word list. The Feistel network used for cryptographic bit diffusion selects from all positions in our 65,536-word dictionary with equal probability. This means every single word must be readable and memorable. We're actively working to replace any remaining obscure words to ensure consistently high-quality three-word addresses. Our latest dictionary update incorporates over 72,000 high-quality English words from linguistic datasets, from which we select the most readable 65,536 words.
 > 
 > Early adopters and developers are encouraged to test and provide feedback!
 
@@ -144,14 +144,15 @@ Three-Word Networking uses sophisticated bit manipulation and a large dictionary
 
 ### Dictionary System
 
-The system uses a frequency-based 65,536-word dictionary derived from the [Hugging Face Common Words 79k dataset](https://huggingface.co/datasets/jaagli/common-words-79k):
+The system uses a carefully curated 65,536-word dictionary optimized for human readability:
 
 - **65,536 Words**: 2^16 words enabling perfect 16-bit encoding per word
-- **Frequency-Based**: Most common English words prioritized for maximum recognizability
+- **High-Quality Sources**: Derived from multiple linguistic datasets including common word frequency lists
 - **Natural Word Forms**: Includes natural suffixes like -ing, -ed, -er, -s for better readability
 - **Voice-Optimized**: Words selected for clear pronunciation and minimal confusion
 - **Quality Filtered**: No homophones, offensive words, or ambiguous terms
-- **Length Flexible**: 3+ character words, allowing natural language patterns
+- **Length Flexible**: 2+ character words, supporting both common short words and descriptive longer ones
+- **Continuous Improvement**: Actively refined based on readability testing and user feedback
 
 ## Performance Characteristics
 
@@ -544,7 +545,7 @@ at your option.
 
 ## Acknowledgments
 
-- **Word Dictionary**: The frequency-based dictionary is derived from the [Hugging Face Common Words 79k dataset](https://huggingface.co/datasets/jaagli/common-words-79k), which provides a comprehensive list of the most common English words based on frequency analysis. This ensures our three-word addresses use the most recognizable and memorable words possible.
+- **Word Dictionary**: Our dictionary is curated from multiple high-quality linguistic sources to ensure maximum readability and memorability. We continuously refine our word selection based on factors including frequency analysis, pronunciation clarity, and user feedback. The goal is to provide three-word addresses using the most recognizable and natural English words possible.
 
 ## Support
 
