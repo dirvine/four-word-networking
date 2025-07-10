@@ -177,7 +177,7 @@ fn test_cli_version_output() {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // Version output should contain version information
-    assert!(stdout.contains("1.2.2") || stdout.contains("version"));
+    assert!(stdout.contains("2.0.0") || stdout.contains("version"));
 }
 
 #[test]
