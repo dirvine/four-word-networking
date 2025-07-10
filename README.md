@@ -95,12 +95,12 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 
 ```bash
 # IPv4 addresses: Always exactly 3 words (perfect reconstruction)
-192.168.1.1:443    →  lehr.delfs.enrages
-10.0.0.1:8080      →  casts.scuds.paws
-8.8.8.8:53         →  aid.ajar.dulls
+192.168.1.10:443   →  soulful.kann.take
+192.168.1.5:443    →  cranium.hillier.strums
+127.0.0.1:8080     →  rudden.cries.mets
 
 # IPv6 addresses: Groups of 3 words (6 or 9 total)
-[::1]:443          →  Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
+[::1]:443          →  Saunier-Surplus-Beefed-Crapser-Tyger-Hamberg
 [fe80::1]:22       →  Casuist-Prattle-Inno-Alky-Stimuli-Bugger
 [2001:db8::1]:443  →  Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
 ```
@@ -205,11 +205,11 @@ three-word-networking = "2.0.0"
 
 ```bash
 # IPv4 addresses (always 3 words - perfect reconstruction)
-3wn 192.168.1.1:443
-# lehr.delfs.enrages
+3wn 192.168.1.10:443
+# soulful.kann.take
 
-3wn 8.8.8.8:53
-# aid.ajar.dulls
+3wn 192.168.1.5:443
+# cranium.hillier.strums
 
 # IPv6 addresses (6 or 9 words in groups of 3)
 3wn "[::1]:443"
@@ -219,20 +219,20 @@ three-word-networking = "2.0.0"
 # Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
 
 # Reverse conversion (dots or spaces for IPv4)
-3wn lehr.delfs.enrages
-# 192.168.1.1:443
+3wn soulful.kann.take
+# 192.168.1.10:443
 
-3wn lehr delfs enrages
-# 192.168.1.1:443
+3wn soulful kann take
+# 192.168.1.10:443
 
 3wn Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
 # [::1]:443
 
 # Verbose mode shows details
-3wn -v 192.168.1.1:443
-# Input: 192.168.1.1:443
+3wn -v 192.168.1.10:443
+# Input: 192.168.1.10:443
 # Type: IPv4 (dot separators, lowercase)
-# Words: lehr.delfs.enrages
+# Words: soulful.kann.take
 # Count: 3 words
 # Method: Perfect reconstruction (0% data loss)
 # Note: IPv4 addresses always use exactly 3 words
@@ -246,12 +246,12 @@ use three_word_networking::ThreeWordAdaptiveEncoder;
 let encoder = ThreeWordAdaptiveEncoder::new()?;
 
 // Encode IPv4 (always 3 words, perfect reconstruction)
-let words = encoder.encode("192.168.1.1:443")?;
-assert_eq!(words, "lehr.delfs.enrages");
+let words = encoder.encode("192.168.1.10:443")?;
+assert_eq!(words, "soulful.kann.take");
 
 // Decode back to exact address
-let decoded = encoder.decode("lehr.delfs.enrages")?;
-assert_eq!(decoded, "192.168.1.1:443");
+let decoded = encoder.decode("soulful.kann.take")?;
+assert_eq!(decoded, "192.168.1.10:443");
 
 // IPv6 examples (6 or 9 words in groups)
 let ipv6_words = encoder.encode("[::1]:443")?;
@@ -274,9 +274,9 @@ use three_word_networking::ThreeWordAdaptiveEncoder;
 let encoder = ThreeWordAdaptiveEncoder::new()?;
 
 // IPv4 perfect reconstruction details
-let ipv4_words = encoder.encode("192.168.1.1:443")?;
-println!("IPv4: {} -> {}", "192.168.1.1:443", ipv4_words);
-// IPv4: 192.168.1.1:443 -> lehr.delfs.enrages
+let ipv4_words = encoder.encode("192.168.1.10:443")?;
+println!("IPv4: {} -> {}", "192.168.1.10:443", ipv4_words);
+// IPv4: 192.168.1.10:443 -> soulful.kann.take
 
 // IPv6 adaptive compression
 let ipv6_words = encoder.encode("[fe80::1]:22")?;
@@ -284,7 +284,7 @@ println!("IPv6: {} -> {}", "[fe80::1]:22", ipv6_words);
 // IPv6: [fe80::1]:22 -> Casuist-Prattle-Inno-Alky-Stimuli-Bugger
 
 // Visual distinction is automatic
-// IPv4: dots, lowercase (lehr.delfs.enrages)
+// IPv4: dots, lowercase (soulful.kann.take)
 // IPv6: dashes, title case (groups of 3)
 
 // Integration with existing code
@@ -317,19 +317,19 @@ Three-word addresses are optimized for verbal communication:
 
 ```
 "What's your server address?"
-"lehr delfs enrages" (192.168.1.1:443)
+"soulful kann take" (192.168.1.10:443)
 
 "Can you share the IPv6 endpoint?"
-"Kaufhof Dingley Inno, Roupe Stimuli Bugger" ([::1]:443)
+"Saunier Surplus Beefed, Crapser Tyger Hamberg" ([::1]:443)
 
 "I need the development server"
-"casts scuds paws" (10.0.0.1:8080)
+"cranium hillier strums" (192.168.1.5:443)
 
 Real-world scenarios:
-- Phone support: "Connect to lehr delfs enrages"
-- Team meetings: "The API is at aid ajar dulls"
-- Documentation: "Default: casts.scuds.paws"
-- Voice assistants: "Connect me to lehr delfs enrages"
+- Phone support: "Connect to soulful kann take"
+- Team meetings: "The API is at cranium hillier strums"
+- Documentation: "Default: rudden.cries.mets"
+- Voice assistants: "Connect me to soulful kann take"
 ```
 
 ### Word Selection Criteria
@@ -363,30 +363,30 @@ Real-world scenarios:
 ### Network Administration
 ```bash
 # Server configuration files
-api_server = "lehr.delfs.enrages"     # 192.168.1.1:443
-db_primary = "casts.scuds.paws"       # 10.0.0.1:8080
-db_replica = "aid.ajar.dulls"         # 8.8.8.8:53
+api_server = "soulful.kann.take"      # 192.168.1.10:443
+db_primary = "cranium.hillier.strums"  # 192.168.1.5:443
+db_replica = "rudden.cries.mets"      # 127.0.0.1:8080
 ```
 
 ### Technical Support
 ```
-Support: "Please connect to lehr delfs enrages"
-User: "Is that L-E-H-R?"
-Support: "Yes, lehr delfs enrages, all lowercase"
+Support: "Please connect to soulful kann take"
+User: "Is that S-O-U-L-F-U-L?"
+Support: "Yes, soulful kann take, all lowercase"
 User: "Connected successfully!"
 ```
 
 ### IoT Device Configuration
 ```rust
 // Device announces its address verbally
-device.announce("Device ready at casts scuds paws");
+device.announce("Device ready at cranium hillier strums");
 ```
 
 ### Monitoring and Alerts
 ```
-Alert: Connection lost to aid.ajar.dulls (8.8.8.8:53)
-Action: Reconnecting to aid.ajar.dulls...
-Status: Restored connection to aid.ajar.dulls
+Alert: Connection lost to rudden.cries.mets (127.0.0.1:8080)
+Action: Reconnecting to rudden.cries.mets...
+Status: Restored connection to rudden.cries.mets
 ```
 
 ## Integration Examples
@@ -416,22 +416,22 @@ async fn main() {
 ```toml
 # config.toml
 [servers]
-primary = "lehr.delfs.enrages"    # 192.168.1.1:443
-backup = "casts.scuds.paws"       # 10.0.0.1:8080
+primary = "soulful.kann.take"     # 192.168.1.10:443
+backup = "cranium.hillier.strums" # 192.168.1.5:443
 
 [database]
-master = "lehr.delfs.enrages"     # 192.168.1.1:5432
-replica = "casts.scuds.paws"      # 10.0.0.1:5432
+master = "soulful.kann.take"      # 192.168.1.10:5432
+replica = "cranium.hillier.strums" # 192.168.1.5:5432
 ```
 
 ### Logging and Monitoring
 ```rust
 // Convert addresses in logs for readability
 log::info!("Connected to {}", twn.encode(peer_addr)?);
-// Output: Connected to lehr.delfs.enrages
+// Output: Connected to soulful.kann.take
 
 // Parse from logs
-if let Ok(addr) = twn.decode("lehr.delfs.enrages") {
+if let Ok(addr) = twn.decode("soulful.kann.take") {
     reconnect(addr);
 }
 ```

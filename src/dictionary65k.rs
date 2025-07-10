@@ -49,8 +49,8 @@ pub struct Dictionary65K {
 impl Dictionary65K {
     /// Create a new 65K dictionary instance
     pub fn new() -> Result<Self, Dictionary65KError> {
-        // Load the high-quality 65K wordlist (3-7 characters, curated)
-        let wordlist_data = include_str!("../data/my_word_list_with_suffixes.txt");
+        // Load the improved 65K wordlist (4-8 characters, curated, family-friendly)
+        let wordlist_data = include_str!("../data/improved_word_list_65k.txt");
         let words: Vec<String> = wordlist_data
             .lines()
             .map(|s| s.trim().to_string())
@@ -65,10 +65,10 @@ impl Dictionary65K {
             });
         }
 
-        // Validate word quality (3-7 characters)
+        // Validate word quality (3-8 characters)
         for word in words.iter() {
             let len = word.len();
-            if !(3..=7).contains(&len) {
+            if !(3..=8).contains(&len) {
                 return Err(Dictionary65KError::SourceFileError);
             }
         }
