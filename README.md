@@ -87,9 +87,12 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 **Near production-ready system for converting IP addresses and ports into memorable word combinations. IPv4 addresses always produce exactly 3 words with perfect reconstruction, while IPv6 addresses use groups of 3 words (6 or 9 total) maintaining the same clean user experience.**
 
 > **🚧 Status: Release Candidate** - The core technology is complete and functional. We are currently:
-> - Finalizing the 65,536-word dictionary for optimal voice clarity and memorability
+> - **Actively curating our 65,536-word dictionary** to ensure all words are highly readable and memorable
+> - Finalizing word selection for optimal voice clarity and natural recognition
 > - Conducting extensive real-world testing and security analysis
 > - Gathering community feedback on word selection and international usage
+> 
+> **Note on Word Readability**: We are continuously improving our word list. The Feistel network used for cryptographic bit diffusion selects from all positions in our 65,536-word dictionary with equal probability. This means every single word must be readable and memorable. We're working to replace any remaining obscure words to ensure consistently high-quality three-word addresses.
 > 
 > Early adopters and developers are encouraged to test and provide feedback!
 
