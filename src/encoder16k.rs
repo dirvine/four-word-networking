@@ -275,7 +275,7 @@ impl UniversalEncoder16K {
         // Decode digit groups
         for digit_group in digits {
             let value: u16 = digit_group.parse().map_err(|_| {
-                DecodingError::InvalidFormat(format!("Invalid digit group: {}", digit_group))
+                DecodingError::InvalidFormat(format!("Invalid digit group: {digit_group}"))
             })?;
 
             // Convert back to 2 bytes
@@ -303,7 +303,7 @@ impl UniversalEncoder16K {
         } else {
             // Hybrid encoding: 4 words + digits
             let remaining_bytes = original_size.saturating_sub(5);
-            let digit_groups = (remaining_bytes + 1) / 2;
+            let digit_groups = remaining_bytes.div_ceil(2);
 
             let rating = match original_size {
                 1..=5 => EfficiencyRating::Excellent,
@@ -514,8 +514,8 @@ mod tests {
         assert!(hybrid_str.contains('.'));
         assert!(hybrid_str.contains('+'));
 
-        println!("Simple: {}", simple_str);
-        println!("Hybrid: {}", hybrid_str);
+        println!("Simple: {simple_str}");
+        println!("Hybrid: {hybrid_str}");
     }
 
     #[test]

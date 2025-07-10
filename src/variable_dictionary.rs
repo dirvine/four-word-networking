@@ -43,8 +43,7 @@ impl VariableDictionary {
             6
         } else {
             return Err(FourWordError::InvalidInput(format!(
-                "Data requires {} bits, exceeds maximum {} bits (6 words)",
-                bit_count, MAX_BITS_6_WORDS
+                "Data requires {bit_count} bits, exceeds maximum {MAX_BITS_6_WORDS} bits (6 words)"
             )));
         };
 
@@ -65,10 +64,9 @@ impl VariableDictionary {
         data: &[u8],
         word_count: usize,
     ) -> Result<Vec<String>, FourWordError> {
-        if word_count < 3 || word_count > 6 {
+        if !(3..=6).contains(&word_count) {
             return Err(FourWordError::InvalidInput(format!(
-                "Word count must be 3-6, got {}",
-                word_count
+                "Word count must be 3-6, got {word_count}"
             )));
         }
 
@@ -77,8 +75,7 @@ impl VariableDictionary {
 
         if bit_count > max_bits {
             return Err(FourWordError::InvalidInput(format!(
-                "Data requires {} bits, but {} words can only hold {} bits",
-                bit_count, word_count, max_bits
+                "Data requires {bit_count} bits, but {word_count} words can only hold {max_bits} bits"
             )));
         }
 
@@ -125,7 +122,7 @@ impl VariableDictionary {
 
         // Convert bit value back to bytes
         let max_bits = words.len() * BITS_PER_WORD;
-        let max_bytes = (max_bits + 7) / 8;
+        let max_bytes = max_bits.div_ceil(8);
         let mut packed_data = Vec::new();
 
         for i in 0..max_bytes {
@@ -144,7 +141,7 @@ impl VariableDictionary {
         data: &[u8],
         target_bits: usize,
     ) -> Result<Vec<u8>, FourWordError> {
-        let target_bytes = (target_bits + 7) / 8; // Round up to nearest byte
+        let target_bytes = target_bits.div_ceil(8); // Round up to nearest byte
         let mut packed = vec![0u8; target_bytes];
 
         // Copy data, padding with zeros if necessary
@@ -168,7 +165,7 @@ impl VariableDictionary {
 
     /// Convert bytes to a single bit value for encoding
     fn bytes_to_bits(&self, data: &[u8], max_bits: usize) -> u128 {
-        let max_bytes = (max_bits + 7) / 8;
+        let max_bytes = max_bits.div_ceil(8);
         let mut value = 0u128;
 
         // u128 can safely handle up to 16 bytes, but we limit to our max (84 bits = ~11 bytes)

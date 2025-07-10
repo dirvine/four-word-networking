@@ -1,4 +1,4 @@
-use four_word_networking::encoder16k::UniversalEncoder16K;
+use three_word_networking::encoder16k::UniversalEncoder16K;
 
 fn main() {
     let encoder = UniversalEncoder16K::new().expect("Failed to create encoder");
@@ -25,24 +25,24 @@ fn main() {
 
     for (data, description) in test_cases {
         println!("\n📊 Testing: {} ({} bytes)", description, data.len());
-        println!("   Data: {:?}", data);
+        println!("   Data: {data:?}");
 
         match encoder.encode(&data) {
             Ok(encoded) => {
                 let word_count = match &encoded {
-                    four_word_networking::encoder16k::Encoding16K::Simple { words: _ } => 3,
-                    four_word_networking::encoder16k::Encoding16K::Hybrid { words: _, digits } => {
+                    three_word_networking::encoder16k::Encoding16K::Simple { words: _ } => 3,
+                    three_word_networking::encoder16k::Encoding16K::Hybrid { words: _, digits } => {
                         3 + digits.len() * 3
                     }
                 };
 
-                println!("   Encoded: {}", encoded);
-                println!("   Total words: {}", word_count);
+                println!("   Encoded: {encoded}");
+                println!("   Total words: {word_count}");
 
                 if word_count == 3 {
                     println!("   ✅ Perfect! Achieved 4-word encoding");
                 } else {
-                    println!("   📈 Uses {} words", word_count);
+                    println!("   📈 Uses {word_count} words");
                 }
 
                 // Show efficiency info
@@ -53,7 +53,7 @@ fn main() {
                 );
             }
             Err(e) => {
-                println!("   ❌ Error: {}", e);
+                println!("   ❌ Error: {e}");
             }
         }
     }

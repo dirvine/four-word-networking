@@ -4,10 +4,10 @@
 //! IPv4 and IPv6 perfect codecs based on the input.
 
 use crate::{
+    FourWordError, Result,
     ipv4_perfect_codec::IPv4PerfectCodec,
     ipv6_perfect_codec::IPv6PerfectCodec,
     perfect_encoder::{MultiDimEncoding, PerfectDictionary},
-    FourWordError, Result,
 };
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -51,9 +51,9 @@ impl PerfectAdaptiveEncoder {
             // IPv6 format (dashes)
             let (ip, port) = self.ipv6_codec.decode(&encoding)?;
             if port == 0 {
-                Ok(format!("[{}]", ip))
+                Ok(format!("[{ip}]"))
             } else {
-                Ok(format!("[{}]:{}", ip, port))
+                Ok(format!("[{ip}]:{port}"))
             }
         } else if is_ipv4 && !is_ipv6 {
             // IPv4 format (dots)
@@ -61,7 +61,7 @@ impl PerfectAdaptiveEncoder {
             if port == 0 {
                 Ok(ip.to_string())
             } else {
-                Ok(format!("{}:{}", ip, port))
+                Ok(format!("{ip}:{port}"))
             }
         } else {
             // Fallback: try IPv4 first, then IPv6
@@ -70,15 +70,15 @@ impl PerfectAdaptiveEncoder {
                     if port == 0 {
                         Ok(ip.to_string())
                     } else {
-                        Ok(format!("{}:{}", ip, port))
+                        Ok(format!("{ip}:{port}"))
                     }
                 }
                 Err(_) => {
                     let (ip, port) = self.ipv6_codec.decode(&encoding)?;
                     if port == 0 {
-                        Ok(format!("[{}]", ip))
+                        Ok(format!("[{ip}]"))
                     } else {
-                        Ok(format!("[{}]:{}", ip, port))
+                        Ok(format!("[{ip}]:{port}"))
                     }
                 }
             }
@@ -99,12 +99,12 @@ impl PerfectAdaptiveEncoder {
                     };
 
                 let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {addr_part}"))
                 })?;
 
                 let port = if let Some(port_str) = port_part {
                     port_str.parse::<u16>().map_err(|_| {
-                        FourWordError::InvalidInput(format!("Invalid port: {}", port_str))
+                        FourWordError::InvalidInput(format!("Invalid port: {port_str}"))
                     })?
                 } else {
                     0
@@ -125,7 +125,7 @@ impl PerfectAdaptiveEncoder {
 
                 if let Ok(ip) = addr_part.parse::<Ipv4Addr>() {
                     let port = port_part.parse::<u16>().map_err(|_| {
-                        FourWordError::InvalidInput(format!("Invalid port: {}", port_part))
+                        FourWordError::InvalidInput(format!("Invalid port: {port_part}"))
                     })?;
 
                     return Ok((IpAddr::V4(ip), port));
@@ -138,8 +138,7 @@ impl PerfectAdaptiveEncoder {
             Ok((ip, 0))
         } else {
             Err(FourWordError::InvalidInput(format!(
-                "Invalid IP address: {}",
-                input
+                "Invalid IP address: {input}"
             )))
         }
     }
@@ -163,10 +162,10 @@ mod tests {
 
         for address in test_cases {
             let encoded = encoder.encode(address).unwrap();
-            println!("{} -> {}", address, encoded);
+            println!("{address} -> {encoded}");
 
             let decoded = encoder.decode(&encoded).unwrap();
-            assert_eq!(address, decoded, "Failed to roundtrip {}", address);
+            assert_eq!(address, decoded, "Failed to roundtrip {address}");
         }
     }
 
@@ -178,7 +177,7 @@ mod tests {
 
         for address in test_cases {
             let encoded = encoder.encode(address).unwrap();
-            println!("{} -> {}", address, encoded);
+            println!("{address} -> {encoded}");
 
             let decoded = encoder.decode(&encoded).unwrap();
 
@@ -189,7 +188,7 @@ mod tests {
                 address.to_string()
             };
 
-            assert_eq!(expected, decoded, "Failed to roundtrip {}", address);
+            assert_eq!(expected, decoded, "Failed to roundtrip {address}");
         }
     }
 
@@ -200,8 +199,8 @@ mod tests {
         let ipv4 = encoder.encode("192.168.1.1:443").unwrap();
         let ipv6 = encoder.encode("[::1]:443").unwrap();
 
-        println!("IPv4 encoding: {}", ipv4);
-        println!("IPv6 encoding: {}", ipv6);
+        println!("IPv4 encoding: {ipv4}");
+        println!("IPv6 encoding: {ipv6}");
 
         // IPv4 should use dots, IPv6 should use dashes
         assert!(ipv4.contains('.'), "IPv4 should use dots");

@@ -1,21 +1,21 @@
-//! Test the four-word encoding system
+//! Test the three-word encoding system
 //!
-//! This demonstrates perfect reconstruction for IPv4 (4 words)
-//! and adaptive encoding for IPv6 (4-6 words).
+//! This demonstrates perfect reconstruction for IPv4 (3 words)
+//! and adaptive encoding for IPv6 (6 or 9 words).
 
-use four_word_networking::FourWordAdaptiveEncoder;
 #[allow(unused_imports)]
 use std::net::{Ipv4Addr, Ipv6Addr};
 #[allow(unused_imports)]
 use std::str::FromStr;
+use three_word_networking::ThreeWordAdaptiveEncoder;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🌟 Four-Word Perfect Encoding Demo");
+    println!("🌟 Three-Word Perfect Encoding Demo");
     println!("=====================================\n");
 
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
 
-    println!("📍 IPv4 Perfect Reconstruction (4 words)");
+    println!("📍 IPv4 Perfect Reconstruction (3 words)");
     println!("----------------------------------------");
 
     // Test IPv4 addresses
@@ -35,17 +35,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let decoded = encoder.decode(&encoded)?;
         let word_count = encoded.split('.').count();
 
-        println!("  {} → {} ({} words)", address, encoded, word_count);
+        println!("  {address} → {encoded} ({word_count} words)");
 
         if address == decoded {
             println!("  ✅ Perfect reconstruction verified!");
         } else {
-            println!("  ❌ Reconstruction failed: {} != {}", address, decoded);
+            println!("  ❌ Reconstruction failed: {address} != {decoded}");
         }
         println!();
     }
 
-    println!("\n🌐 IPv6 Adaptive Encoding (4-6 words)");
+    println!("\n🌐 IPv6 Adaptive Encoding (6 or 9 words)");
     println!("--------------------------------------");
 
     // Test IPv6 addresses
@@ -62,16 +62,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let encoded = encoder.encode(address)?;
         let word_count = encoded.split('-').count();
 
-        println!("  {} → {} ({} words)", address, encoded, word_count);
+        println!("  {address} → {encoded} ({word_count} words)");
         println!("  📊 Compression: IPv6 category-based encoding");
 
         // Try to decode
         match encoder.decode(&encoded) {
             Ok(decoded) => {
-                println!("  🔄 Decoded to: {}", decoded);
+                println!("  🔄 Decoded to: {decoded}");
             }
             Err(e) => {
-                println!("  ⚠️  Decode not implemented: {}", e);
+                println!("  ⚠️  Decode not implemented: {e}");
             }
         }
         println!();
@@ -79,12 +79,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("\n📋 Summary");
     println!("----------");
-    println!("• IPv4: Perfect reconstruction with exactly 4 words");
-    println!("• IPv6: Adaptive encoding with 4-6 words based on pattern");
+    println!("• IPv4: Perfect reconstruction with exactly 3 words");
+    println!("• IPv6: Adaptive encoding with 6 or 9 words (groups of 3)");
     println!("• Visual distinction: IPv4 uses dots, IPv6 uses dashes");
-    println!("• Dictionary: 16,384 words (14 bits per word)");
-    println!("• IPv4 capacity: 4 × 14 = 56 bits (perfect for 48-bit IPv4+port)");
-    println!("• IPv6 compression: Category-based for common patterns");
+    println!("• Dictionary: 65,536 words for IPv4 (16 bits per word)");
+    println!("• IPv4 capacity: 3 × 16 = 48 bits (perfect for IPv4+port)");
+    println!("• IPv6 compression: Groups of 3 for consistent UX");
 
     Ok(())
 }

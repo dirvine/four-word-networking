@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use four_word_networking::FourWordAdaptiveEncoder;
+use three_word_networking::FourWordAdaptiveEncoder;
 
 fuzz_target!(|data: &[u8]| {
     // Try to interpret input as a string

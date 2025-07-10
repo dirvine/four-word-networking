@@ -460,7 +460,7 @@ impl Ipv6Compressor {
                 if data.len() >= 3 {
                     let pos = data[1] as usize + 4; // Convert back to absolute position
                     let val = data[2] as u16;
-                    if pos >= 4 && pos < 8 {
+                    if (4..8).contains(&pos) {
                         segments[pos] = val;
                     }
                 }
@@ -481,7 +481,7 @@ impl Ipv6Compressor {
                     if i + 2 < data.len() {
                         let pos = data[i] as usize + 4; // Convert back to absolute position
                         let val = ((data[i + 1] as u16) << 8) | (data[i + 2] as u16);
-                        if pos >= 4 && pos < 8 {
+                        if (4..8).contains(&pos) {
                             segments[pos] = val;
                         }
                         i += 3;
@@ -502,7 +502,7 @@ impl Ipv6Compressor {
 
     fn decompress_unique_local(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
         if data.len() >= 7 {
-            let prefix = ((data[0] as u16) << 8) | 0x00;
+            let prefix = (data[0] as u16) << 8;
             let global_id_part = ((data[1] as u16) << 8) | (data[2] as u16);
             let subnet = ((data[5] as u16) << 8) | (data[6] as u16);
 
@@ -546,7 +546,7 @@ impl Ipv6Compressor {
                 if data.len() >= 3 {
                     let pos = data[1] as usize;
                     let val = data[2] as u16;
-                    if pos >= 2 && pos < 8 {
+                    if (2..8).contains(&pos) {
                         segments[pos] = val;
                     }
                 }
@@ -558,7 +558,7 @@ impl Ipv6Compressor {
                     if i + 2 < data.len() {
                         let pos = data[i] as usize;
                         let val = ((data[i + 1] as u16) << 8) | (data[i + 2] as u16);
-                        if pos >= 2 && pos < 8 {
+                        if (2..8).contains(&pos) {
                             segments[pos] = val;
                         }
                         i += 3;
@@ -622,7 +622,7 @@ mod tests {
 
         assert_eq!(compressed.category, Ipv6Category::Loopback);
         assert_eq!(compressed.compressed_data.len(), 6); // Padded to 6 bytes
-                                                         // With category byte + 6 bytes data = 56 bits total = 4 words
+        // With category byte + 6 bytes data = 56 bits total = 4 words
         assert!(compressed.recommended_word_count() >= 4); // IPv6 minimum 4 words
 
         let (decompressed_ip, port) = Ipv6Compressor::decompress(&compressed).unwrap();
@@ -680,7 +680,7 @@ mod tests {
             let compressed = Ipv6Compressor::compress(ip, Some(443)).unwrap();
             let ratio = compressed.compression_ratio();
             println!("{}: {:.1}% compression", name, ratio * 100.0);
-            assert!(ratio > 0.0, "{} should have some compression", name);
+            assert!(ratio > 0.0, "{name} should have some compression");
         }
     }
 }

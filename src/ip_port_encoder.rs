@@ -51,12 +51,12 @@ impl IpPortAddress {
                     };
 
                 let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {addr_part}"))
                 })?;
 
                 let port = if let Some(port_str) = port_part {
                     Some(port_str.parse::<u16>().map_err(|_| {
-                        FourWordError::InvalidInput(format!("Invalid port: {}", port_str))
+                        FourWordError::InvalidInput(format!("Invalid port: {port_str}"))
                     })?)
                 } else {
                     None
@@ -80,11 +80,11 @@ impl IpPortAddress {
                 let port_part = &input[last_colon + 1..];
 
                 let ip = addr_part.parse::<Ipv4Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {addr_part}"))
                 })?;
 
                 let port = port_part.parse::<u16>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid port: {}", port_part))
+                    FourWordError::InvalidInput(format!("Invalid port: {port_part}"))
                 })?;
 
                 return Ok(Self {
@@ -97,7 +97,7 @@ impl IpPortAddress {
         // Try parsing as standalone IP
         let ip = input
             .parse::<IpAddr>()
-            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
+            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {input}")))?;
 
         Ok(Self { ip, port: None })
     }
@@ -105,9 +105,9 @@ impl IpPortAddress {
     /// Convert back to string representation
     pub fn to_string(&self) -> String {
         match (&self.ip, self.port) {
-            (IpAddr::V4(addr), Some(port)) => format!("{}:{}", addr, port),
+            (IpAddr::V4(addr), Some(port)) => format!("{addr}:{port}"),
             (IpAddr::V4(addr), None) => addr.to_string(),
-            (IpAddr::V6(addr), Some(port)) => format!("[{}]:{}", addr, port),
+            (IpAddr::V6(addr), Some(port)) => format!("[{addr}]:{port}"),
             (IpAddr::V6(addr), None) => addr.to_string(),
         }
     }
@@ -219,7 +219,7 @@ impl CompressedIpPort {
                 else if ipv6.segments()[0] & 0xFFC0 == 0xFE80 {
                     // Store marker + interface ID (last 64 bits)
                     data.push(0x91); // IPv6 link-local marker
-                                     // This would need 8 more bytes - doesn't fit
+                    // This would need 8 more bytes - doesn't fit
                     return Err(FourWordError::InvalidInput(
                         "IPv6 link-local addresses exceed 5 bytes".to_string(),
                     ));
@@ -368,8 +368,7 @@ impl CompressedIpPort {
                 Ok(IpPortAddress { ip, port })
             }
             _ => Err(FourWordError::InvalidInput(format!(
-                "Unknown compression header: 0x{:02X}",
-                header
+                "Unknown compression header: 0x{header:02X}"
             ))),
         }
     }
@@ -581,13 +580,13 @@ mod tests {
 
         for port in common_ports {
             // Localhost
-            let addr = format!("127.0.0.1:{}", port);
+            let addr = format!("127.0.0.1:{port}");
             let encoded = encoder.encode(&addr).unwrap();
             let decoded = encoder.decode(&encoded).unwrap();
             assert_eq!(decoded, addr);
 
             // Private network
-            let addr = format!("192.168.1.1:{}", port);
+            let addr = format!("192.168.1.1:{port}");
             let encoded = encoder.encode(&addr).unwrap();
             let decoded = encoder.decode(&encoded).unwrap();
             assert_eq!(decoded, addr);

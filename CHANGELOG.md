@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-01-10
+
+### Major Architecture Update - Three-Word Networking
+
+#### Added
+- **Perfect IPv4 Reconstruction**: IPv4 addresses now use exactly 3 words with 100% perfect reconstruction
+- **65,536-word dictionary**: Expanded from 16K to 65K words for perfect 16-bit encoding per word
+- **Three-word encoder system**: New `ThreeWordAdaptiveEncoder` for optimal encoding
+- **3wn CLI tool**: Renamed from `4wn` to `3wn` with updated functionality
+- **Space-separated word support**: CLI and library now accept both dots and spaces for IPv4
+- **Feistel network**: 8-round cryptographic bit diffusion for security
+- **Groups of 3 for IPv6**: IPv6 addresses use 6 or 9 words (always groups of 3)
+
+#### Changed
+- **BREAKING**: Crate renamed from `four-word-networking` to `three-word-networking`
+- **BREAKING**: CLI renamed from `4wn` to `3wn`
+- **BREAKING**: IPv4 addresses now produce 3 words instead of 4
+- **BREAKING**: Library crate name changed to `three_word_networking`
+- IPv6 addresses now use 6 or 9 words (groups of 3) for consistent UX
+- Updated all documentation and examples to reflect new architecture
+
+#### Fixed
+- IPv6 decoder now properly extracts category from encoded data
+- Fixed metadata byte handling in IPv6 category reconstruction
+- Improved bit calculation for 6 vs 9 word IPv6 decision
+- All tests now pass with correct word expectations
+
+#### Migration Guide
+- Update Cargo.toml: `four-word-networking` → `three-word-networking`
+- Update imports: `use four_word_networking` → `use three_word_networking`
+- Update CLI usage: `4wn` → `3wn`
+- IPv4 addresses will now have 3 words instead of 4
+- IPv6 addresses will use 6 or 9 words (groups of 3)
+- Space-separated words are now supported: `3wn lehr delfs enrages`
+
 ## [1.1.0] - 2025-01-08
 
 ### Major Architecture Update - Four-Word Networking

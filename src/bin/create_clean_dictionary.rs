@@ -33,12 +33,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Show samples
     println!("\nSample excellent words:");
     for word in excellent_words.iter().take(15) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     println!("\nSample filtered words:");
     for word in filtered_out.iter().take(15) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     // Build final dictionary: Excellent first, then good, then acceptable as needed
@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if needed > 0 {
         if needed <= acceptable_words.len() {
             final_words.extend(acceptable_words.iter().take(needed));
-            println!("\nAdded {} acceptable words to reach 16384 total", needed);
+            println!("\nAdded {needed} acceptable words to reach 16384 total");
         } else {
             final_words.extend(&acceptable_words);
             let still_needed = 16384 - final_words.len();

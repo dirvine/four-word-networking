@@ -3,7 +3,7 @@ use proptest::prelude::*;
 use quickcheck::TestResult;
 use quickcheck_macros::quickcheck;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use four_word_networking::*;
+use three_word_networking::*;
 
 mod test_config;
 #[allow(unused_imports)]
@@ -16,7 +16,7 @@ proptest! {
     fn prop_ipv4_roundtrip(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
-        
+
         // Test roundtrip property
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             match decode_words(&encoded) {
@@ -32,18 +32,18 @@ proptest! {
     fn prop_ipv4_valid_encoding(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
-        
+
         if let Ok(encoded) = encode_ip_address(&ip_str) {
-            // Should have exactly 4 words
+            // Should have exactly 3 words for IPv4
             let words: Vec<&str> = encoded.split('.').collect();
-            prop_assert_eq!(words.len(), 4);
-            
+            prop_assert_eq!(words.len(), 3);
+
             // Each word should be valid
             for word in words {
                 prop_assert!(!word.is_empty(), "Word cannot be empty");
                 prop_assert!(word.len() >= 3, "Word too short: {}", word);
                 prop_assert!(word.len() <= 12, "Word too long: {}", word);
-                prop_assert!(word.chars().all(|c| c.is_ascii_lowercase() || c == '-'), 
+                prop_assert!(word.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
                     "Invalid characters in word: {}", word);
                 prop_assert!(!word.starts_with('-'), "Word starts with hyphen: {}", word);
                 prop_assert!(!word.ends_with('-'), "Word ends with hyphen: {}", word);
@@ -57,7 +57,7 @@ proptest! {
     fn prop_encoding_deterministic(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
-        
+
         if let Ok(encoded1) = encode_ip_address(&ip_str) {
             if let Ok(encoded2) = encode_ip_address(&ip_str) {
                 prop_assert_eq!(encoded1, encoded2, "Encoding should be deterministic");
@@ -74,15 +74,15 @@ proptest! {
     ) {
         let ip1 = Ipv4Addr::new(a1, b1, c1, d1);
         let ip2 = Ipv4Addr::new(a2, b2, c2, d2);
-        
+
         // Only test if IPs are different
         if ip1 != ip2 {
             if let (Ok(encoded1), Ok(encoded2)) = (
                 encode_ip_address(&ip1.to_string()),
                 encode_ip_address(&ip2.to_string())
             ) {
-                prop_assert_ne!(encoded1, encoded2, 
-                    "Different IPs should produce different encodings: {} vs {}", 
+                prop_assert_ne!(encoded1, encoded2,
+                    "Different IPs should produce different encodings: {} vs {}",
                     ip1, ip2);
             }
         }
@@ -98,7 +98,7 @@ proptest! {
         let ip = Ipv4Addr::new(a, b, c, d);
         let socket = SocketAddr::from((ip, port));
         let socket_str = socket.to_string();
-        
+
         if let Ok(encoded) = encode_socket_address(&socket_str) {
             if let Ok(decoded) = decode_socket_address(&encoded) {
                 prop_assert_eq!(socket_str, decoded, "Socket address roundtrip failed");
@@ -115,14 +115,14 @@ proptest! {
     ) {
         let ip = Ipv6Addr::new(a, b, c, d, e, f, g, h);
         let ip_str = ip.to_string();
-        
+
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             if let Ok(decoded) = decode_words(&encoded) {
                 // Parse both to normalize representation
                 let original_parsed: Ipv6Addr = ip_str.parse().unwrap();
                 let decoded_parsed: Ipv6Addr = decoded.parse().unwrap();
-                prop_assert_eq!(original_parsed, decoded_parsed, 
-                    "IPv6 roundtrip failed: {} -> {} -> {}", 
+                prop_assert_eq!(original_parsed, decoded_parsed,
+                    "IPv6 roundtrip failed: {} -> {} -> {}",
                     ip_str, encoded, decoded);
             }
         }
@@ -134,20 +134,20 @@ proptest! {
     fn prop_compression_bounds(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
-        
+
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             let word_count = encoded.split('.').count();
-            
-            // IPv4 should always produce exactly 4 words
-            prop_assert_eq!(word_count, 4, "IPv4 should produce exactly 4 words");
-            
+
+            // IPv4 should always produce exactly 3 words
+            prop_assert_eq!(word_count, 3, "IPv4 should produce exactly 3 words");
+
             // Estimate encoding efficiency
             let original_bits = 32; // IPv4 is 32 bits
             let estimated_encoded_bits = word_count * 14; // Assume 14 bits per word
             let compression_ratio = estimated_encoded_bits as f64 / original_bits as f64;
-            
+
             // Should be reasonably efficient (not more than 4x expansion)
-            prop_assert!(compression_ratio <= 4.0, 
+            prop_assert!(compression_ratio <= 4.0,
                 "Compression too inefficient: {}x expansion", compression_ratio);
         }
     }
@@ -158,22 +158,22 @@ proptest! {
     fn prop_performance_bounds(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
-        
+
         // Encoding should be fast
         let start = std::time::Instant::now();
         let encoded = encode_ip_address(&ip_str);
         let encoding_time = start.elapsed();
-        
-        prop_assert!(encoding_time.as_micros() < 10000, 
+
+        prop_assert!(encoding_time.as_micros() < 10000,
             "Encoding too slow: {}μs", encoding_time.as_micros());
-        
+
         // Decoding should be fast
         if let Ok(encoded) = encoded {
             let start = std::time::Instant::now();
             let _decoded = decode_words(&encoded);
             let decoding_time = start.elapsed();
-            
-            prop_assert!(decoding_time.as_micros() < 10000, 
+
+            prop_assert!(decoding_time.as_micros() < 10000,
                 "Decoding too slow: {}μs", decoding_time.as_micros());
         }
     }
@@ -186,7 +186,7 @@ proptest! {
 fn qc_ipv4_roundtrip(a: u8, b: u8, c: u8, d: u8) -> TestResult {
     let ip = Ipv4Addr::new(a, b, c, d);
     let ip_str = ip.to_string();
-    
+
     match encode_ip_address(&ip_str) {
         Ok(encoded) => match decode_words(&encoded) {
             Ok(decoded) => TestResult::from_bool(ip_str == decoded),
@@ -198,15 +198,27 @@ fn qc_ipv4_roundtrip(a: u8, b: u8, c: u8, d: u8) -> TestResult {
 
 /// Test that encoding is injective (one-to-one)
 #[quickcheck]
-fn qc_encoding_injective(a1: u8, b1: u8, c1: u8, d1: u8, a2: u8, b2: u8, c2: u8, d2: u8) -> TestResult {
+fn qc_encoding_injective(
+    a1: u8,
+    b1: u8,
+    c1: u8,
+    d1: u8,
+    a2: u8,
+    b2: u8,
+    c2: u8,
+    d2: u8,
+) -> TestResult {
     let ip1 = Ipv4Addr::new(a1, b1, c1, d1);
     let ip2 = Ipv4Addr::new(a2, b2, c2, d2);
-    
+
     if ip1 == ip2 {
         return TestResult::discard();
     }
-    
-    match (encode_ip_address(&ip1.to_string()), encode_ip_address(&ip2.to_string())) {
+
+    match (
+        encode_ip_address(&ip1.to_string()),
+        encode_ip_address(&ip2.to_string()),
+    ) {
         (Ok(encoded1), Ok(encoded2)) => TestResult::from_bool(encoded1 != encoded2),
         _ => TestResult::discard(),
     }
@@ -217,16 +229,16 @@ fn qc_encoding_injective(a1: u8, b1: u8, c1: u8, d1: u8, a2: u8, b2: u8, c2: u8,
 fn qc_word_format_consistency(a: u8, b: u8, c: u8, d: u8) -> TestResult {
     let ip = Ipv4Addr::new(a, b, c, d);
     let ip_str = ip.to_string();
-    
+
     match encode_ip_address(&ip_str) {
         Ok(encoded) => {
             let words: Vec<&str> = encoded.split('.').collect();
-            
+
             // Check word count
-            if words.len() != 4 {
+            if words.len() != 3 {
                 return TestResult::failed();
             }
-            
+
             // Check each word
             for word in words {
                 if word.is_empty() {
@@ -242,9 +254,9 @@ fn qc_word_format_consistency(a: u8, b: u8, c: u8, d: u8) -> TestResult {
                     return TestResult::failed();
                 }
             }
-            
+
             TestResult::passed()
-        },
+        }
         Err(_) => TestResult::discard(),
     }
 }
@@ -255,14 +267,14 @@ fn qc_collision_resistance(inputs: Vec<u32>) -> TestResult {
     if inputs.len() < 2 {
         return TestResult::discard();
     }
-    
+
     let mut encodings = std::collections::HashSet::new();
-    
+
     for input in inputs {
         let bytes = input.to_be_bytes();
         let ip = Ipv4Addr::new(bytes[0], bytes[1], bytes[2], bytes[3]);
         let ip_str = ip.to_string();
-        
+
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             if encodings.contains(&encoded) {
                 return TestResult::failed(); // Collision detected
@@ -270,7 +282,7 @@ fn qc_collision_resistance(inputs: Vec<u32>) -> TestResult {
             encodings.insert(encoded);
         }
     }
-    
+
     TestResult::passed()
 }
 
@@ -281,7 +293,7 @@ fn qc_error_handling_consistency(invalid_input: String) -> TestResult {
     if invalid_input.parse::<IpAddr>().is_ok() {
         return TestResult::discard(); // Skip valid IPs
     }
-    
+
     match encode_ip_address(&invalid_input) {
         Ok(_) => TestResult::failed(), // Should have failed
         Err(_) => TestResult::passed(),
@@ -294,12 +306,12 @@ fn qc_batch_consistency(ips: Vec<u32>) -> TestResult {
     if ips.is_empty() {
         return TestResult::discard();
     }
-    
+
     for ip_val in ips {
         let bytes = ip_val.to_be_bytes();
         let ip = Ipv4Addr::new(bytes[0], bytes[1], bytes[2], bytes[3]);
         let ip_str = ip.to_string();
-        
+
         // Encode/decode multiple times - should be consistent
         if let Ok(encoded1) = encode_ip_address(&ip_str) {
             if let Ok(encoded2) = encode_ip_address(&ip_str) {
@@ -309,7 +321,7 @@ fn qc_batch_consistency(ips: Vec<u32>) -> TestResult {
             }
         }
     }
-    
+
     TestResult::passed()
 }
 
@@ -319,20 +331,20 @@ fn qc_batch_consistency(ips: Vec<u32>) -> TestResult {
 #[test]
 fn test_special_ipv4_addresses() {
     let special_addresses = vec![
-        "0.0.0.0",           // All zeros
-        "255.255.255.255",   // All ones
-        "127.0.0.1",         // Loopback
-        "169.254.1.1",       // Link-local
-        "224.0.0.1",         // Multicast
-        "192.168.1.1",       // Private
-        "10.0.0.1",          // Private
-        "172.16.0.1",        // Private
+        "0.0.0.0",         // All zeros
+        "255.255.255.255", // All ones
+        "127.0.0.1",       // Loopback
+        "169.254.1.1",     // Link-local
+        "224.0.0.1",       // Multicast
+        "192.168.1.1",     // Private
+        "10.0.0.1",        // Private
+        "172.16.0.1",      // Private
     ];
-    
+
     for addr in special_addresses {
         let encoded = encode_ip_address(addr).expect("Encoding failed");
         let decoded = decode_words(&encoded).expect("Decoding failed");
-        assert_eq!(addr, decoded, "Special address roundtrip failed: {}", addr);
+        assert_eq!(addr, decoded, "Special address roundtrip failed: {addr}");
     }
 }
 
@@ -340,22 +352,24 @@ fn test_special_ipv4_addresses() {
 #[test]
 fn test_special_ipv6_addresses() {
     let special_addresses = vec![
-        "::",                           // All zeros
-        "::1",                          // Loopback
-        "fe80::1",                      // Link-local
-        "ff02::1",                      // Multicast
-        "2001:db8::1",                  // Documentation
-        "::ffff:192.0.2.1",           // IPv4-mapped
+        "::",               // All zeros
+        "::1",              // Loopback
+        "fe80::1",          // Link-local
+        "ff02::1",          // Multicast
+        "2001:db8::1",      // Documentation
+        "::ffff:192.0.2.1", // IPv4-mapped
     ];
-    
+
     for addr in special_addresses {
         if let Ok(encoded) = encode_ip_address(addr) {
             if let Ok(decoded) = decode_words(&encoded) {
                 // Parse both to normalize representation
                 let original: Ipv6Addr = addr.parse().unwrap();
                 let decoded_parsed: Ipv6Addr = decoded.parse().unwrap();
-                assert_eq!(original, decoded_parsed, 
-                    "Special IPv6 address roundtrip failed: {}", addr);
+                assert_eq!(
+                    original, decoded_parsed,
+                    "Special IPv6 address roundtrip failed: {addr}"
+                );
             }
         }
     }
@@ -363,22 +377,22 @@ fn test_special_ipv6_addresses() {
 
 // Helper functions (placeholders - replace with actual implementation)
 fn encode_ip_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_words(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 
 fn encode_socket_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_socket_address(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 
@@ -390,8 +404,7 @@ proptest! {
 
 // Custom strategies for more focused testing
 pub fn ipv4_strategy() -> impl Strategy<Value = Ipv4Addr> {
-    (0u8..=255, 0u8..=255, 0u8..=255, 0u8..=255)
-        .prop_map(|(a, b, c, d)| Ipv4Addr::new(a, b, c, d))
+    (0u8..=255, 0u8..=255, 0u8..=255, 0u8..=255).prop_map(|(a, b, c, d)| Ipv4Addr::new(a, b, c, d))
 }
 
 pub fn port_strategy() -> impl Strategy<Value = u16> {
@@ -399,8 +412,7 @@ pub fn port_strategy() -> impl Strategy<Value = u16> {
 }
 
 pub fn socket_addr_strategy() -> impl Strategy<Value = SocketAddr> {
-    (ipv4_strategy(), port_strategy())
-        .prop_map(|(ip, port)| SocketAddr::from((ip, port)))
+    (ipv4_strategy(), port_strategy()).prop_map(|(ip, port)| SocketAddr::from((ip, port)))
 }
 
 // Use custom strategies
@@ -408,7 +420,7 @@ proptest! {
     #[test]
     fn prop_custom_socket_roundtrip(socket in socket_addr_strategy()) {
         let socket_str = socket.to_string();
-        
+
         if let Ok(encoded) = encode_socket_address(&socket_str) {
             if let Ok(decoded) = decode_socket_address(&encoded) {
                 prop_assert_eq!(socket_str, decoded);

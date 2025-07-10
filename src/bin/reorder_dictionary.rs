@@ -31,12 +31,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Show samples
     println!("\nSample high quality words:");
     for word in high_quality.iter().take(20) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     println!("\nSample low quality words:");
     for word in low_quality.iter().take(20) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     // Reorder: put high quality words first, then medium, then low
@@ -467,10 +467,8 @@ fn has_repeated_patterns(word: &str) -> bool {
     }
 
     // Check for alternating patterns like "aba" or "abab"
-    if chars.len() >= 3 {
-        if chars[0] == chars[2] {
-            return true;
-        }
+    if chars.len() >= 3 && chars[0] == chars[2] {
+        return true;
     }
 
     false

@@ -4,8 +4,8 @@
 //! the enhanced multi-dimensional encoding space.
 
 use crate::{
-    perfect_encoder::{CasePattern, MultiDimEncoding, PerfectEncoder, Separator},
     FourWordError, Result,
+    perfect_encoder::{CasePattern, MultiDimEncoding, PerfectEncoder, Separator},
 };
 use std::net::Ipv6Addr;
 
@@ -249,7 +249,12 @@ impl IPv6PerfectCodec {
         // Force IPv6 to always use dashes and title case
         // This ensures visual distinction from IPv4
         encoding.separators = [Separator::Dash, Separator::Dash, Separator::Dash];
-        encoding.case_patterns = [CasePattern::Title, CasePattern::Title, CasePattern::Title, CasePattern::Title];
+        encoding.case_patterns = [
+            CasePattern::Title,
+            CasePattern::Title,
+            CasePattern::Title,
+            CasePattern::Title,
+        ];
 
         Ok(encoding)
     }
@@ -327,8 +332,8 @@ mod tests {
             let encoded = codec.encode(ip, port).unwrap();
             let (decoded_ip, decoded_port) = codec.decode(&encoded).unwrap();
 
-            assert_eq!(ip, decoded_ip, "IP mismatch for {}", ip);
-            assert_eq!(port, decoded_port, "Port mismatch for {}:{}", ip, port);
+            assert_eq!(ip, decoded_ip, "IP mismatch for {ip}");
+            assert_eq!(port, decoded_port, "Port mismatch for {ip}:{port}");
         }
     }
 

@@ -35,6 +35,12 @@ pub struct PortCompressor {
     frequent_ports: Vec<(u16, u8)>,
 }
 
+impl Default for PortCompressor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PortCompressor {
     pub fn new() -> Self {
         Self {
@@ -144,8 +150,7 @@ impl PortCompressor {
                 }
             }
             _ => Err(FourWordError::InvalidInput(format!(
-                "Invalid port bit count: {}",
-                bits
+                "Invalid port bit count: {bits}"
             ))),
         }
     }
@@ -154,6 +159,12 @@ impl PortCompressor {
 /// Main compression engine
 pub struct IpCompressor {
     port_compressor: PortCompressor,
+}
+
+impl Default for IpCompressor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IpCompressor {
@@ -175,8 +186,7 @@ impl IpCompressor {
         let total_bits = addr_bits + port_bits;
         if total_bits > MAX_BITS {
             return Err(FourWordError::InvalidInput(format!(
-                "Compressed size {} bits exceeds maximum {} bits",
-                total_bits, MAX_BITS
+                "Compressed size {total_bits} bits exceeds maximum {MAX_BITS} bits"
             )));
         }
 
@@ -308,7 +318,7 @@ impl IpCompressor {
     ) -> Result<IpAddr, FourWordError> {
         match addr_type {
             AddressType::Ipv4Localhost => {
-                if data.len() >= 1 {
+                if !data.is_empty() {
                     Ok(IpAddr::V4(Ipv4Addr::new(127, 0, 0, data[0])))
                 } else {
                     Ok(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))
@@ -636,7 +646,6 @@ impl BitWriter {
     }
 
     fn write_bits(&mut self, value: u32, num_bits: usize) {
-        let value = value;
         let mut bits_to_write = num_bits;
 
         while bits_to_write > 0 {

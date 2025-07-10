@@ -1,15 +1,15 @@
-//! Four-Word Networking CLI
+//! Three-Word Networking CLI
 //!
 //! Command-line interface for converting network IP addresses to human-friendly
-//! word combinations with perfect IPv4 reconstruction and adaptive IPv6 compression.
+//! word combinations with perfect IPv4 reconstruction (3 words) and adaptive IPv6 compression (6 or 9 words).
 
 use clap::{Parser, Subcommand};
-use four_word_networking::{
-    CompressedEncoder, FourWordAdaptiveEncoder, IpPortEncoder, Result, UniversalEncoder,
+use three_word_networking::{
+    CompressedEncoder, IpPortEncoder, Result, ThreeWordAdaptiveEncoder, UniversalEncoder,
 };
 
 #[derive(Parser)]
-#[command(name = "four-word-networking")]
+#[command(name = "three-word-networking")]
 #[command(about = "Convert network addresses to human-friendly word combinations")]
 #[command(version)]
 struct Cli {
@@ -25,9 +25,9 @@ enum Commands {
         address: String,
     },
 
-    /// Decode four words back to IP address with port
+    /// Decode three words back to IP address with port
     IpDecode {
-        /// The four-word address to decode
+        /// The three-word address to decode
         words: String,
     },
 
@@ -41,9 +41,9 @@ enum Commands {
         stats: bool,
     },
 
-    /// Decode compressed four-word address back to IP
+    /// Decode compressed three-word address back to IP
     Decompress {
-        /// The four-word address to decode
+        /// The three-word address to decode
         words: String,
     },
 
@@ -75,7 +75,7 @@ enum Commands {
 
     /// Decode perfect encoding back to exact IP address
     AdaptiveDecode {
-        /// Four-word address to decode
+        /// Three-word address to decode
         words: String,
     },
 }
@@ -88,17 +88,17 @@ async fn main() -> Result<()> {
         Commands::IpEncode { address } => match IpPortEncoder::new() {
             Ok(encoder) => match encoder.encode(&address) {
                 Ok(words) => {
-                    println!("IP Address: {}", address);
-                    println!("Four-word: {}", words);
+                    println!("IP Address: {address}");
+                    println!("Three-word: {words}");
                     println!("Valid: ✓");
                 }
                 Err(e) => {
-                    eprintln!("Error encoding IP address: {}", e);
+                    eprintln!("Error encoding IP address: {e}");
                     std::process::exit(1);
                 }
             },
             Err(e) => {
-                eprintln!("Error initializing encoder: {}", e);
+                eprintln!("Error initializing encoder: {e}");
                 std::process::exit(1);
             }
         },
@@ -106,90 +106,92 @@ async fn main() -> Result<()> {
         Commands::IpDecode { words } => match IpPortEncoder::new() {
             Ok(encoder) => match encoder.decode(&words) {
                 Ok(address) => {
-                    println!("Four-word: {}", words);
-                    println!("IP Address: {}", address);
+                    println!("Three-word: {words}");
+                    println!("IP Address: {address}");
                 }
                 Err(e) => {
-                    eprintln!("Error decoding four-word address: {}", e);
+                    eprintln!("Error decoding three-word address: {e}");
                     std::process::exit(1);
                 }
             },
             Err(e) => {
-                eprintln!("Error initializing encoder: {}", e);
+                eprintln!("Error initializing encoder: {e}");
                 std::process::exit(1);
             }
         },
 
-        Commands::Compress { address, stats } => {
-            match CompressedEncoder::new() {
-                Ok(encoder) => {
-                    if stats {
-                        match encoder.compression_stats(&address) {
-                            Ok(stats) => {
-                                println!("Compression Analysis for: {}", address);
-                                println!("==================================");
-                                println!("{}", stats.summary());
-                                println!();
+        Commands::Compress { address, stats } => match CompressedEncoder::new() {
+            Ok(encoder) => {
+                if stats {
+                    match encoder.compression_stats(&address) {
+                        Ok(stats) => {
+                            println!("Compression Analysis for: {address}");
+                            println!("==================================");
+                            println!("{}", stats.summary());
+                            println!();
 
-                                if stats.fits_in_four_words {
-                                    match encoder.encode(&address) {
-                                        Ok(words) => {
-                                            println!("Four-word encoding: {}", words);
-                                        }
-                                        Err(e) => {
-                                            eprintln!("Error encoding: {}", e);
-                                        }
+                            if stats.fits_in_four_words {
+                                match encoder.encode(&address) {
+                                    Ok(words) => {
+                                        println!("Three-word encoding: {words}");
                                     }
-                                } else {
-                                    println!("⚠️  This address cannot be encoded in four words");
-                                    println!(
-                                        "   It requires {} bits but only 42 bits are available",
-                                        stats.compressed_bits
-                                    );
+                                    Err(e) => {
+                                        eprintln!("Error encoding: {e}");
+                                    }
                                 }
-                            }
-                            Err(e) => {
-                                eprintln!("Error analyzing compression: {}", e);
-                                std::process::exit(1);
+                            } else {
+                                println!("⚠️  This address cannot be encoded in three words");
+                                println!(
+                                    "   It requires {} bits but only 42 bits are available",
+                                    stats.compressed_bits
+                                );
                             }
                         }
-                    } else {
-                        match encoder.encode(&address) {
-                            Ok(words) => {
-                                println!("IP Address: {}", address);
-                                println!("Four-word: {}", words);
-                                println!("Compression: ✓");
-                            }
-                            Err(e) => {
-                                eprintln!("Error encoding IP address: {}", e);
-                                eprintln!("\nNote: Only private networks and common ports can be compressed to four words.");
-                                eprintln!("Try addresses like: 192.168.1.1:80, 10.0.0.1:443, 127.0.0.1:8080");
-                                std::process::exit(1);
-                            }
+                        Err(e) => {
+                            eprintln!("Error analyzing compression: {e}");
+                            std::process::exit(1);
+                        }
+                    }
+                } else {
+                    match encoder.encode(&address) {
+                        Ok(words) => {
+                            println!("IP Address: {address}");
+                            println!("Three-word: {words}");
+                            println!("Compression: ✓");
+                        }
+                        Err(e) => {
+                            eprintln!("Error encoding IP address: {e}");
+                            eprintln!(
+                                "\nNote: Only private networks and common ports can be compressed to three words."
+                            );
+                            eprintln!(
+                                "Try addresses like: 192.168.1.1:80, 10.0.0.1:443, 127.0.0.1:8080"
+                            );
+                            std::process::exit(1);
                         }
                     }
                 }
-                Err(e) => {
-                    eprintln!("Error initializing encoder: {}", e);
-                    std::process::exit(1);
-                }
             }
-        }
+            Err(e) => {
+                eprintln!("Error initializing encoder: {e}");
+                std::process::exit(1);
+            }
+        },
 
         Commands::Decompress { words } => match CompressedEncoder::new() {
             Ok(encoder) => match encoder.decode(&words) {
                 Ok(address) => {
-                    println!("Four-word: {}", words);
-                    println!("IP Address: {}", address);
+                    println!("Three-word: {words}");
+                    println!("IP Address: {address}");
                     println!("Compression: ✓");
                 }
                 Err(e) => {
-                    eprintln!("Error decoding four-word address: {}", e);
+                    eprintln!("Error decoding three-word address: {e}");
                     std::process::exit(1);
                 }
             },
             Err(e) => {
-                eprintln!("Error initializing encoder: {}", e);
+                eprintln!("Error initializing encoder: {e}");
                 std::process::exit(1);
             }
         },
@@ -200,10 +202,10 @@ async fn main() -> Result<()> {
                     if analysis {
                         match encoder.compression_stats(&address) {
                             Ok(stats) => {
-                                println!("🔬 Universal Compression Analysis for: {}", address);
+                                println!("🔬 Universal Compression Analysis for: {address}");
                                 println!("==============================================");
                                 println!("Original: {} bits (IPv4 + port)", stats.original_bits);
-                                println!("Target: 42 bits (four words)");
+                                println!("Target: 42 bits (three words)");
                                 println!();
 
                                 if let Some(_best) = stats.best_strategy() {
@@ -213,15 +215,17 @@ async fn main() -> Result<()> {
                                     // Try encoding with best strategy
                                     match encoder.encode(&address) {
                                         Ok(words) => {
-                                            println!("Four-word encoding: {}", words);
+                                            println!("Three-word encoding: {words}");
                                         }
                                         Err(e) => {
-                                            println!("Encoding failed: {}", e);
+                                            println!("Encoding failed: {e}");
                                         }
                                     }
                                 } else {
                                     println!("❌ No compression strategy succeeded");
-                                    println!("This address requires the full 48 bits and cannot fit in 42 bits");
+                                    println!(
+                                        "This address requires the full 48 bits and cannot fit in 42 bits"
+                                    );
                                 }
 
                                 println!();
@@ -238,21 +242,25 @@ async fn main() -> Result<()> {
                                 }
                             }
                             Err(e) => {
-                                eprintln!("Error analyzing compression: {}", e);
+                                eprintln!("Error analyzing compression: {e}");
                                 std::process::exit(1);
                             }
                         }
                     } else {
                         match encoder.encode(&address) {
                             Ok(words) => {
-                                println!("IP Address: {}", address);
-                                println!("Four-word: {}", words);
+                                println!("IP Address: {address}");
+                                println!("Three-word: {words}");
                                 println!("Universal compression: ✓");
                             }
                             Err(e) => {
-                                eprintln!("Error encoding IP address: {}", e);
-                                eprintln!("\nNote: This address cannot be compressed to fit in four words.");
-                                eprintln!("The fundamental limit is 42 bits (four words) vs 48 bits (IPv4+port).");
+                                eprintln!("Error encoding IP address: {e}");
+                                eprintln!(
+                                    "\nNote: This address cannot be compressed to fit in three words."
+                                );
+                                eprintln!(
+                                    "The fundamental limit is 42 bits (three words) vs 48 bits (IPv4+port)."
+                                );
                                 eprintln!("Try --analysis to see detailed compression attempts.");
                                 std::process::exit(1);
                             }
@@ -260,7 +268,7 @@ async fn main() -> Result<()> {
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error initializing universal encoder: {}", e);
+                    eprintln!("Error initializing universal encoder: {e}");
                     std::process::exit(1);
                 }
             }
@@ -269,39 +277,39 @@ async fn main() -> Result<()> {
         Commands::UniversalDecode { words } => match UniversalEncoder::new() {
             Ok(encoder) => match encoder.decode(&words) {
                 Ok(address) => {
-                    println!("Four-word: {}", words);
-                    println!("IP Address: {}", address);
+                    println!("Three-word: {words}");
+                    println!("IP Address: {address}");
                     println!("Universal decompression: ✓");
                 }
                 Err(e) => {
-                    eprintln!("Error decoding four-word address: {}", e);
+                    eprintln!("Error decoding three-word address: {e}");
                     std::process::exit(1);
                 }
             },
             Err(e) => {
-                eprintln!("Error initializing universal encoder: {}", e);
+                eprintln!("Error initializing universal encoder: {e}");
                 std::process::exit(1);
             }
         },
 
         Commands::Adaptive { address, analysis } => {
-            match FourWordAdaptiveEncoder::new() {
+            match ThreeWordAdaptiveEncoder::new() {
                 Ok(encoder) => {
                     if analysis {
-                        println!("🎯 Perfect Four-Word Networking");
+                        println!("🎯 Perfect Three-Word Networking");
                         println!("=========================================");
                         println!(
                             "Using multi-dimensional encoding for 100% perfect reconstruction"
                         );
                         println!();
-                        println!("Address: {}", address);
+                        println!("Address: {address}");
                         println!();
 
                         // Try encoding
                         match encoder.encode(&address) {
                             Ok(encoded) => {
                                 println!("✅ Encoding successful!");
-                                println!("Words: {}", encoded);
+                                println!("Words: {encoded}");
                                 println!();
                                 println!("Features:");
                                 if encoded.contains('.') && !encoded.contains('-') {
@@ -321,24 +329,23 @@ async fn main() -> Result<()> {
                                     Ok(decoded) => {
                                         println!();
                                         println!(
-                                            "✓ Roundtrip verification: {} → {} → {}",
-                                            address, encoded, decoded
+                                            "✓ Roundtrip verification: {address} → {encoded} → {decoded}"
                                         );
                                     }
                                     Err(e) => {
-                                        println!("\n⚠️  Decode verification failed: {}", e);
+                                        println!("\n⚠️  Decode verification failed: {e}");
                                     }
                                 }
                             }
                             Err(e) => {
-                                println!("❌ Encoding failed: {}", e);
+                                println!("❌ Encoding failed: {e}");
                             }
                         }
                     } else {
                         match encoder.encode(&address) {
                             Ok(encoded) => {
-                                println!("IP Address: {}", address);
-                                println!("Four-word: {}", encoded);
+                                println!("IP Address: {address}");
+                                println!("Three-word: {encoded}");
                                 println!("Encoding: ✓ Perfect (100% reversible)");
 
                                 // Show appropriate messaging based on format
@@ -349,26 +356,26 @@ async fn main() -> Result<()> {
                                 }
                             }
                             Err(e) => {
-                                eprintln!("Error encoding address: {}", e);
+                                eprintln!("Error encoding address: {e}");
                                 std::process::exit(1);
                             }
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error initializing perfect encoder: {}", e);
+                    eprintln!("Error initializing perfect encoder: {e}");
                     std::process::exit(1);
                 }
             }
         }
 
         Commands::AdaptiveDecode { words } => {
-            match FourWordAdaptiveEncoder::new() {
+            match ThreeWordAdaptiveEncoder::new() {
                 Ok(encoder) => {
                     match encoder.decode(&words) {
                         Ok(address) => {
-                            println!("Four-word: {}", words);
-                            println!("IP Address: {}", address);
+                            println!("Three-word: {words}");
+                            println!("IP Address: {address}");
                             println!("Decoding: ✓ Perfect reconstruction");
 
                             // Show format detection
@@ -379,15 +386,15 @@ async fn main() -> Result<()> {
                             }
                         }
                         Err(e) => {
-                            eprintln!("Error decoding words: {}", e);
-                            eprintln!("\nMake sure the four-word address is valid.");
+                            eprintln!("Error decoding words: {e}");
+                            eprintln!("\nMake sure the three-word address is valid.");
                             eprintln!("Expected format: word1.word2.word3 or Word1-Word2-Word3");
                             std::process::exit(1);
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error initializing perfect encoder: {}", e);
+                    eprintln!("Error initializing perfect encoder: {e}");
                     std::process::exit(1);
                 }
             }

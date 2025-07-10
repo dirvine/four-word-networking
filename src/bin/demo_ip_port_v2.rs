@@ -1,6 +1,6 @@
 //! Demonstration of IP+Port encoder v2 with perfect round-trip encoding
 
-use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
+use three_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
     println!("=== IP+Port Four-Word Encoder V2 Demo ===");
@@ -75,8 +75,7 @@ fn demo_perfect_round_trip(encoder: &IpPortEncoderV2) -> Result<(), IpPortErrorV
     }
 
     println!(
-        "\nPerfect matches: {}/{} (simplified decoder handles general cases as placeholders)",
-        perfect_matches, total
+        "\nPerfect matches: {perfect_matches}/{total} (simplified decoder handles general cases as placeholders)"
     );
     println!();
 
@@ -122,7 +121,7 @@ fn demo_all_address_types(encoder: &IpPortEncoderV2) -> Result<(), IpPortErrorV2
     ];
 
     for (category, addresses) in categories {
-        println!("{}:", category);
+        println!("{category}:");
         for addr in addresses {
             let encoded = encoder.encode(addr)?;
             println!(

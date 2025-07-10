@@ -91,8 +91,7 @@ impl IPv6MultiDimEncoding {
             // Verify word exists in dictionary
             if dictionary.find_word(&normalized).is_none() {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Word '{}' not in dictionary",
-                    normalized
+                    "Word '{normalized}' not in dictionary"
                 )));
             }
 
@@ -102,9 +101,10 @@ impl IPv6MultiDimEncoding {
 
         // Try to detect original word order from permutation analysis
         let word_order = Self::detect_word_order(&normalized_words, dictionary)?;
-        
+
         // Try to detect the IPv6 pattern from the encoded data
-        let pattern = Self::detect_pattern_from_encoding(&normalized_words, &case_patterns, dictionary)?;
+        let pattern =
+            Self::detect_pattern_from_encoding(&normalized_words, &case_patterns, dictionary)?;
 
         Ok(IPv6MultiDimEncoding {
             words: normalized_words,
@@ -226,7 +226,7 @@ impl IPv6MultiDimEncoding {
         // and see which one produces the most logical encoding
         Ok(None)
     }
-    
+
     /// Detect IPv6 pattern from encoded words
     fn detect_pattern_from_encoding(
         words: &[String],
@@ -237,31 +237,34 @@ impl IPv6MultiDimEncoding {
         // This is because the pattern information is not preserved in the encoding
         // The proper solution would be to encode the pattern into the multi-dimensional
         // features (case patterns, separators, word order) in a systematic way
-        
+
         // As a temporary workaround, check for some known patterns
         if words.len() == 4 {
             // Get word indices to check for specific patterns
-            let indices: Vec<_> = words.iter()
+            let indices: Vec<_> = words
+                .iter()
                 .filter_map(|w| dictionary.find_word(w))
                 .collect();
-                
+
             if indices.len() == 4 {
                 // Check for all zeros pattern (could be loopback or unspecified)
                 let first_idx = indices[0];
-                
+
                 // Simple heuristic: if first word is in a certain range, assume pattern
                 // This is not reliable but helps with testing
                 match first_idx {
                     0..=100 => return Ok(IPv6Pattern::Loopback),
                     101..=200 => return Ok(IPv6Pattern::Unspecified),
-                    201..=300 => return Ok(IPv6Pattern::LinkLocal(
-                        crate::ipv6_perfect_patterns::LinkLocalPattern::SmallInteger(1)
-                    )),
+                    201..=300 => {
+                        return Ok(IPv6Pattern::LinkLocal(
+                            crate::ipv6_perfect_patterns::LinkLocalPattern::SmallInteger(1),
+                        ));
+                    }
                     _ => {}
                 }
             }
         }
-        
+
         // Default to unstructured - this will cause the fallback behavior
         Ok(IPv6Pattern::Unstructured)
     }
@@ -298,8 +301,7 @@ impl CasePattern {
             3 => Ok(CasePattern::Alternating),
             4 => Ok(CasePattern::Reverse),
             _ => Err(FourWordError::InvalidInput(format!(
-                "Invalid case pattern bits: {}",
-                bits
+                "Invalid case pattern bits: {bits}"
             ))),
         }
     }
@@ -357,8 +359,7 @@ impl Separator {
             2 => Ok(Separator::Colon),
             3 => Ok(Separator::Slash),
             _ => Err(FourWordError::InvalidInput(format!(
-                "Invalid separator bits: {}",
-                bits
+                "Invalid separator bits: {bits}"
             ))),
         }
     }
@@ -472,8 +473,7 @@ impl IPv6MultiDimEncoder {
                 words.push(word.clone());
             } else {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Invalid word index: {}",
-                    word_index
+                    "Invalid word index: {word_index}"
                 )));
             }
         }
@@ -520,8 +520,7 @@ impl IPv6MultiDimEncoder {
                 words.push(word.clone());
             } else {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Invalid word index: {}",
-                    word_index
+                    "Invalid word index: {word_index}"
                 )));
             }
         }
@@ -634,8 +633,7 @@ impl IPv6MultiDimEncoder {
                 available.remove(pos);
             } else {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Invalid permutation element: {}",
-                    p
+                    "Invalid permutation element: {p}"
                 )));
             }
         }
@@ -724,7 +722,7 @@ mod tests {
         for perm in test_perms {
             let encoded = IPv6MultiDimEncoder::encode_permutation(&perm).unwrap();
             let decoded = IPv6MultiDimEncoder::decode_permutation(encoded, 4).unwrap();
-            assert_eq!(perm, decoded, "Roundtrip failed for permutation {:?}", perm);
+            assert_eq!(perm, decoded, "Roundtrip failed for permutation {perm:?}");
         }
     }
 
@@ -743,15 +741,15 @@ mod tests {
         let data = 0x12345678u64; // 32 bits - should definitely fit
         let extra = Some(0x9876u64); // Small extra value
 
-        println!("Original data: {}", data);
-        println!("Original extra: {:?}", extra);
+        println!("Original data: {data}");
+        println!("Original extra: {extra:?}");
 
         let encoded = encoder.encode(data, extra, 4).unwrap();
-        println!("Encoded: {:?}", encoded);
-        
+        println!("Encoded: {encoded:?}");
+
         let (decoded_data, decoded_extra) = encoder.decode(&encoded).unwrap();
-        println!("Decoded data: {}", decoded_data);
-        println!("Decoded extra: {:?}", decoded_extra);
+        println!("Decoded data: {decoded_data}");
+        println!("Decoded extra: {decoded_extra:?}");
 
         // Test basic roundtrip
         assert_eq!(data, decoded_data);

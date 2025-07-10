@@ -1,9 +1,9 @@
-//! Property-based testing for Four-Word Networking
+//! Property-based testing for Three-Word Networking
 //!
 //! This module contains property-based tests that verify mathematical invariants
 //! and properties of the encoding system using proptest.
 
-use crate::FourWordAdaptiveEncoder;
+use crate::ThreeWordAdaptiveEncoder;
 use proptest::prelude::*;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
@@ -11,20 +11,20 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 mod tests {
     use super::*;
 
-    // Property: IPv4 addresses should always encode to exactly 4 dot-separated words
+    // Property: IPv4 addresses should always encode to exactly 3 dot-separated words
     proptest! {
         #[test]
         fn prop_ipv4_always_4_words(
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr_str = format!("{}:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr_str = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
-                // Should have exactly 4 words separated by dots
+                // Should have exactly 3 words separated by dots
                 let word_count = words.split('.').count();
-                prop_assert_eq!(word_count, 4);
+                prop_assert_eq!(word_count, 3);
 
                 // Should not contain dashes (IPv6 format)
                 prop_assert!(!words.contains('-'));
@@ -35,15 +35,15 @@ mod tests {
         }
     }
 
-    // Property: IPv6 addresses should always encode to 4+ dash-separated words
+    // Property: IPv6 addresses should always encode to 6 or 9 dash-separated words
     proptest! {
         #[test]
         fn prop_ipv6_format_consistency(
             ip in any::<Ipv6Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr_str = format!("[{}]:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr_str = format!("[{ip}]:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Should contain dashes (IPv6 format)
@@ -52,9 +52,9 @@ mod tests {
                 // Should not contain dots (IPv4 format)
                 prop_assert!(!words.contains('.'));
 
-                // Should have at least 4 words
+                // Should have 6 or 9 words (groups of 3)
                 let word_count = words.split('-').count();
-                prop_assert!(word_count >= 4);
+                prop_assert!(word_count == 6 || word_count == 9);
 
                 // Should be title case (first letter uppercase)
                 for word in words.split('-') {
@@ -74,8 +74,8 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let original = format!("{}:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let original = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&original) {
                 if let Ok(decoded) = encoder.decode(&words) {
@@ -92,8 +92,8 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr_str = format!("{}:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr_str = format!("{ip}:{port}");
 
             if let Ok(words1) = encoder.encode(&addr_str) {
                 if let Ok(words2) = encoder.encode(&addr_str) {
@@ -113,9 +113,9 @@ mod tests {
         ) {
             prop_assume!(port1 != port2);
 
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr1_str = format!("{}:{}", ip, port1);
-            let addr2_str = format!("{}:{}", ip, port2);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr1_str = format!("{ip}:{port1}");
+            let addr2_str = format!("{ip}:{port2}");
 
             if let (Ok(words1), Ok(words2)) = (encoder.encode(&addr1_str), encoder.encode(&addr2_str)) {
                 prop_assert_ne!(words1, words2);
@@ -130,8 +130,8 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr_str = format!("{}:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr_str = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Each word should be from the dictionary
@@ -151,15 +151,15 @@ mod tests {
             ip_bytes in prop::array::uniform4(any::<u8>()),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
             let ip = Ipv4Addr::from(ip_bytes);
-            let addr_str = format!("{}:{}", ip, port);
+            let addr_str = format!("{ip}:{port}");
 
             // Encoding should either succeed or fail gracefully
             match encoder.encode(&addr_str) {
                 Ok(words) => {
                     // If encoding succeeds, it should produce valid format
-                    prop_assert_eq!(words.split('.').count(), 4);
+                    prop_assert_eq!(words.split('.').count(), 3);
                     prop_assert!(!words.is_empty());
                 },
                 Err(_) => {
@@ -177,9 +177,9 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = FourWordAdaptiveEncoder::new().unwrap();
-            let addr_str1 = format!("{}:{}", ip, port);
-            let addr_str2 = format!("{}:{}", ip, port);
+            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let addr_str1 = format!("{ip}:{port}");
+            let addr_str2 = format!("{ip}:{port}");
 
             let result1 = encoder.encode(&addr_str1);
             let result2 = encoder.encode(&addr_str2);

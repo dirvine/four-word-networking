@@ -442,7 +442,7 @@ mod tests {
 
         // Get some valid words
         let valid_words = dict.sample_words(5);
-        let word_refs: Vec<&str> = valid_words.iter().map(|&s| s).collect();
+        let word_refs: Vec<&str> = valid_words.iter().copied().collect();
 
         // Should validate successfully
         assert!(utils::validate_words(&word_refs).is_ok());

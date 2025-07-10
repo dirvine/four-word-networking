@@ -217,12 +217,12 @@ impl AdaptiveEncoder {
                     };
 
                 let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {addr_part}"))
                 })?;
 
                 let port = if let Some(port_str) = port_part {
                     Some(port_str.parse::<u16>().map_err(|_| {
-                        FourWordError::InvalidInput(format!("Invalid port: {}", port_str))
+                        FourWordError::InvalidInput(format!("Invalid port: {port_str}"))
                     })?)
                 } else {
                     None
@@ -242,11 +242,11 @@ impl AdaptiveEncoder {
                 let port_part = &input[last_colon + 1..];
 
                 let ip = addr_part.parse::<Ipv4Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {addr_part}"))
                 })?;
 
                 let port = port_part.parse::<u16>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid port: {}", port_part))
+                    FourWordError::InvalidInput(format!("Invalid port: {port_part}"))
                 })?;
 
                 return Ok((IpAddr::V4(ip), Some(port)));
@@ -256,7 +256,7 @@ impl AdaptiveEncoder {
         // Try parsing as standalone IP
         let ip = input
             .parse::<IpAddr>()
-            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
+            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {input}")))?;
 
         Ok((ip, None))
     }
@@ -279,7 +279,7 @@ impl AdaptiveEncoder {
                         if port == 0 {
                             Ok(ip.to_string())
                         } else {
-                            Ok(format!("{}:{}", ip, port))
+                            Ok(format!("{ip}:{port}"))
                         }
                     }
                     Err(_) => {
@@ -287,7 +287,7 @@ impl AdaptiveEncoder {
                         if data.len() >= 6 {
                             let ip = Ipv4Addr::new(data[0], data[1], data[2], data[3]);
                             let port = u16::from_be_bytes([data[4], data[5]]);
-                            Ok(format!("{}:{}", ip, port))
+                            Ok(format!("{ip}:{port}"))
                         } else {
                             Err(FourWordError::InvalidInput(
                                 "Failed to decompress IPv4 address".to_string(),
@@ -300,7 +300,7 @@ impl AdaptiveEncoder {
                     "Insufficient data for IPv4".to_string(),
                 ))
             }
-        } else if word_count >= 4 && word_count <= 6 {
+        } else if (4..=6).contains(&word_count) {
             // IPv6 - decompress based on category
             if data.is_empty() {
                 return Err(FourWordError::InvalidInput(
@@ -315,17 +315,16 @@ impl AdaptiveEncoder {
             match self.decompress_ipv6(category, compressed_data) {
                 Ok((ip, port)) => {
                     if port == 0 {
-                        Ok(format!("[{}]", ip))
+                        Ok(format!("[{ip}]"))
                     } else {
-                        Ok(format!("[{}]:{}", ip, port))
+                        Ok(format!("[{ip}]:{port}"))
                     }
                 }
                 Err(e) => Err(e),
             }
         } else {
             Err(FourWordError::InvalidInput(format!(
-                "Invalid word count: {} (expected 3 for IPv4, 4-6 for IPv6)",
-                word_count
+                "Invalid word count: {word_count} (expected 3 for IPv4, 4-6 for IPv6)"
             )))
         }
     }
@@ -342,9 +341,8 @@ impl AdaptiveEncoder {
             6 => Ipv6Category::Special,
             _ => {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Unknown IPv6 category: {}",
-                    category
-                )))
+                    "Unknown IPv6 category: {category}"
+                )));
             }
         };
 
@@ -366,8 +364,7 @@ impl AdaptiveEncoder {
                 // For other categories, we'd need to implement proper decompression
                 // For now, return a representative address
                 return Err(FourWordError::InvalidInput(format!(
-                    "IPv6 decompression not fully implemented for {:?}",
-                    category
+                    "IPv6 decompression not fully implemented for {category:?}"
                 )));
             }
         };

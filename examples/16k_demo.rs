@@ -3,8 +3,8 @@
 //! This example demonstrates the dramatic improvements achieved by upgrading
 //! from 4,096 words (12 bits per word) to 16,384 words (14 bits per word).
 
-use four_word_networking::encoder16k::{Encoding16K, UniversalEncoder16K};
 use std::time::Instant;
+use three_word_networking::encoder16k::{Encoding16K, UniversalEncoder16K};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🌟 16K Word Encoding System - Comprehensive Demo");
@@ -101,13 +101,13 @@ fn show_efficiency_gains(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn st
         let encoding = encoder.encode(&data)?;
         let efficiency = encoder.efficiency_info(&data);
 
-        println!("\n{}: {}", name, improvement);
-        println!("  Old (4K): {}", old_format);
+        println!("\n{name}: {improvement}");
+        println!("  Old (4K): {old_format}");
         println!(
             "  New (16K): {} ({})",
             new_format, efficiency.efficiency_rating
         );
-        println!("  Actual: {}", encoding);
+        println!("  Actual: {encoding}");
     }
 
     Ok(())
@@ -121,35 +121,35 @@ fn real_world_examples(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std:
     let google_dns = vec![8, 8, 8, 8];
     let google_encoded = encoder.encode(&google_dns)?;
     println!("\n🔗 Google DNS (8.8.8.8):");
-    println!("  Encoded: {}", google_encoded);
+    println!("  Encoded: {google_encoded}");
     println!("  Say: \"{}\"", format_for_voice(&google_encoded));
 
     // Cloudflare DNS (IPv4)
     let cloudflare_dns = vec![1, 1, 1, 1];
     let cloudflare_encoded = encoder.encode(&cloudflare_dns)?;
     println!("\n☁️  Cloudflare DNS (1.1.1.1):");
-    println!("  Encoded: {}", cloudflare_encoded);
+    println!("  Encoded: {cloudflare_encoded}");
     println!("  Say: \"{}\"", format_for_voice(&cloudflare_encoded));
 
     // Example IPv6 address
     let ipv6_example = hex::decode("20010db8000000000000000000000001")?;
     let ipv6_encoded = encoder.encode(&ipv6_example)?;
     println!("\n🌐 IPv6 Example (2001:db8::1):");
-    println!("  Encoded: {}", ipv6_encoded);
+    println!("  Encoded: {ipv6_encoded}");
     println!("  Say: \"{}\"", format_for_voice(&ipv6_encoded));
 
     // Bitcoin Genesis Address (decoded)
     let bitcoin_genesis = hex::decode("0062e907b15cbf27d5425399ebf6f0fb50ebb88f18")?;
     let bitcoin_encoded = encoder.encode(&bitcoin_genesis)?;
     println!("\n₿ Bitcoin Genesis Style:");
-    println!("  Encoded: {}", bitcoin_encoded);
+    println!("  Encoded: {bitcoin_encoded}");
     println!("  Say: \"{}\"", format_for_voice(&bitcoin_encoded));
 
     // Ethereum ENS Registry
     let eth_ens = hex::decode("314159265dd8dbb310642f98f50c066173c1259b")?;
     let eth_encoded = encoder.encode(&eth_ens)?;
     println!("\n🔷 Ethereum ENS Registry:");
-    println!("  Encoded: {}", eth_encoded);
+    println!("  Encoded: {eth_encoded}");
     println!("  Say: \"{}\"", format_for_voice(&eth_encoded));
 
     Ok(())
@@ -186,9 +186,9 @@ fn voice_sharing_demo(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std::
         let encoded = encoder.encode(&data)?;
         let voice_format = format_for_voice(&encoded);
 
-        println!("\n🎭 {}", scenario);
+        println!("\n🎭 {scenario}");
         println!("  IP: {}.{}.{}.{}", data[0], data[1], data[2], data[3]);
-        println!("  Words: {}", encoded);
+        println!("  Words: {encoded}");
         println!(
             "  Voice: {}",
             example.replace("[voice encoding]", &voice_format)
@@ -235,7 +235,7 @@ fn performance_benchmarks(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn s
         let avg_encode = encode_time.as_nanos() as f64 / iterations as f64 / 1000.0;
         let avg_decode = decode_time.as_nanos() as f64 / iterations as f64 / 1000.0;
 
-        println!("\n📊 {} Performance:", name);
+        println!("\n📊 {name} Performance:");
         println!(
             "  Encoding: {:.2}μs ({:.0} ops/sec)",
             avg_encode,
@@ -246,7 +246,7 @@ fn performance_benchmarks(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn s
             avg_decode,
             1_000_000.0 / avg_decode
         );
-        println!("  Format: {}", encoded);
+        println!("  Format: {encoded}");
     }
 
     Ok(())
@@ -286,12 +286,12 @@ fn round_trip_verification(
         // For demo purposes, check that we get reasonable data back
         if decoded.len() >= original_data.len() && decoded[..original_data.len()] == original_data {
             println!("✅ PASS");
-            println!("     Encoded: {}", encoded);
+            println!("     Encoded: {encoded}");
         } else {
             println!("⚠️  Partial (demo limitations)");
             println!("     Original: {} bytes", original_data.len());
             println!("     Decoded: {} bytes", decoded.len());
-            println!("     Encoded: {}", encoded);
+            println!("     Encoded: {encoded}");
         }
     }
 

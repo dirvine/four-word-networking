@@ -14,7 +14,7 @@ use std::str::FromStr;
 /// # Examples
 ///
 /// ```rust
-/// use four_word_networking::FourWordNetworking;
+/// use three_word_networking::FourWordNetworking;
 ///
 /// let twn = FourWordNetworking::new()?;
 ///
@@ -71,8 +71,7 @@ impl FourWordNetworking {
                 Ok(SocketAddr::new(ip, 0))
             } else {
                 Err(FourWordError::InvalidInput(format!(
-                    "Could not parse decoded address: {}",
-                    address_str
+                    "Could not parse decoded address: {address_str}"
                 )))
             }
         })
@@ -150,8 +149,8 @@ impl AddressInput {
             AddressInput::String(s) => s.clone(),
             AddressInput::SocketAddr(addr) => addr.to_string(),
             AddressInput::IpAddr(ip) => match ip {
-                IpAddr::V4(ipv4) => format!("{}:0", ipv4),
-                IpAddr::V6(ipv6) => format!("[{}]:0", ipv6),
+                IpAddr::V4(ipv4) => format!("{ipv4}:0"),
+                IpAddr::V6(ipv6) => format!("[{ipv6}]:0"),
             },
         }
     }
@@ -241,10 +240,13 @@ mod tests {
 
         // Test IPv6
         let words = twn.encode("[::1]:443").unwrap();
-        println!("IPv6 encoded: '{}'", words);
+        println!("IPv6 encoded: '{words}'");
         let word_count = words.split('.').count();
-        println!("IPv6 word count: {}", word_count);
-        assert!(word_count >= 4, "IPv6 should use at least 4 words, got {}", word_count);
+        println!("IPv6 word count: {word_count}");
+        assert!(
+            word_count >= 4,
+            "IPv6 should use at least 4 words, got {word_count}"
+        );
     }
 
     #[test]

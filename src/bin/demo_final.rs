@@ -1,20 +1,20 @@
-//! Final demonstration of the Four-Word Networking system
+//! Final demonstration of the Three-Word Networking system
 //!
 //! Shows the complete solution:
-//! - IPv4: 4 words with perfect reconstruction
-//! - IPv6: 4-6 words with category-based compression
+//! - IPv4: 3 words with perfect reconstruction
+//! - IPv6: 6 or 9 words (groups of 3) with adaptive encoding
 
-use four_word_networking::FourWordAdaptiveEncoder;
+use three_word_networking::ThreeWordAdaptiveEncoder;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🌐 Four-Word Networking - Final Solution");
+    println!("🌐 Three-Word Networking - Final Solution");
     println!("=========================================");
     println!();
 
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
 
     // IPv4 Examples
-    println!("IPv4 Perfect Reconstruction (4 words)");
+    println!("IPv4 Perfect Reconstruction (3 words)");
     println!("─────────────────────────────────────");
 
     let ipv4_examples = vec![
@@ -28,13 +28,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let encoded = encoder.encode(addr)?;
         let decoded = encoder.decode(&encoded)?;
 
-        println!("► {}", desc);
-        println!("  {} → {}", addr, encoded);
+        println!("► {desc}");
+        println!("  {addr} → {encoded}");
 
         if addr == decoded {
             println!("  ✓ Perfect reconstruction!");
         } else {
-            println!("  ✗ Failed: {}", decoded);
+            println!("  ✗ Failed: {decoded}");
         }
         println!();
     }
@@ -54,12 +54,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let encoded = encoder.encode(addr)?;
         let word_count = encoded.split('-').count();
 
-        println!("► {} ({})", desc, compression);
-        println!("  {} → {} ({} words)", addr, encoded, word_count);
+        println!("► {desc} ({compression})");
+        println!("  {addr} → {encoded} ({word_count} words)");
 
         match encoder.decode(&encoded) {
             Ok(decoded) => {
-                println!("  ↩ Decoded: {}", decoded);
+                println!("  ↩ Decoded: {decoded}");
             }
             Err(_) => {
                 println!("  ~ Category-based reconstruction");

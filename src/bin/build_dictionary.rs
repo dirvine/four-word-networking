@@ -126,7 +126,7 @@ fn load_eff_wordlist(
         }
     }
 
-    println!("  Loaded {} EFF words", count);
+    println!("  Loaded {count} EFF words");
     Ok(())
 }
 
@@ -145,7 +145,7 @@ fn load_bip39_wordlist(
         }
     }
 
-    println!("  Loaded {} BIP39 words", count);
+    println!("  Loaded {count} BIP39 words");
     Ok(())
 }
 
@@ -169,7 +169,7 @@ fn load_diceware_wordlist(
         }
     }
 
-    println!("  Loaded {} Diceware words", count);
+    println!("  Loaded {count} Diceware words");
     Ok(())
 }
 
@@ -188,7 +188,7 @@ fn load_english_wordlist(
         }
     }
 
-    println!("  Loaded {} English words", count);
+    println!("  Loaded {count} English words");
     Ok(())
 }
 
@@ -207,7 +207,7 @@ fn load_supplementary_wordlist(
         }
     }
 
-    println!("  Loaded {} supplementary words", count);
+    println!("  Loaded {count} supplementary words");
     Ok(())
 }
 
@@ -293,7 +293,7 @@ fn validate_final_wordlist(words: &[String]) -> Result<(), Box<dyn Error>> {
     // Check word lengths
     for word in words {
         if word.len() < 2 || word.len() > 15 {
-            return Err(format!("Invalid word length: {}", word).into());
+            return Err(format!("Invalid word length: {word}").into());
         }
     }
 
@@ -318,7 +318,7 @@ fn print_statistics(words: &[String], sources: &HashMap<String, String>) {
     println!("\n📏 Length Distribution:");
     for len in 3..=12 {
         if let Some(count) = length_counts.get(&len) {
-            println!("  {} chars: {} words", len, count);
+            println!("  {len} chars: {count} words");
         }
     }
 
@@ -332,7 +332,7 @@ fn print_statistics(words: &[String], sources: &HashMap<String, String>) {
 
     println!("\n📚 Source Distribution:");
     for (source, count) in source_counts {
-        println!("  {}: {} words", source, count);
+        println!("  {source}: {count} words");
     }
 
     // Sample words

@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Show some rejected words
     println!("\nSample rejected words:");
     for word in rejected_words.iter().take(20) {
-        println!("  '{}'", word);
+        println!("  '{word}'");
     }
 
     // If we don't have enough quality words, we need to be more lenient
@@ -82,7 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!("\nWord length distribution in quality subset:");
         for (len, count) in length_stats {
-            println!("  {}-letter words: {}", len, count);
+            println!("  {len}-letter words: {count}");
         }
     }
 
@@ -178,7 +178,7 @@ fn is_lenient_quality_word(word: &str) -> bool {
             .windows(2)
             .any(|w| w[0] == w[1])
     {
-        let repeated = word.chars().nth(0) == word.chars().nth(1)
+        let repeated = word.chars().next() == word.chars().nth(1)
             || word.chars().nth(1) == word.chars().nth(2);
         if repeated {
             return false;

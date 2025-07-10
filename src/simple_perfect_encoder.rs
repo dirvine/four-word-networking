@@ -27,7 +27,10 @@ impl SimpleEncoding {
             )
         } else {
             // IPv4 uses dots and lowercase
-            format!("{}.{}.{}.{}", self.words[0], self.words[1], self.words[2], self.words[3])
+            format!(
+                "{}.{}.{}.{}",
+                self.words[0], self.words[1], self.words[2], self.words[3]
+            )
         }
     }
 
@@ -62,8 +65,7 @@ impl SimpleEncoding {
         for word in &words {
             if dictionary.find_word(word).is_none() {
                 return Err(FourWordError::InvalidInput(format!(
-                    "Word '{}' not in dictionary",
-                    word
+                    "Word '{word}' not in dictionary"
                 )));
             }
         }
@@ -134,7 +136,7 @@ impl SimplePerfectEncoder {
         let word1_idx = ((data >> 42) & 0x3FFF) as usize; // Bits 42-55 (14 bits)
         let word2_idx = ((data >> 28) & 0x3FFF) as usize; // Bits 28-41 (14 bits)
         let word3_idx = ((data >> 14) & 0x3FFF) as usize; // Bits 14-27 (14 bits)
-        let word4_idx = (data & 0x3FFF) as usize;         // Bits 0-13 (14 bits)
+        let word4_idx = (data & 0x3FFF) as usize; // Bits 0-13 (14 bits)
 
         Ok(SimpleEncoding {
             words: [
@@ -211,8 +213,7 @@ mod tests {
             assert_eq!(
                 value & 0xFFFF_FFFF_FFFF,
                 decoded,
-                "Failed for value: 0x{:012X}",
-                value
+                "Failed for value: 0x{value:012X}"
             );
             assert_eq!(is_ipv6, encoded.is_ipv6);
         }

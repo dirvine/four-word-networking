@@ -167,7 +167,7 @@ impl MultiDimEncoding {
         for part in &parts {
             let normalized = part.to_lowercase();
             let word_index = dictionary.find_word(&normalized).ok_or_else(|| {
-                FourWordError::InvalidInput(format!("Word '{}' not in dictionary", normalized))
+                FourWordError::InvalidInput(format!("Word '{normalized}' not in dictionary"))
             })?;
             normalized_words.push(dictionary.get_word(word_index));
             case_patterns.push(CasePattern::detect(part, &normalized));
@@ -181,7 +181,7 @@ impl MultiDimEncoding {
         // Try each permutation to find the original order
         for perm in 0..8 {
             let indices = Self::permutation_indices(perm);
-            let matches = indices.iter().enumerate().all(|(_target, &source)| {
+            let matches = indices.iter().all(|&source| {
                 // Check if this permutation could produce the observed order
                 dictionary.find_word(&normalized_words[source]).is_some()
             });
@@ -282,7 +282,7 @@ impl PerfectEncoder {
 
         // Now we have 4 words × 14 bits = 56 bits capacity, more than enough for 48 bits
         // Bit distribution:
-        // - First 3 words: 42 bits (14 bits each)  
+        // - First 3 words: 42 bits (14 bits each)
         // - Fourth word: remaining 6 bits + padding
 
         // Extract word indices (use full 14-bit dictionary access)
@@ -293,7 +293,12 @@ impl PerfectEncoder {
 
         // Simple encoding - no complex permutations needed
         let order = 0;
-        let case_patterns = [CasePattern::Lower, CasePattern::Lower, CasePattern::Lower, CasePattern::Lower];
+        let case_patterns = [
+            CasePattern::Lower,
+            CasePattern::Lower,
+            CasePattern::Lower,
+            CasePattern::Lower,
+        ];
         let separators = [Separator::Dot, Separator::Dot, Separator::Dot];
 
         Ok(MultiDimEncoding {
@@ -316,22 +321,26 @@ impl PerfectEncoder {
             .dictionary
             .find_word(&encoding.words[0])
             .ok_or_else(|| FourWordError::InvalidInput("Word 1 not found".to_string()))?
-            as u64 & 0x3FFF;
+            as u64
+            & 0x3FFF;
         let word2_idx = self
             .dictionary
             .find_word(&encoding.words[1])
             .ok_or_else(|| FourWordError::InvalidInput("Word 2 not found".to_string()))?
-            as u64 & 0x3FFF;
+            as u64
+            & 0x3FFF;
         let word3_idx = self
             .dictionary
             .find_word(&encoding.words[2])
             .ok_or_else(|| FourWordError::InvalidInput("Word 3 not found".to_string()))?
-            as u64 & 0x3FFF;
+            as u64
+            & 0x3FFF;
         let word4_idx = self
             .dictionary
             .find_word(&encoding.words[3])
             .ok_or_else(|| FourWordError::InvalidInput("Word 4 not found".to_string()))?
-            as u64 & 0x3F; // Only 6 bits used
+            as u64
+            & 0x3F; // Only 6 bits used
 
         // Combine all bits (48 bits total)
         let data = (word1_idx << 34) | (word2_idx << 20) | (word3_idx << 6) | word4_idx;
@@ -367,7 +376,7 @@ mod tests {
         for value in test_values {
             let encoded = encoder.encode_48_bits(value).unwrap();
             let decoded = encoder.decode_48_bits(&encoded).unwrap();
-            assert_eq!(value, decoded, "Failed for value: 0x{:012X}", value);
+            assert_eq!(value, decoded, "Failed for value: 0x{value:012X}");
         }
     }
 
@@ -381,7 +390,12 @@ mod tests {
                 "meadow".to_string(),
             ],
             order: 0,
-            case_patterns: [CasePattern::Title, CasePattern::Lower, CasePattern::Lower, CasePattern::Lower],
+            case_patterns: [
+                CasePattern::Title,
+                CasePattern::Lower,
+                CasePattern::Lower,
+                CasePattern::Lower,
+            ],
             separators: [Separator::Dot, Separator::Dash, Separator::Dot],
         };
 

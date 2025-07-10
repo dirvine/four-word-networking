@@ -1,9 +1,9 @@
 //! Test compression capabilities and demonstrate efficiency
 
-use four_word_networking::CompressedEncoder;
+use three_word_networking::CompressedEncoder;
 
 fn test_address(encoder: &CompressedEncoder, address: &str) {
-    println!("\nTesting: {}", address);
+    println!("\nTesting: {address}");
     println!("─────────────────────────────────");
 
     match encoder.compression_stats(address) {
@@ -13,7 +13,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
             if stats.fits_in_four_words {
                 match encoder.encode(address) {
                     Ok(words) => {
-                        println!("✓ Four words: {}", words);
+                        println!("✓ Four words: {words}");
 
                         // Test round-trip
                         match encoder.decode(&words) {
@@ -21,13 +21,13 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
                                 if decoded == address {
                                     println!("✓ Round-trip successful");
                                 } else {
-                                    println!("✗ Round-trip failed: {} != {}", decoded, address);
+                                    println!("✗ Round-trip failed: {decoded} != {address}");
                                 }
                             }
-                            Err(e) => println!("✗ Decode error: {}", e),
+                            Err(e) => println!("✗ Decode error: {e}"),
                         }
                     }
-                    Err(e) => println!("✗ Encode error: {}", e),
+                    Err(e) => println!("✗ Encode error: {e}"),
                 }
             } else {
                 println!(
@@ -36,7 +36,7 @@ fn test_address(encoder: &CompressedEncoder, address: &str) {
                 );
             }
         }
-        Err(e) => println!("✗ Compression analysis error: {}", e),
+        Err(e) => println!("✗ Compression analysis error: {e}"),
     }
 }
 
@@ -47,7 +47,7 @@ fn main() {
     let encoder = match CompressedEncoder::new() {
         Ok(e) => e,
         Err(e) => {
-            eprintln!("Failed to create encoder: {}", e);
+            eprintln!("Failed to create encoder: {e}");
             return;
         }
     };

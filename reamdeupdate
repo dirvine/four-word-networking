@@ -1,0 +1,82 @@
+# Three Words to Connect the World: A New Era of Human-Friendly Networking
+
+## The Internet Made Simple Again
+
+Imagine calling your friend by saying "connect to black.tree.fish" instead of trying to remember 192.168.1.105:8080. That's the promise of three-word networking—a revolutionary approach that makes direct, secure connections between devices as easy as sharing three simple words.
+
+## Beyond IP Addresses: Service Addresses for Everyone
+
+Traditional networking requires us to remember complex strings of numbers. But what if every service on your computer—your website, blog, phone system, video chat, or AI assistant—had its own simple three-word address? 
+
+This isn't just about IP addresses; it's about *service addresses*. Each device can run over 60,000 different services, and each gets its own unique three-word combination. Same computer, different words, different services—all instantly accessible to anyone you choose to share them with.
+
+## How It Works in Real Life
+
+### Starting Your Digital Presence
+
+When you start your node on this peer-to-peer network, you might receive three words like "black.tree.fish". Share these words with friends, and they can instantly connect to you—no technical knowledge required. Whether you're creating a private friend network or joining a global community, those three words are your gateway.
+
+### Multiple Services, One Device
+
+Your computer becomes a Swiss Army knife of services:
+- **Website**: black.tree.fish
+- **Voice/Video Calls**: mountain.cat.yes  
+- **Crypto Wallet**: monkey.rain.bike
+- **File Sharing**: sunset.river.song
+
+Each service runs on the same machine but has its own memorable address. Tell a friend to video call you at "mountain.cat.yes"—that's it. No apps to download, no accounts to create, just direct, secure communication.
+
+### Revolutionizing Digital Payments
+
+Cryptocurrency addresses are notoriously complex: long strings of random characters that are easy to mistype and impossible to remember. With three-word networking, sending Bitcoin becomes as simple as saying "send 2 Bitcoin to monkey.rain.bike". 
+
+For the technically curious, this elegantly solves the challenge of transmitting high-entropy data (complex cryptographic addresses) through a low-entropy channel (human speech and memory).
+
+## A DNS for the People
+
+Think of it as a massive, global directory service—like DNS but:
+- **Free**: No registration fees, no renewals
+- **Secure**: Built on peer-to-peer principles with end-to-end encryption
+- **Decentralized**: No single company or government controls it
+- **Fair**: Everyone gets an equal chance at memorable addresses
+
+### The Name Game Is Already Over
+
+Critics might say "but you can't choose your own words!" Yet look at today's internet: all the good domain names are taken. We're left with misspelled company names, hard-to-pronounce combinations, and domains that have nothing to do with their content. 
+
+Three-word networking actually levels the playing field. Everyone gets equally memorable addresses, allocated fairly by the system.
+
+## Why This Matters
+
+### For Regular Users
+- **Simplicity**: Share services as easily as telling someone your favorite three words
+- **Privacy**: Direct connections mean no middlemen tracking your communications
+- **Cost**: Zero fees for addressing—forever
+
+### For Developers and Creators
+- **Instant Publishing**: Launch a website without buying domains or hosting
+- **Direct Services**: Offer video calls, file sharing, or custom applications directly from your device
+- **True Ownership**: You control your services, not a hosting company
+- **Network cold start**: This solves the "bootsrapping probelm" or cold start issues where folk pass around hashes and network identifiers and suchlike
+
+### For the Future of the Internet
+This represents a shift from the corporate-controlled internet back to its peer-to-peer roots. When anyone can run services as easily as sharing three words, we return to an internet of equals—where innovation isn't gatekept by those who can afford domain names and hosting.
+
+## Looking Ahead
+
+While this system starts with individual machines (no load balancing like big tech companies use), it opens doors to entirely new models of distributed computing. Combined with other decentralized network technologies, we might see:
+- Community-run services that share load naturally
+- Resilient networks that route around failures
+- New economic models where users contribute resources directly
+
+## The Bottom Line
+
+Three-word networking isn't just a technical innovation—it's a return to the internet's original vision: a network where anyone can connect, create, and communicate without permission, without fees, and without complexity.
+
+In a world where we struggle to remember phone numbers, where we rely on corporate platforms for basic communication, and where technical barriers keep billions from fully participating online, three simple words might just be the key to unlocking the internet's true potential.
+
+*Welcome to the future of networking. It's as simple as black.tree.fish.*
+
+---
+
+*Based on open-source peer-to-peer networking technology including [ant-quic](https://github.com/dirvine/ant-quic) and other decentralized protocols currently in development.*

@@ -465,8 +465,7 @@ impl IpPortCompressor {
             0x70 => self.decode_ipv6_link_local(data),
             0x80 => self.decode_ipv6_general(data),
             _ => Err(IpPortErrorV2::DecompressionError(format!(
-                "Unknown header: 0x{:02x}",
-                header
+                "Unknown header: 0x{header:02x}"
             ))),
         }
     }
@@ -646,14 +645,14 @@ mod tests {
 
             // For well-known addresses, verify key components match
             if original.contains("127.0.0.") && decoded.contains("127.0.0.") {
-                let orig_port = original.split(':').last().unwrap();
-                let dec_port = decoded.split(':').last().unwrap();
+                let orig_port = original.split(':').next_back().unwrap();
+                let dec_port = decoded.split(':').next_back().unwrap();
                 assert_eq!(orig_port, dec_port, "Ports should match for localhost");
             }
 
             if original.contains("192.168.") && decoded.contains("192.168.") {
-                let orig_port = original.split(':').last().unwrap();
-                let dec_port = decoded.split(':').last().unwrap();
+                let orig_port = original.split(':').next_back().unwrap();
+                let dec_port = decoded.split(':').next_back().unwrap();
                 assert_eq!(
                     orig_port, dec_port,
                     "Ports should match for private network"
@@ -661,8 +660,8 @@ mod tests {
             }
 
             if original.contains("::1") && decoded.contains("::1") {
-                let orig_port = original.split(':').last().unwrap();
-                let dec_port = decoded.split(':').last().unwrap();
+                let orig_port = original.split(':').next_back().unwrap();
+                let dec_port = decoded.split(':').next_back().unwrap();
                 assert_eq!(orig_port, dec_port, "Ports should match for IPv6 localhost");
             }
         }

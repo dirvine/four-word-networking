@@ -17,6 +17,12 @@ pub struct UniversalIpCompressor {
     port_frequency_map: PortFrequencyMap,
 }
 
+impl Default for UniversalIpCompressor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UniversalIpCompressor {
     pub fn new() -> Self {
         Self {
@@ -49,8 +55,7 @@ impl UniversalIpCompressor {
         }
 
         Err(FourWordError::InvalidInput(format!(
-            "Cannot compress {}:{} into 42 bits with any strategy",
-            ip, port
+            "Cannot compress {ip}:{port} into 42 bits with any strategy"
         )))
     }
 
@@ -331,12 +336,12 @@ mod tests {
                     // Test decompression
                     match compressor.decompress(compressed) {
                         Ok((decompressed_ip, decompressed_port)) => {
-                            println!("  Decompressed: {}:{}", decompressed_ip, decompressed_port);
+                            println!("  Decompressed: {decompressed_ip}:{decompressed_port}");
                         }
-                        Err(e) => println!("  Decompression failed: {}", e),
+                        Err(e) => println!("  Decompression failed: {e}"),
                     }
                 }
-                Err(e) => println!("✗ Failed to compress {}:{} - {}", ip, port, e),
+                Err(e) => println!("✗ Failed to compress {ip}:{port} - {e}"),
             }
         }
     }
@@ -363,7 +368,7 @@ mod tests {
 
                 for i in 0..4 {
                     let diff = (orig_octets[i] as i16 - decomp_octets[i] as i16).abs();
-                    assert!(diff <= 1, "Octet {} diff too large: {}", i, diff);
+                    assert!(diff <= 1, "Octet {i} diff too large: {diff}");
                 }
             }
         }
@@ -385,9 +390,7 @@ mod tests {
                 Ok(compressed) => {
                     assert!(
                         compressed <= MAX_VALUE,
-                        "Compressed value {} exceeds maximum {}",
-                        compressed,
-                        MAX_VALUE
+                        "Compressed value {compressed} exceeds maximum {MAX_VALUE}"
                     );
                 }
                 Err(_) => {

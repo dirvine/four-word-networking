@@ -44,8 +44,7 @@ impl PureIpCompressor {
         }
 
         Err(FourWordError::InvalidInput(format!(
-            "Cannot compress {}:{} (48→42 bits)",
-            ip, port
+            "Cannot compress {ip}:{port} (48→42 bits)"
         )))
     }
 
@@ -320,18 +319,15 @@ mod tests {
             match PureIpCompressor::compress(ip, port) {
                 Ok(compressed) => {
                     assert!(compressed <= MAX_42_BITS);
-                    println!(
-                        "✓ Compressed {}:{} -> {} (fits in 42 bits)",
-                        ip, port, compressed
-                    );
+                    println!("✓ Compressed {ip}:{port} -> {compressed} (fits in 42 bits)");
 
                     // Test decompression
                     if let Ok((dec_ip, dec_port)) = PureIpCompressor::decompress(compressed) {
-                        println!("  Decompressed: {}:{}", dec_ip, dec_port);
+                        println!("  Decompressed: {dec_ip}:{dec_port}");
                     }
                 }
                 Err(e) => {
-                    println!("✗ Failed {}:{} - {}", ip, port, e);
+                    println!("✗ Failed {ip}:{port} - {e}");
                 }
             }
         }
@@ -351,9 +347,9 @@ mod tests {
         assert!(interleave <= MAX_42_BITS);
         assert!(gray <= MAX_42_BITS);
 
-        println!("Cantor pairing: {}", cantor);
-        println!("Bit interleaving: {}", interleave);
-        println!("Gray code: {}", gray);
+        println!("Cantor pairing: {cantor}");
+        println!("Bit interleaving: {interleave}");
+        println!("Gray code: {gray}");
     }
 
     #[test]
@@ -373,7 +369,7 @@ mod tests {
             );
             let port = rng.r#gen::<u16>();
 
-            if let Ok(_) = PureIpCompressor::compress(ip, port) {
+            if PureIpCompressor::compress(ip, port).is_ok() {
                 success_count += 1;
             }
         }

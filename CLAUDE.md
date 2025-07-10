@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Four-Word Networking is a Rust library and CLI that converts IP addresses into memorable word combinations for human-friendly networking. The system provides perfect reconstruction for IPv4 addresses using exactly 4 words, and adaptive compression for IPv6 addresses using 4-6 words with intelligent category-based optimization.
+Three-Word Networking is a Rust library and CLI that converts IP addresses into memorable word combinations for human-friendly networking. The system provides perfect reconstruction for IPv4 addresses using exactly 3 words, and adaptive compression for IPv6 addresses using 6 or 9 words (groups of 3) with intelligent category-based optimization.
 
 ## Common Development Commands
 
@@ -23,16 +23,13 @@ cargo test
 cargo test -- --nocapture
 
 # Run specific test
-cargo test test_four_word_address_parsing
+cargo test test_three_word_address_parsing
 
-# Run exhaustive test suite (fast mode - 12,000+ tests)
-./run_exhaustive_tests.sh
-
-# Run full exhaustive test suite (11.1M tests - takes 30+ minutes)
-./run_exhaustive_tests.sh full
+# Run main test suite
+./run_main_tests.sh
 
 # Run the CLI
-cargo run --bin 4wn -- 192.168.1.1:443
+cargo run --bin 3wn -- 192.168.1.1:443
 ```
 
 ### Code Quality
@@ -52,25 +49,26 @@ cargo machete
 
 ### CLI Usage Examples
 ```bash
-# Convert IPv4 to four words (perfect reconstruction)
-cargo run --bin 4wn -- 192.168.1.1:443
+# Convert IPv4 to three words (perfect reconstruction)
+cargo run --bin 3wn -- 192.168.1.1:443
 
-# Convert IPv6 to 4-6 words (adaptive compression)
-cargo run --bin 4wn -- "[::1]:443"
+# Convert IPv6 to 6 or 9 words (groups of 3)
+cargo run --bin 3wn -- "[::1]:443"
 
-# Decode words back to IP addresses
-cargo run --bin 4wn -- paper.broaden.smith.bully
+# Decode words back to IP addresses (dots or spaces)
+cargo run --bin 3wn -- lehr.delfs.enrages
+cargo run --bin 3wn -- lehr delfs enrages
 
 # Decode IPv6 from words
-cargo run --bin 4wn -- City-Tub-Book-April-Book
+cargo run --bin 3wn -- Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
 
 # Verbose output
-cargo run --bin 4wn -- -v 192.168.1.1:443
+cargo run --bin 3wn -- -v 192.168.1.1:443
 ```
 
 ### Binary Tools
 ```bash
-# Build and validate the 16K dictionary system
+# Build and validate the dictionary systems
 cargo run --bin validate_16k_system
 
 # Check word quality in dictionary
@@ -79,8 +77,11 @@ cargo run --bin check_word_quality
 # Create clean dictionary (removes homophones, offensive words)
 cargo run --bin create_clean_dictionary
 
-# Debug specific encoding issues
-cargo run --bin debug_aim_issue
+# Test three-word system
+cargo run --bin test_three_word
+
+# Benchmark three vs four word systems
+cargo run --bin benchmark_three_vs_four
 ```
 
 ## Architecture
@@ -88,65 +89,71 @@ cargo run --bin debug_aim_issue
 ### Core Components
 
 - **`src/lib.rs`**: Main library interface and public API
-- **`src/four_word_encoder.rs`**: Four-word encoder system for perfect IPv4 and adaptive IPv6
+- **`src/three_word_adaptive_encoder.rs`**: Three-word adaptive encoder system for perfect IPv4 and adaptive IPv6
 - **`src/ipv6_compression.rs`**: IPv6 category-based compression algorithms
 - **`src/error.rs`**: Comprehensive error types using `thiserror`
 - **`src/main.rs`**: CLI application using `clap`
-- **`src/bin/4wn.rs`**: Command-line interface for four-word networking
+- **`src/bin/3wn.rs`**: Command-line interface for three-word networking
+
+### Three-Word Encoding Systems
+
+- **`src/dictionary65k.rs`**: 65,536-word dictionary for IPv4 3-word encoding (2^16 words)
+- **`src/three_word_encoder.rs`**: Perfect 3-word encoding for IPv4 with Feistel network
+- **`src/three_word_ipv6_encoder.rs`**: Groups of 3 encoding for IPv6 (6 or 9 words)
+- **`src/dictionary16k.rs`**: 16,384-word dictionary used in legacy four-word system
 
 ### Advanced Encoding Systems
 
-- **`src/dictionary16k.rs`**: 16,384-word dictionary with quality filtering
-- **`src/encoder16k.rs`**: Enhanced encoder using 14-bit word indices
 - **`src/compression.rs`**: IP address compression achieving 40-60% reduction
+- **`src/ipv6_compression.rs`**: Category-based IPv6 compression
+- **`src/encoder16k.rs`**: Legacy four-word encoder using 14-bit word indices
 - **`src/balanced_encoder.rs`**: Natural word grouping with compression
 - **`src/ultra_compression.rs`**: Aggressive compression for ≤5 byte output
-- **`src/ultra_compact_encoder.rs`**: Perfect 4-word encoding with 75-87% compression
-
-### Universal Encoding Module (`src/universal/`)
-
-Experimental system for encoding arbitrary 32-byte data:
-- **`simple.rs`**: ≤8 byte encoding (4 words only)
-- **`fractal.rs`**: 9-20 byte encoding (base + zoom levels)
-- **`holographic.rs`**: 21-32 byte encoding (multiple story views)
-- **`dictionaries.rs`**: Four specialized 4,096-word dictionaries
 
 ### Key Data Structures
 
-- **`FourWordEncoding`**: Four-word address structure with IP version detection
-- **`FourWordAdaptiveEncoder`**: Main interface for encoding/decoding IP addresses
-- **`FourWordDictionary`**: 16,384-word dictionary for encoding
+- **`ThreeWordEncoding`**: Three-word IPv4 address structure
+- **`ThreeWordAdaptiveEncoder`**: Main interface for encoding/decoding IP addresses
+- **`Dictionary65K`**: 65,536-word dictionary for 16-bit per word encoding
+- **`Ipv6ThreeWordGroupEncoding`**: IPv6 encoding in groups of 3 words
+- **`ThreeWordGroup`**: Container for 3-word groups
 - **`CompressedIpv6`**: IPv6 compression with category-based optimization
 - **`Ipv6Category`**: IPv6 address types (Loopback, LinkLocal, GlobalUnicast, etc.)
-- **`UltraCompactData`**: 5-byte compressed format
 
 ## Encoding Strategies
 
-### Ultra-Compact Encoding (Production Ready)
-- **Localhost**: 3-byte encoding for 127.0.0.1 patterns
-- **Private Networks**: 4-5 byte encoding for RFC1918 addresses
-- **Common Ports**: Single-byte codes for well-known ports
-- **Protocol Packing**: Bit-packed protocol headers
-- **Performance**: 0.37-1.79μs encoding, <0.00005% collision rate
+### Three-Word IPv4 Encoding
+- **Perfect Reconstruction**: 48 bits (IPv4 + port) encoded in 3 × 16-bit words
+- **Feistel Network**: 8 rounds of cryptographic bit diffusion
+- **Dictionary**: 65,536 words (2^16) for perfect 16-bit encoding
+- **Format**: Lowercase words separated by dots or spaces
+
+### IPv6 Group Encoding
+- **Groups of 3**: Always 6 or 9 words (2 or 3 groups)
+- **Category Detection**: Optimizes based on IPv6 type
+- **Compression**: 6 words for common patterns, 9 for complex addresses
+- **Format**: Title case words separated by dashes
 
 ### Compression Techniques
 ```rust
-// Example: Localhost compression
-// 127.0.0.1:8080 → 3 bytes total
-// Header: 0b10000000 (localhost marker)
-// Port: 2 bytes for 8080
+// Example: IPv6 category-based compression
+match category {
+    Ipv6Category::Loopback => compress_loopback(),
+    Ipv6Category::LinkLocal => compress_link_local(),
+    Ipv6Category::Documentation => compress_documentation(),
+    Ipv6Category::GlobalUnicast => compress_global(),
+}
 ```
 
 ## Dictionary Management
 
-### Word Sources
-- **EFF Large**: 7,776 secure passphrase words
-- **BIP39**: 2,048 cryptocurrency mnemonic words
-- **Diceware 8K**: 8,192 security-focused words
-- **Custom English**: Additional curated words
+### 65K Dictionary (IPv4)
+- **Size**: 65,536 words (2^16)
+- **Sources**: EFF, BIP39, Diceware, custom English words
+- **Quality**: Voice-friendly, no homophones, 3-7 characters
 
-### Quality Criteria
-- Length: 4-8 characters
+### Word Quality Criteria
+- Length: 3-7 characters optimal
 - Voice-friendly: Easy to pronounce
 - No homophones or offensive terms
 - Phonetically distinct
@@ -168,9 +175,9 @@ let parsed = parse_address(addr)?;
 ### Testing Strategy
 - Unit tests in `#[cfg(test)]` modules
 - Integration tests for workflows
-- Real-world address testing (Bitcoin, Ethereum)
-- Exhaustive validation (millions of addresses)
+- Real-world address testing
 - Performance benchmarks (<2μs requirement)
+- CLI integration tests
 
 ### Code Organization
 - Feature-focused module structure
@@ -180,36 +187,39 @@ let parsed = parse_address(addr)?;
 
 ## Performance Targets
 
-- **Encoding**: <2μs per address
-- **Decoding**: <2μs per address
-- **Memory**: <1MB total dictionary size
-- **Throughput**: ~100,000 addresses/second
-- **Collision Rate**: <0.00005%
+- **Encoding**: <1μs for IPv4, <2μs for IPv6
+- **Decoding**: <1μs for IPv4, <2μs for IPv6
+- **Memory**: ~1MB total dictionary size
+- **Throughput**: ~1,000,000 addresses/second
+- **Zero Collisions**: Deterministic encoding
 
 ## Current Implementation Status
 
 ### Production Ready
-- Ultra-compact IP address encoding
-- 16K word dictionary system
-- CLI with full feature set
+- Three-word IPv4 encoding with perfect reconstruction
+- IPv6 encoding in groups of 3 (6 or 9 words)
+- 65K word dictionary system
+- CLI with full feature set (`3wn`)
+- Space-separated word support
 - Comprehensive test coverage
 
-### Experimental
-- Universal 32-byte encoding
-- Multi-language support structure
-- Advanced collision resolution
+### Features
+- IPv4: Always exactly 3 words
+- IPv6: 6 words for common patterns, 9 for complex
+- Visual distinction: dots vs dashes, case differences
+- Voice-optimized dictionary
+- Sub-microsecond performance
 
 ### Known Limitations
 - English-only dictionaries currently
-- Simplified address recovery in demo mode
-- Some edge cases in exotic IP address formats
+- Some IPv6 patterns may require 9 words
 
 ## Future Development Areas
 
 ### High Priority
-- Perfect address reconstruction
 - Multi-language dictionary support
 - WebAssembly bindings
+- Python/JavaScript bindings
 - Integration with networking libraries
 
 ### Medium Priority
@@ -224,21 +234,16 @@ let parsed = parse_address(addr)?;
 - `serde`: Serialization (with derive)
 - `thiserror`: Error handling
 - `clap`: CLI parsing (with derive)
-- `tokio`: Async runtime (full features)
-
-### Encoding
-- `hex`: Hexadecimal encoding
-- `bs58`: Base58 encoding
-- `bitvec`: Bit manipulation
+- `once_cell`: Global dictionary singleton
 
 ### Testing
 - `tokio-test`: Async test utilities
 - `rand`: Random generation
-- `sha2`: Hashing for tests
+- `criterion`: Benchmarking
 
 ## Useful Resources
 
-- **Test Script**: `./run_exhaustive_tests.sh` for comprehensive validation
-- **Binary Tools**: 16 utilities in `src/bin/` for development tasks
+- **Test Script**: `./run_main_tests.sh` for test suite
+- **Binary Tools**: Multiple utilities in `src/bin/` for development
 - **Word Lists**: Raw dictionaries in `wordlists/` directory
-- **Processed Dictionaries**: Quality-filtered versions in `data/`
+- **65K Dictionary**: Pre-built in `data/dictionary_65536.txt`

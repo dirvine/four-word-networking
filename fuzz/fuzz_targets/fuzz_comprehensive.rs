@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use four_word_networking::*;
+use three_word_networking::*;
 use arbitrary::Arbitrary;
 use std::net::{IpAddr, SocketAddr};
 

@@ -4,8 +4,8 @@
 //! using the multi-dimensional encoding system.
 
 use crate::{
-    perfect_encoder::{MultiDimEncoding, PerfectEncoder},
     Result,
+    perfect_encoder::{MultiDimEncoding, PerfectEncoder},
 };
 use std::net::Ipv4Addr;
 
@@ -82,8 +82,8 @@ mod tests {
             let encoded = codec.encode(ip, port).unwrap();
             let (decoded_ip, decoded_port) = codec.decode(&encoded).unwrap();
 
-            assert_eq!(ip, decoded_ip, "IP mismatch for {}", ip);
-            assert_eq!(port, decoded_port, "Port mismatch for {}:{}", ip, port);
+            assert_eq!(ip, decoded_ip, "IP mismatch for {ip}");
+            assert_eq!(port, decoded_port, "Port mismatch for {ip}:{port}");
         }
     }
 
@@ -95,7 +95,7 @@ mod tests {
         let port = 443;
 
         let encoded_str = codec.encode_to_string(ip, port).unwrap();
-        println!("Encoded {}:{} as: {}", ip, port, encoded_str);
+        println!("Encoded {ip}:{port} as: {encoded_str}");
 
         // Should be able to decode back
         let (decoded_ip, decoded_port) = codec.decode_from_string(&encoded_str).unwrap();
@@ -113,8 +113,8 @@ mod tests {
             let encoded = codec.encode(ip, port).unwrap();
             let (decoded_ip, decoded_port) = codec.decode(&encoded).unwrap();
 
-            assert_eq!(ip, decoded_ip, "IP mismatch at port {}", port);
-            assert_eq!(port, decoded_port, "Port mismatch at port {}", port);
+            assert_eq!(ip, decoded_ip, "IP mismatch at port {port}");
+            assert_eq!(port, decoded_port, "Port mismatch at port {port}");
         }
     }
 }

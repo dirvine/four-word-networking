@@ -3,9 +3,9 @@
 //! This module implements the complete IPv6 perfect compression system that achieves
 //! 4-5 word encoding for 90%+ of real-world IPv6 addresses with 100% perfect reconstruction.
 
+use crate::Result;
 use crate::ipv6_multi_dimensional::{IPv6MultiDimEncoder, IPv6MultiDimEncoding};
 use crate::ipv6_perfect_patterns::{IPv6Pattern, IPv6PatternDetector};
-use crate::Result;
 use std::net::Ipv6Addr;
 
 /// IPv6 perfect encoding result
@@ -182,25 +182,27 @@ impl IPv6PerfectEncoder {
     ) -> Result<(u64, usize)> {
         let segments = ip.segments();
         let port_bits = port.unwrap_or(0) as u64;
-        
+
         // First, perform the normal compression based on pattern
-        let (compressed_data, compressed_bits) = self.compress_by_pattern_internal(pattern, &segments, port_bits)?;
-        
+        let (compressed_data, compressed_bits) =
+            self.compress_by_pattern_internal(pattern, &segments, port_bits)?;
+
         // Then, use Feistel network to embed pattern information
         use crate::ipv6_pattern_feistel::{IPv6PatternFeistel, IPv6PatternId};
         let pattern_id = IPv6PatternId::from_ipv6_pattern(pattern);
-        let feistel_data = IPv6PatternFeistel::encode(pattern_id, compressed_data, compressed_bits)?;
-        
+        let feistel_data =
+            IPv6PatternFeistel::encode(pattern_id, compressed_data, compressed_bits)?;
+
         // Return Feistel-encoded data with slightly more bits (for pattern info)
-        let feistel_bits = if compressed_bits <= 32 { 
+        let feistel_bits = if compressed_bits <= 32 {
             compressed_bits + 3 // Small data: +3 bits for pattern interleaving
-        } else { 
+        } else {
             compressed_bits + 3 // Large data: +3 bits for pattern in high bits
         };
-        
+
         Ok((feistel_data, feistel_bits))
     }
-    
+
     /// Internal compression logic (without Feistel encoding)
     fn compress_by_pattern_internal(
         &self,
@@ -208,7 +210,6 @@ impl IPv6PerfectEncoder {
         segments: &[u16; 8],
         port_bits: u64,
     ) -> Result<(u64, usize)> {
-
         match pattern {
             IPv6Pattern::Loopback => {
                 // ::1 -> just port (16 bits)
@@ -483,22 +484,23 @@ impl IPv6PerfectEncoder {
     ) -> Result<(Ipv6Addr, Option<u16>)> {
         // First, determine the expected data bits for this pattern type
         let expected_data_bits = self.estimate_pattern_bits(pattern);
-        
+
         // Use Feistel network to decode pattern and data
         use crate::ipv6_pattern_feistel::{IPv6PatternFeistel, IPv6PatternId};
-        let (decoded_pattern_id, data) = IPv6PatternFeistel::decode(feistel_data, expected_data_bits)?;
-        
+        let (decoded_pattern_id, data) =
+            IPv6PatternFeistel::decode(feistel_data, expected_data_bits)?;
+
         // Verify pattern consistency (optional validation)
         let expected_pattern_id = IPv6PatternId::from_ipv6_pattern(pattern);
         if decoded_pattern_id != expected_pattern_id {
-            // For now, just use the provided pattern - in a full implementation 
+            // For now, just use the provided pattern - in a full implementation
             // we might want to handle this mismatch differently
         }
-        
+
         // Decompress using the original pattern-based logic
         self.decompress_by_pattern_internal(pattern, data)
     }
-    
+
     /// Internal decompression logic (without Feistel decoding)
     fn decompress_by_pattern_internal(
         &self,
@@ -632,54 +634,46 @@ impl IPv6PerfectEncoder {
         }
         hash & 0xFFFFFFFFFFFF // 48 bits
     }
-    
+
     /// Estimate data bits for a given pattern (for Feistel decoding)
     fn estimate_pattern_bits(&self, pattern: &IPv6Pattern) -> usize {
         use crate::ipv6_perfect_patterns::*;
         match pattern {
             IPv6Pattern::Loopback => 16,
             IPv6Pattern::Unspecified => 16,
-            
-            IPv6Pattern::LinkLocal(link_pattern) => {
-                match link_pattern {
-                    LinkLocalPattern::Zero => 16,
-                    LinkLocalPattern::SmallInteger(_) => 24,
-                    LinkLocalPattern::EUI64 => 64,
-                    LinkLocalPattern::Privacy => 64,
-                    LinkLocalPattern::Complex => 80,
-                }
-            }
-            
-            IPv6Pattern::Documentation(doc_pattern) => {
-                match doc_pattern {
-                    DocumentationPattern::Base => 16,
-                    DocumentationPattern::Sequential(_) => 32,
-                    DocumentationPattern::Subnet(_, _) => 48,
-                    DocumentationPattern::Complex => 112,
-                }
-            }
-            
-            IPv6Pattern::UniqueLocal(ul_pattern) => {
-                match ul_pattern {
-                    UniqueLocalPattern::Simple { .. } => 56,
-                    UniqueLocalPattern::Standard { .. } => 64,
-                    UniqueLocalPattern::Complex => 144,
-                }
-            }
-            
+
+            IPv6Pattern::LinkLocal(link_pattern) => match link_pattern {
+                LinkLocalPattern::Zero => 16,
+                LinkLocalPattern::SmallInteger(_) => 24,
+                LinkLocalPattern::EUI64 => 64,
+                LinkLocalPattern::Privacy => 64,
+                LinkLocalPattern::Complex => 80,
+            },
+
+            IPv6Pattern::Documentation(doc_pattern) => match doc_pattern {
+                DocumentationPattern::Base => 16,
+                DocumentationPattern::Sequential(_) => 32,
+                DocumentationPattern::Subnet(_, _) => 48,
+                DocumentationPattern::Complex => 112,
+            },
+
+            IPv6Pattern::UniqueLocal(ul_pattern) => match ul_pattern {
+                UniqueLocalPattern::Simple { .. } => 56,
+                UniqueLocalPattern::Standard { .. } => 64,
+                UniqueLocalPattern::Complex => 144,
+            },
+
             IPv6Pattern::CloudProvider(_) => 64, // Most cloud patterns use ~64 bits
             IPv6Pattern::CommonProvider(_) => 80, // Most common patterns use ~80 bits
-            IPv6Pattern::GlobalUnicast(_) => 80,  // Most global patterns use ~80 bits
-            
-            IPv6Pattern::Multicast(multicast_pattern) => {
-                match multicast_pattern {
-                    MulticastPattern::WellKnown(_) => 32,
-                    MulticastPattern::SolicitedNode(_) => 48,
-                    MulticastPattern::OrganizationLocal { .. } => 48,
-                    MulticastPattern::Complex => 144,
-                }
-            }
-            
+            IPv6Pattern::GlobalUnicast(_) => 80, // Most global patterns use ~80 bits
+
+            IPv6Pattern::Multicast(multicast_pattern) => match multicast_pattern {
+                MulticastPattern::WellKnown(_) => 32,
+                MulticastPattern::SolicitedNode(_) => 48,
+                MulticastPattern::OrganizationLocal { .. } => 48,
+                MulticastPattern::Complex => 144,
+            },
+
             IPv6Pattern::Unstructured => 144, // Full encoding
         }
     }

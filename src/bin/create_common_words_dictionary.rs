@@ -33,12 +33,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Show samples
     println!("\nSample very common words:");
     for word in very_common.iter().take(20) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     println!("\nSample filtered words:");
     for word in filtered_out.iter().take(20) {
-        println!("  {}", word);
+        println!("  {word}");
     }
 
     // Build dictionary: Very common first, then common, then fill with uncommon

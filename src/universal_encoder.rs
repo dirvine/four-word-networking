@@ -64,7 +64,7 @@ impl UniversalEncoder {
         let (ip, port) = self.decompress_with_strategy_detection(compressed)?;
 
         // Format result
-        Ok(format!("{}:{}", ip, port))
+        Ok(format!("{ip}:{port}"))
     }
 
     /// Get compression statistics for an address
@@ -73,7 +73,7 @@ impl UniversalEncoder {
 
         let mut analysis = CompressionAnalysis {
             original_bits: 48, // 32 bits IP + 16 bits port
-            address: format!("{}:{}", ip, port),
+            address: format!("{ip}:{port}"),
             strategies: Vec::new(),
         };
 
@@ -153,17 +153,17 @@ impl UniversalEncoder {
 
             let ip = ip_part
                 .parse::<Ipv4Addr>()
-                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", ip_part)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {ip_part}")))?;
 
             let port = port_part
                 .parse::<u16>()
-                .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {}", port_part)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid port: {port_part}")))?;
 
             Ok((ip, port))
         } else {
             let ip = input
                 .parse::<Ipv4Addr>()
-                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {}", input)))?;
+                .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP: {input}")))?;
 
             Ok((ip, 0)) // Default port
         }
@@ -350,20 +350,20 @@ mod tests {
         ];
 
         for address in test_cases {
-            println!("\nTesting: {}", address);
+            println!("\nTesting: {address}");
 
             match encoder.encode(address) {
                 Ok(words) => {
-                    println!("  Encoded: {}", words);
+                    println!("  Encoded: {words}");
 
                     match encoder.decode(&words) {
                         Ok(decoded) => {
-                            println!("  Decoded: {}", decoded);
+                            println!("  Decoded: {decoded}");
                         }
-                        Err(e) => println!("  Decode error: {}", e),
+                        Err(e) => println!("  Decode error: {e}"),
                     }
                 }
-                Err(e) => println!("  Encode error: {}", e),
+                Err(e) => println!("  Encode error: {e}"),
             }
 
             // Show compression analysis

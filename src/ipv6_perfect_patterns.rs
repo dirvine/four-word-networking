@@ -232,6 +232,12 @@ enum AllocationType {
     Mobile,
 }
 
+impl Default for IPv6ProviderDictionary {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IPv6ProviderDictionary {
     /// Create a new provider dictionary with real-world BGP data
     pub fn new() -> Self {
@@ -598,6 +604,12 @@ impl IPv6ProviderDictionary {
 /// IPv6 pattern detector for perfect compression
 pub struct IPv6PatternDetector {
     provider_dictionary: IPv6ProviderDictionary,
+}
+
+impl Default for IPv6PatternDetector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IPv6PatternDetector {

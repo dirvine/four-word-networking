@@ -76,9 +76,9 @@ impl CompressedEncoder {
 
         // Format result
         match (ip, port) {
-            (IpAddr::V4(addr), Some(p)) => Ok(format!("{}:{}", addr, p)),
+            (IpAddr::V4(addr), Some(p)) => Ok(format!("{addr}:{p}")),
             (IpAddr::V4(addr), None) => Ok(addr.to_string()),
-            (IpAddr::V6(addr), Some(p)) => Ok(format!("[{}]:{}", addr, p)),
+            (IpAddr::V6(addr), Some(p)) => Ok(format!("[{addr}]:{p}")),
             (IpAddr::V6(addr), None) => Ok(addr.to_string()),
         }
     }
@@ -97,12 +97,12 @@ impl CompressedEncoder {
                     };
 
                 let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv6 address: {addr_part}"))
                 })?;
 
                 let port = if let Some(port_str) = port_part {
                     Some(port_str.parse::<u16>().map_err(|_| {
-                        FourWordError::InvalidInput(format!("Invalid port: {}", port_str))
+                        FourWordError::InvalidInput(format!("Invalid port: {port_str}"))
                     })?)
                 } else {
                     None
@@ -123,11 +123,11 @@ impl CompressedEncoder {
                 let port_part = &input[last_colon + 1..];
 
                 let ip = addr_part.parse::<Ipv4Addr>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {}", addr_part))
+                    FourWordError::InvalidInput(format!("Invalid IPv4 address: {addr_part}"))
                 })?;
 
                 let port = port_part.parse::<u16>().map_err(|_| {
-                    FourWordError::InvalidInput(format!("Invalid port: {}", port_part))
+                    FourWordError::InvalidInput(format!("Invalid port: {port_part}"))
                 })?;
 
                 return Ok((IpAddr::V4(ip), Some(port)));
@@ -137,7 +137,7 @@ impl CompressedEncoder {
         // Try parsing as standalone IP
         let ip = input
             .parse::<IpAddr>()
-            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {}", input)))?;
+            .map_err(|_| FourWordError::InvalidInput(format!("Invalid IP address: {input}")))?;
 
         Ok((ip, None))
     }

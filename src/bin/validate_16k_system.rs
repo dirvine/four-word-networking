@@ -3,9 +3,9 @@
 //! This tool validates and demonstrates the performance improvements
 //! of the new 16,384 word dictionary system.
 
-use four_word_networking::dictionary16k::Dictionary16K;
-use four_word_networking::encoder16k::UniversalEncoder16K;
 use std::time::Instant;
+use three_word_networking::dictionary16k::Dictionary16K;
+use three_word_networking::encoder16k::UniversalEncoder16K;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 16K Word System Validation");
@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for len in stats.min_length..=stats.max_length {
         if let Some(count) = stats.length_distribution.get(&len) {
             if *count > 0 {
-                println!("    {} chars: {} words", len, count);
+                println!("    {len} chars: {count} words");
             }
         }
     }
@@ -59,7 +59,7 @@ fn test_address_types(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std::
     // IPv4 (4 bytes) - should be Simple
     let ipv4 = vec![192, 168, 1, 100];
     let ipv4_encoded = encoder.encode(&ipv4)?;
-    println!("  IPv4 (4 bytes): {}", ipv4_encoded);
+    println!("  IPv4 (4 bytes): {ipv4_encoded}");
     assert!(ipv4_encoded.is_simple());
 
     // IPv6 (16 bytes) - should be Hybrid with reduced digits
@@ -68,23 +68,17 @@ fn test_address_types(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std::
         0x34,
     ];
     let ipv6_encoded = encoder.encode(&ipv6)?;
-    println!("  IPv6 (16 bytes): {}", ipv6_encoded);
+    println!("  IPv6 (16 bytes): {ipv6_encoded}");
     let ipv6_digits = ipv6_encoded.digit_groups().unwrap().len() * 4;
-    println!(
-        "    Digits needed: {} (vs ~96 with old system)",
-        ipv6_digits
-    );
+    println!("    Digits needed: {ipv6_digits} (vs ~96 with old system)");
 
     // Bitcoin address (21 bytes) - should be Hybrid
     let mut bitcoin = vec![0x00; 21]; // Version + 20-byte hash
     bitcoin[0] = 0x00; // P2PKH version
     let bitcoin_encoded = encoder.encode(&bitcoin)?;
-    println!("  Bitcoin (21 bytes): {}", bitcoin_encoded);
+    println!("  Bitcoin (21 bytes): {bitcoin_encoded}");
     let bitcoin_digits = bitcoin_encoded.digit_groups().unwrap().len() * 4;
-    println!(
-        "    Digits needed: {} (vs ~124 with old system)",
-        bitcoin_digits
-    );
+    println!("    Digits needed: {bitcoin_digits} (vs ~124 with old system)");
 
     // Ethereum address (20 bytes) - should be Hybrid
     let ethereum = vec![
@@ -92,12 +86,9 @@ fn test_address_types(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std::
         0xd3, 0x7a, 0xa9, 0x60, 0x45,
     ];
     let ethereum_encoded = encoder.encode(&ethereum)?;
-    println!("  Ethereum (20 bytes): {}", ethereum_encoded);
+    println!("  Ethereum (20 bytes): {ethereum_encoded}");
     let ethereum_digits = ethereum_encoded.digit_groups().unwrap().len() * 4;
-    println!(
-        "    Digits needed: {} (vs ~120 with old system)",
-        ethereum_digits
-    );
+    println!("    Digits needed: {ethereum_digits} (vs ~120 with old system)");
 
     // SHA-256 hash (32 bytes) - should be Hybrid
     let sha256 = vec![
@@ -106,12 +97,9 @@ fn test_address_types(encoder: &UniversalEncoder16K) -> Result<(), Box<dyn std::
         0x44, 0x15,
     ];
     let sha256_encoded = encoder.encode(&sha256)?;
-    println!("  SHA-256 (32 bytes): {}", sha256_encoded);
+    println!("  SHA-256 (32 bytes): {sha256_encoded}");
     let sha256_digits = sha256_encoded.digit_groups().unwrap().len() * 4;
-    println!(
-        "    Digits needed: {} (vs ~188 with old system)",
-        sha256_digits
-    );
+    println!("    Digits needed: {sha256_digits} (vs ~188 with old system)");
 
     println!("  ✅ All address types encoded successfully");
     Ok(())
@@ -213,10 +201,7 @@ fn efficiency_demonstration(
 
     for (name, data, new_format, old_format, improvement) in improvements {
         let efficiency = encoder.efficiency_info(&data);
-        println!(
-            "  {}: {} -> {} ({})",
-            name, old_format, new_format, improvement
-        );
+        println!("  {name}: {old_format} -> {new_format} ({improvement})");
         println!(
             "    Rating: {} - {}",
             efficiency.efficiency_rating, efficiency.description

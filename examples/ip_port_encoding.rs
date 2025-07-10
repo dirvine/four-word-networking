@@ -3,7 +3,7 @@
 //! This example demonstrates encoding IP addresses with ports directly
 //! into four memorable words, without multiaddr overhead.
 
-use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
+use three_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
     println!("=== Pure IP+Port Four-Word Encoding ===\n");
@@ -21,7 +21,7 @@ fn main() -> Result<(), IpPortErrorV2> {
 
     for (addr, description) in examples {
         let encoded = encoder.encode(addr)?;
-        println!("  {} ({})", addr, description);
+        println!("  {addr} ({description})");
         println!("    → {}", encoded.to_string());
         println!(
             "    → Compression: {:.0}%",
@@ -30,7 +30,7 @@ fn main() -> Result<(), IpPortErrorV2> {
 
         // Decode back
         let decoded = encoder.decode(&encoded.words[0], &encoded.words[1], &encoded.words[2])?;
-        println!("    → Decoded: {}", decoded);
+        println!("    → Decoded: {decoded}");
         println!();
     }
 

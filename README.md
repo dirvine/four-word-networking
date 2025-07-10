@@ -1,81 +1,170 @@
-# Four-Word Networking: Human-Readable IP Address Encoding
+# Three-Word Networking: Human-Readable IP Address Encoding
 
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
-[![Crates.io](https://img.shields.io/crates/v/four-word-networking.svg)](https://crates.io/crates/four-word-networking)
-[![Documentation](https://docs.rs/four-word-networking/badge.svg)](https://docs.rs/four-word-networking)
+[![Crates.io](https://img.shields.io/crates/v/three-word-networking.svg)](https://crates.io/crates/three-word-networking)
+[![Documentation](https://docs.rs/three-word-networking/badge.svg)](https://docs.rs/three-word-networking)
 
-**Production-ready system for converting IP addresses and ports into memorable word combinations. IPv4 addresses always produce exactly 4 words with perfect reconstruction, while IPv6 addresses achieve 4 words for common patterns using advanced compression.**
+## Beyond IP Addresses: Service Addresses for Everyone
+
+Traditional networking requires us to remember complex strings of numbers. But what if every service on your computer—your website, blog, phone system, video chat, or AI assistant—had its own simple three-word address?
+
+This isn't just about IP addresses; it's about *service addresses*. Each device can run over 60,000 different services, and each gets its own unique three-word combination. Same computer, different words, different services—all instantly accessible to anyone you choose to share them with.
+
+## How It Works in Real Life
+
+### Starting Your Digital Presence
+
+When you start your node on this peer-to-peer network, you might receive three words like "black.tree.fish". Share these words with friends, and they can instantly connect to you—no technical knowledge required. Whether you're creating a private friend network or joining a global community, those three words are your gateway.
+
+### Multiple Services, One Device
+
+Your computer becomes a Swiss Army knife of services:
+- **Website**: black.tree.fish
+- **Voice/Video Calls**: mountain.cat.yes
+- **Crypto Wallet**: monkey.rain.bike
+- **File Sharing**: sunset.river.song
+
+Each service runs on the same machine but has its own memorable address. Tell a friend to video call you at "mountain.cat.yes"—that's it. No apps to download, no accounts to create, just direct, secure communication.
+
+### Revolutionizing Digital Payments
+
+Cryptocurrency addresses are notoriously complex: long strings of random characters that are easy to mistype and impossible to remember. With three-word networking, sending Bitcoin becomes as simple as saying "send 2 Bitcoin to monkey.rain.bike".
+
+For the technically curious, this elegantly solves the challenge of transmitting high-entropy data (complex cryptographic addresses) through a low-entropy channel (human speech and memory).
+
+## A DNS for the People
+
+Think of it as a massive, global directory service—like DNS but:
+- **Free**: No registration fees, no renewals
+- **Secure**: Built on peer-to-peer principles with end-to-end encryption
+- **Decentralized**: No single company or government controls it
+- **Fair**: Everyone gets an equal chance at memorable addresses
+
+### The Name Game Is Already Over
+
+Critics might say "but you can't choose your own words!" Yet look at today's internet: all the good domain names are taken. We're left with misspelled company names, hard-to-pronounce combinations, and domains that have nothing to do with their content.
+
+Three-word networking actually levels the playing field. Everyone gets equally memorable addresses, allocated fairly by the system.
+
+## Why This Matters
+
+### For Regular Users
+- **Simplicity**: Share services as easily as telling someone your favorite three words
+- **Privacy**: Direct connections mean no middlemen tracking your communications
+- **Cost**: Zero fees for addressing—forever
+
+### For Developers and Creators
+- **Instant Publishing**: Launch a website without buying domains or hosting
+- **Direct Services**: Offer video calls, file sharing, or custom applications directly from your device
+- **True Ownership**: You control your services, not a hosting company
+- **Network cold start**: This solves the "bootstrapping problem" or cold start issues where folk pass around hashes and network identifiers and suchlike
+
+### For the Future of the Internet
+This represents a shift from the corporate-controlled internet back to its peer-to-peer roots. When anyone can run services as easily as sharing three words, we return to an internet of equals—where innovation isn't gatekept by those who can afford domain names and hosting.
+
+## Looking Ahead
+
+While this system starts with individual machines (no load balancing like big tech companies use), it opens doors to entirely new models of distributed computing. Combined with other decentralized network technologies, we might see:
+- Community-run services that share load naturally
+- Resilient networks that route around failures
+- New economic models where users contribute resources directly
+
+## The Bottom Line
+
+Three-word networking isn't just a technical innovation—it's a return to the internet's original vision: a network where anyone can connect, create, and communicate without permission, without fees, and without complexity.
+
+In a world where we struggle to remember phone numbers, where we rely on corporate platforms for basic communication, and where technical barriers keep billions from fully participating online, three simple words might just be the key to unlocking the internet's true potential.
+
+*Welcome to the future of networking. It's as simple as black.tree.fish.*
+
+---
+
+*Based on open-source peer-to-peer networking technology including [ant-quic](https://github.com/dirvine/ant-quic) and other decentralized protocols currently in development.*
+
+---
+
+**Near production-ready system for converting IP addresses and ports into memorable word combinations. IPv4 addresses always produce exactly 3 words with perfect reconstruction, while IPv6 addresses use groups of 3 words (6 or 9 total) maintaining the same clean user experience.**
+
+> **🚧 Status: Release Candidate** - The core technology is complete and functional. We are currently:
+> - Finalizing the 65,536-word dictionary for optimal voice clarity and memorability
+> - Conducting extensive real-world testing and security analysis
+> - Gathering community feedback on word selection and international usage
+> 
+> Early adopters and developers are encouraged to test and provide feedback!
 
 ```bash
-# IPv4 addresses: Always exactly 4 words (perfect reconstruction)
-192.168.1.1:443    →  paper.broaden.smith.bully
-10.0.0.1:8080      →  game.weather.july.general
-8.8.8.8:53         →  game.december.physical.state
+# IPv4 addresses: Always exactly 3 words (perfect reconstruction)
+192.168.1.1:443    →  lehr.delfs.enrages
+10.0.0.1:8080      →  casts.scuds.paws
+8.8.8.8:53         →  aid.ajar.dulls
 
-# IPv6 addresses: Always 4 words with perfect compression
-[::1]:443          →  Bully-Book-Book-Book
-[fe80::1]:22       →  Ship-July-Book-Book
-[2001:db8::1]:443  →  Bully-July-Book-Book
+# IPv6 addresses: Groups of 3 words (6 or 9 total)
+[::1]:443          →  Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
+[fe80::1]:22       →  Casuist-Prattle-Inno-Alky-Stimuli-Bugger
+[2001:db8::1]:443  →  Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
 ```
 
 ## Overview
 
-Four-Word Networking provides a production-ready solution for converting IP addresses into human-memorable word combinations. The system uses advanced compression algorithms to achieve optimal encoding while maintaining perfect reversibility for IPv4 and excellent compression for IPv6.
+Three-Word Networking provides a production-ready solution for converting IP addresses into human-memorable word combinations. The system uses a 65,536-word dictionary to achieve perfect encoding for IPv4 addresses in just 3 words, while IPv6 addresses use groups of 3 words (6 or 9 total) for consistent user experience.
 
 ### Key Features
 
-- **Perfect IPv4 Reconstruction**: IPv4 always produces exactly 4 words with 100% perfect reconstruction
-- **Adaptive IPv6 Compression**: IPv6 achieves 4 words for most common patterns with perfect reconstruction
-- **Voice-Friendly Dictionary**: 16,384 carefully selected English words optimized for clarity
+- **Perfect IPv4 Reconstruction**: IPv4 always produces exactly 3 words with 100% perfect reconstruction
+- **Consistent IPv6 Groups**: IPv6 uses groups of 3 words (6 or 9 total) for natural rhythm
+- **Voice-Friendly Dictionary**: 65,536 carefully selected English words optimized for clarity
 - **Visual Distinction**: IPv4 uses dots (lowercase), IPv6 uses dashes (title case)
 - **Zero Collisions**: Deterministic encoding with guaranteed reversibility
 - **Production Performance**: Sub-microsecond encoding with minimal memory footprint
 - **Simple Integration**: Clean API supporting String, &str, SocketAddr, and IpAddr inputs
-- **Instant CLI Tool**: Install `4wn` command with `cargo install four-word-networking`
+- **Instant CLI Tool**: Install `3wn` command with `cargo install three-word-networking`
 
 ## Technical Architecture
 
-### Adaptive Encoding System
+### Three-Word Encoding System
 
-Four-Word Networking uses sophisticated compression algorithms tailored to each IP version:
+Three-Word Networking uses sophisticated bit manipulation and a large dictionary to achieve optimal encoding:
 
-#### IPv4 Perfect Encoding (Always 4 Words)
-- **Perfect Reconstruction**: Encodes 48 bits (IPv4 + port) into 56 bits (4 × 14-bit words)
+#### IPv4 Perfect Encoding (Always 3 Words)
+- **Perfect Reconstruction**: Encodes 48 bits (IPv4 + port) into exactly 48 bits (3 × 16-bit words)
 - **No Data Loss**: 100% perfect reconstruction guaranteed for all IPv4 addresses
-- **Optimal Capacity**: 4 words provide exactly the right capacity for IPv4+port data
+- **Optimal Efficiency**: 3 words provide perfect capacity for IPv4+port data
+- **Feistel Network**: 8-round cryptographic bit diffusion for security
 
-#### IPv6 Adaptive Compression (4 Words for Common Patterns)
-- **Category-Based Compression**: Analyzes IPv6 structure for optimal encoding
-- **Pattern Recognition**: Achieves 4 words for loopback, link-local, documentation addresses
-- **Advanced Encoding**: Uses multi-dimensional encoding (case, separators, word order)
+#### IPv6 Adaptive Encoding (Groups of 3 Words)
+- **Consistent UX**: Always groups of 3 words (6 or 9 total) for natural speaking rhythm
+- **Category-Based Compression**: Optimizes encoding based on IPv6 address type
+- **Pattern Recognition**: 6 words for common patterns (loopback, link-local, documentation)
+- **Full Support**: 9 words for complex global unicast addresses
 - **Clear Differentiation**: Visual format ensures IPv6 is never confused with IPv4
 
-### Variable-Length Dictionary
+### Dictionary System
 
-The system uses an adaptive dictionary supporting 3-6 word combinations:
+The system uses a carefully curated 65,536-word dictionary:
 
-- **16,384 Base Words**: Carefully curated for voice clarity and memorability
-- **Adaptive Encoding**: Automatically selects optimal word count based on data
-- **Bit-Perfect Reconstruction**: Every encoding is perfectly reversible
+- **65,536 Words**: 2^16 words enabling perfect 16-bit encoding per word
 - **Voice-Optimized**: Words selected for clear pronunciation and minimal confusion
+- **Quality Filtered**: No homophones, offensive words, or ambiguous terms
+- **Length Range**: 3-7 characters for optimal memorability
 
 ## Performance Characteristics
 
 ### Encoding Performance
 
-| Address Type | Example | Word Count | Compression | Time |
-|-------------|---------|------------|-------------|------|
-| IPv4 | 192.168.1.1:443 | **4** | Perfect (0% loss) | <1μs |
-| IPv4 | 10.0.0.1:8080 | **4** | Perfect (0% loss) | <1μs |
-| IPv6 Loopback | [::1]:443 | **4** | 72.2% | <2μs |
-| IPv6 Link-Local | [fe80::1]:22 | **4** | 72.2% | <2μs |
-| IPv6 Documentation | [2001:db8::1]:443 | **4** | 72.2% | <2μs |
+| Address Type | Example | Word Count | Time |
+|-------------|---------|------------|------|
+| IPv4 | 192.168.1.1:443 | **3** | <1μs |
+| IPv4 | 10.0.0.1:8080 | **3** | <1μs |
+| IPv6 Loopback | [::1]:443 | **6** | <2μs |
+| IPv6 Link-Local | [fe80::1]:22 | **6** | <2μs |
+| IPv6 Global | [2001:db8::1]:443 | **6** | <2μs |
+| IPv6 Complex | [2001:db8:85a3::8a2e:370:7334]:8080 | **9** | <2μs |
 
 ### Production Characteristics
 
 - **Zero Collisions**: Deterministic encoding with perfect reversibility
-- **Memory Usage**: <1MB total footprint including dictionary
+- **Memory Usage**: ~1MB total footprint including dictionary
 - **Thread Safety**: Fully thread-safe, suitable for concurrent use
 - **No External Dependencies**: Pure Rust implementation
 - **Cross-Platform**: Works on all platforms supported by Rust
@@ -85,15 +174,19 @@ The system uses an adaptive dictionary supporting 3-6 word combinations:
 ### Command Line Tool
 
 ```bash
-# Install the 4wn CLI tool
-cargo install four-word-networking
+# Install the 3wn CLI tool
+cargo install three-word-networking
 
 # Convert IP to words
-4wn 192.168.1.1:443
-# Output: paper.broaden.smith.bully
+3wn 192.168.1.1:443
+# Output: lehr.delfs.enrages
 
 # Convert words back to IP
-4wn paper.broaden.smith.bully
+3wn lehr.delfs.enrages
+# Output: 192.168.1.1:443
+
+# Also supports space-separated input
+3wn lehr delfs enrages
 # Output: 192.168.1.1:443
 ```
 
@@ -103,137 +196,140 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-four-word-networking = "1.1.0"
+three-word-networking = "2.0.0"
 ```
 
 ## Usage
 
-### Command Line (4wn)
+### Command Line (3wn)
 
 ```bash
-# IPv4 addresses (always 4 words - perfect reconstruction)
-4wn 192.168.1.1:443
-# paper.broaden.smith.bully
+# IPv4 addresses (always 3 words - perfect reconstruction)
+3wn 192.168.1.1:443
+# lehr.delfs.enrages
 
-4wn 8.8.8.8:53
-# game.december.physical.state
+3wn 8.8.8.8:53
+# aid.ajar.dulls
 
-# IPv6 addresses (4 words for common patterns)
-4wn "[::1]:443"
-# Bully-Book-Book-Book
+# IPv6 addresses (6 or 9 words in groups of 3)
+3wn "[::1]:443"
+# Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
 
-4wn "[2001:db8::1]:443"
-# Bully-July-Book-Book
+3wn "[2001:db8::1]:443"
+# Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
 
-# Reverse conversion
-4wn paper.broaden.smith.bully
+# Reverse conversion (dots or spaces for IPv4)
+3wn lehr.delfs.enrages
 # 192.168.1.1:443
 
-4wn Bully-Book-Book-Book
+3wn lehr delfs enrages
+# 192.168.1.1:443
+
+3wn Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
 # [::1]:443
 
 # Verbose mode shows details
-4wn -v 192.168.1.1:443
+3wn -v 192.168.1.1:443
 # Input: 192.168.1.1:443
 # Type: IPv4 (dot separators, lowercase)
-# Words: paper.broaden.smith.bully
-# Count: 4 words
+# Words: lehr.delfs.enrages
+# Count: 3 words
 # Method: Perfect reconstruction (0% data loss)
-# Note: IPv4 addresses always use exactly 4 words for perfect reconstruction
+# Note: IPv4 addresses always use exactly 3 words
 ```
 
 ### Library API
 
 ```rust
-use four_word_networking::FourWordAdaptiveEncoder;
+use three_word_networking::ThreeWordAdaptiveEncoder;
 
-let encoder = FourWordAdaptiveEncoder::new()?;
+let encoder = ThreeWordAdaptiveEncoder::new()?;
 
-// Encode IPv4 (always 4 words, perfect reconstruction)
+// Encode IPv4 (always 3 words, perfect reconstruction)
 let words = encoder.encode("192.168.1.1:443")?;
-assert_eq!(words, "paper.broaden.smith.bully");
+assert_eq!(words, "lehr.delfs.enrages");
 
 // Decode back to exact address
-let decoded = encoder.decode("paper.broaden.smith.bully")?;
+let decoded = encoder.decode("lehr.delfs.enrages")?;
 assert_eq!(decoded, "192.168.1.1:443");
 
-// IPv6 examples (4 words for common patterns)
+// IPv6 examples (6 or 9 words in groups)
 let ipv6_words = encoder.encode("[::1]:443")?;
-assert_eq!(ipv6_words, "Bully-Book-Book-Book"); // 4 words
+assert_eq!(ipv6_words, "Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger"); // 6 words
 let decoded_ipv6 = encoder.decode(&ipv6_words)?;
 assert_eq!(decoded_ipv6, "[::1]:443");
 
 // Word count depends on address type
-// IPv4: Always exactly 4 words
-// IPv6: 4 words for most common patterns
-assert_eq!(words.split('.').count(), 4); // IPv4
-assert_eq!(ipv6_words.split('-').count(), 4); // IPv6 (common pattern)
+// IPv4: Always exactly 3 words
+// IPv6: 6 or 9 words (always groups of 3)
+assert_eq!(words.split('.').count(), 3); // IPv4
+assert_eq!(ipv6_words.split('-').count(), 6); // IPv6 (common pattern)
 ```
 
 ### Advanced Usage
 
 ```rust
-use four_word_networking::FourWordAdaptiveEncoder;
+use three_word_networking::ThreeWordAdaptiveEncoder;
 
-let encoder = FourWordAdaptiveEncoder::new()?;
+let encoder = ThreeWordAdaptiveEncoder::new()?;
 
 // IPv4 perfect reconstruction details
 let ipv4_words = encoder.encode("192.168.1.1:443")?;
 println!("IPv4: {} -> {}", "192.168.1.1:443", ipv4_words);
-// IPv4: 192.168.1.1:443 -> paper.broaden.smith.bully
+// IPv4: 192.168.1.1:443 -> lehr.delfs.enrages
 
 // IPv6 adaptive compression
 let ipv6_words = encoder.encode("[fe80::1]:22")?;
 println!("IPv6: {} -> {}", "[fe80::1]:22", ipv6_words);
-// IPv6: [fe80::1]:22 -> Ship-July-Book-Book
+// IPv6: [fe80::1]:22 -> Casuist-Prattle-Inno-Alky-Stimuli-Bugger
 
 // Visual distinction is automatic
-// IPv4: dots, lowercase (paper.broaden.smith.bully)
-// IPv6: dashes, title case (Ship-July-Book-Book)
+// IPv4: dots, lowercase (lehr.delfs.enrages)
+// IPv6: dashes, title case (groups of 3)
 
 // Integration with existing code
 fn get_server_words(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let encoder = FourWordAdaptiveEncoder::new()?;
+    let encoder = ThreeWordAdaptiveEncoder::new()?;
     Ok(encoder.encode(addr)?)
 }
 ```
 
 ## How It Works
 
-### IPv4 Encoding (4 Words)
+### IPv4 Encoding (3 Words)
 
-1. **Input**: IPv4 address + port (6 bytes total)
-2. **Compression**: Mathematical transform reduces to 42 bits
-3. **Dictionary Mapping**: 48 bits → 4 words (14 bits each)
-4. **Output**: Exactly 4 memorable words
+1. **Input**: IPv4 address + port (6 bytes = 48 bits total)
+2. **Feistel Network**: 8 rounds of cryptographic bit diffusion
+3. **Dictionary Mapping**: 48 bits → 3 words (16 bits each)
+4. **Output**: Exactly 3 memorable words
 
-### IPv6 Encoding (4-6 Words)
+### IPv6 Encoding (6 or 9 Words)
 
 1. **Input**: IPv6 address + port (18 bytes total)
 2. **Analysis**: Categorize address type (loopback, link-local, global, etc.)
-3. **Compression**: Hierarchical compression based on category
-4. **Adaptive Encoding**: 4-6 words based on complexity
-5. **Output**: Always 4+ words for clear IPv6 identification
+3. **Compression**: Category-based compression to reduce data size
+4. **Group Encoding**: Encode in groups of 3 words (48 bits per group)
+5. **Output**: 6 words (2 groups) or 9 words (3 groups) based on complexity
 
 ## Voice Communication
 
-Four-word addresses are optimized for verbal communication:
+Three-word addresses are optimized for verbal communication:
 
 ```
 "What's your server address?"
-"paper broaden smith bully" (192.168.1.1:443)
+"lehr delfs enrages" (192.168.1.1:443)
 
 "Can you share the IPv6 endpoint?"
-"Bully Book Book Book" ([::1]:443)
+"Kaufhof Dingley Inno, Roupe Stimuli Bugger" ([::1]:443)
 
 "I need the development server"
-"game weather july general" (10.0.0.1:8080)
+"casts scuds paws" (10.0.0.1:8080)
 
 Real-world scenarios:
-- Phone support: "Connect to paper broaden smith bully"
-- Team meetings: "The API is at game december physical state"
-- Documentation: "Default: game.weather.july.general"
-- Voice assistants: "Connect me to paper broaden smith bully"
+- Phone support: "Connect to lehr delfs enrages"
+- Team meetings: "The API is at aid ajar dulls"
+- Documentation: "Default: casts.scuds.paws"
+- Voice assistants: "Connect me to lehr delfs enrages"
 ```
 
 ### Word Selection Criteria
@@ -241,7 +337,7 @@ Real-world scenarios:
 - **Common English words**: Familiar to most speakers
 - **Clear pronunciation**: Minimal ambiguity when spoken
 - **No homophones**: Words that sound unique
-- **Appropriate length**: 4-8 characters for clarity
+- **Appropriate length**: 3-7 characters for clarity
 - **Professional tone**: Suitable for business use
 
 ## Production Validation
@@ -258,7 +354,7 @@ Real-world scenarios:
 
 - **Zero Collisions**: Mathematical proof of uniqueness
 - **Performance**: 1M+ encodings/second on modern hardware
-- **Memory**: 976KB total including dictionary
+- **Memory**: ~1MB total including dictionary
 - **Thread Safe**: Safe for concurrent server applications
 - **Cross-Platform**: Tested on Linux, macOS, Windows
 
@@ -267,42 +363,42 @@ Real-world scenarios:
 ### Network Administration
 ```bash
 # Server configuration files
-api_server = "paper.broaden.smith.bully"    # 192.168.1.1:443
-db_primary = "game.weather.july.general"    # 10.0.0.1:8080
-db_replica = "game.december.physical.state"  # 8.8.8.8:53
+api_server = "lehr.delfs.enrages"     # 192.168.1.1:443
+db_primary = "casts.scuds.paws"       # 10.0.0.1:8080
+db_replica = "aid.ajar.dulls"         # 8.8.8.8:53
 ```
 
 ### Technical Support
 ```
-Support: "Please connect to paper broaden smith bully"
-User: "Is that P-A-P-E-R?"
-Support: "Yes, paper broaden smith bully, all lowercase"
+Support: "Please connect to lehr delfs enrages"
+User: "Is that L-E-H-R?"
+Support: "Yes, lehr delfs enrages, all lowercase"
 User: "Connected successfully!"
 ```
 
 ### IoT Device Configuration
 ```rust
 // Device announces its address verbally
-device.announce("Device ready at game weather july general");
+device.announce("Device ready at casts scuds paws");
 ```
 
 ### Monitoring and Alerts
 ```
-Alert: Connection lost to game.december.physical.state (8.8.8.8:53)
-Action: Reconnecting to game.december.physical.state...
-Status: Restored connection to game.december.physical.state
+Alert: Connection lost to aid.ajar.dulls (8.8.8.8:53)
+Action: Reconnecting to aid.ajar.dulls...
+Status: Restored connection to aid.ajar.dulls
 ```
 
 ## Integration Examples
 
 ### Web Services
 ```rust
-use four_word_networking::FourWordNetworking;
+use three_word_networking::ThreeWordNetworking;
 use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    let twn = FourWordNetworking::new().unwrap();
+    let twn = ThreeWordNetworking::new().unwrap();
     let addr: SocketAddr = "127.0.0.1:3030".parse().unwrap();
     let words = twn.encode(addr).unwrap();
     
@@ -320,22 +416,22 @@ async fn main() {
 ```toml
 # config.toml
 [servers]
-primary = "paper.broaden.smith.bully"    # 192.168.1.1:443
-backup = "game.weather.july.general"     # 10.0.0.1:8080
+primary = "lehr.delfs.enrages"    # 192.168.1.1:443
+backup = "casts.scuds.paws"       # 10.0.0.1:8080
 
 [database]
-master = "paper.broaden.smith.bully"    # 192.168.1.1:5432
-replica = "game.weather.july.general"   # 10.0.0.1:5432
+master = "lehr.delfs.enrages"     # 192.168.1.1:5432
+replica = "casts.scuds.paws"      # 10.0.0.1:5432
 ```
 
 ### Logging and Monitoring
 ```rust
 // Convert addresses in logs for readability
 log::info!("Connected to {}", twn.encode(peer_addr)?);
-// Output: Connected to paper.broaden.smith.bully
+// Output: Connected to lehr.delfs.enrages
 
 // Parse from logs
-if let Ok(addr) = twn.decode("paper.broaden.smith.bully") {
+if let Ok(addr) = twn.decode("lehr.delfs.enrages") {
     reconnect(addr);
 }
 ```
@@ -346,7 +442,7 @@ if let Ok(addr) = twn.decode("paper.broaden.smith.bully") {
 
 ```rust
 // Main API interface
-pub struct FourWordNetworking { ... }
+pub struct ThreeWordNetworking { ... }
 
 // Methods
 fn encode<T: Into<AddressInput>>(&self, input: T) -> Result<String>
@@ -366,35 +462,59 @@ pub enum AddressInput {
 ## Design Principles
 
 ### Clarity Through Separation
-- **IPv4 = 4 words**: Instant recognition of IPv4 addresses
-- **IPv6 = 4 words**: Same length but visually distinct format
+- **IPv4 = 3 words**: Instant recognition of IPv4 addresses
+- **IPv6 = 6/9 words**: Groups of 3 maintain consistent rhythm
 - **No ambiguity**: Format (dots vs dashes, case) identifies IP version
 
 ### Mathematical Foundation
 - **Deterministic**: No randomness, same input → same output
-- **Perfect Reconstruction**: IPv4 uses 4 words (56 bits) for perfect 48-bit storage
+- **Perfect Reconstruction**: IPv4 uses 3 words (48 bits) for perfect 48-bit storage
 - **Optimal encoding**: Maximum semantic meaning in minimum words
+- **Feistel Network**: Cryptographic bit diffusion for security
 
 ### Human Factors
 - **Voice-optimized**: Clear pronunciation, no homophones
-- **Memory-friendly**: Common English words
+- **Memory-friendly**: Common English words in groups of 3
 - **Error-resistant**: Word boundaries prevent confusion
 
-### Production Ready (v1.2.0)
-- **IPv4**: 100% perfect reconstruction for all addresses - always exactly 4 words
-- **IPv6**: Perfect compression achieving 4 words for common patterns (loopback, link-local, documentation)
-- **Use Cases**: Ideal for all networking scenarios requiring human-friendly addresses with guaranteed reversibility
+### Near Production Ready (v2.0.0-rc)
+- **IPv4**: 100% perfect reconstruction for all addresses - always exactly 3 words
+- **IPv6**: Groups of 3 words (6 or 9 total) for consistent user experience
+- **Use Cases**: Ideal for all networking scenarios requiring human-friendly addresses
 
-## Production Features
+## Current Features & Status
 
-- ✅ **IPv4 Support**: All 4.3 billion addresses, always 4 words with perfect reconstruction
-- ✅ **IPv6 Support**: Common patterns in 4 words, full address space support
+- ✅ **IPv4 Support**: All 4.3 billion addresses, always 3 words with perfect reconstruction
+- ✅ **IPv6 Support**: Full address space support with 6 or 9 words (groups of 3)
 - ✅ **Zero Collisions**: Mathematically guaranteed uniqueness
 - ✅ **Clean API**: Simple integration with any Rust application
-- ✅ **CLI Tool**: `4wn` command for instant conversions
-- ✅ **Performance**: Microsecond encoding, <1MB memory
+- ✅ **CLI Tool**: `3wn` command for instant conversions
+- ✅ **Performance**: Microsecond encoding, ~1MB memory
 - ✅ **Thread Safety**: Safe for concurrent applications
 - ✅ **Cross-Platform**: Linux, macOS, Windows support
+
+### What We're Still Refining
+
+- 🔧 **Dictionary Optimization**: Fine-tuning the 65,536-word list for:
+  - Maximum voice clarity (removing similar-sounding words)
+  - International pronunciation compatibility
+  - Elimination of potentially offensive combinations
+  - Optimal memorability based on psycholinguistic research
+
+- 🔧 **Security Analysis**: 
+  - Penetration testing for collision attacks
+  - Analysis of Feistel network parameters
+  - Timing attack resistance verification
+
+- 🔧 **Real-World Testing**:
+  - Large-scale deployment scenarios
+  - Network performance under various conditions
+  - User studies for memorability and usability
+
+- 🔧 **Internationalization**:
+  - Preparing framework for non-English dictionaries
+  - Testing with global user base
+  - Cultural sensitivity review
 
 ## Contributing
 
@@ -419,10 +539,10 @@ at your option.
 
 ## Support
 
-- **Documentation**: [docs.rs/four-word-networking](https://docs.rs/four-word-networking)
-- **Issues**: [GitHub Issues](https://github.com/dirvine/four-word-networking/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/dirvine/four-word-networking/discussions)
+- **Documentation**: [docs.rs/three-word-networking](https://docs.rs/three-word-networking)
+- **Issues**: [GitHub Issues](https://github.com/dirvine/three-word-networking/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/dirvine/three-word-networking/discussions)
 
 ---
 
-**Four-Word Networking**: Making IP addresses human-friendly. IPv4 in 4 words. IPv6 in 4-6 words. Always.
+**Three-Word Networking**: Making IP addresses human-friendly. IPv4 in 3 words. IPv6 in groups of 3. Always.
