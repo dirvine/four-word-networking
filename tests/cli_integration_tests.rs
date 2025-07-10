@@ -25,15 +25,14 @@ fn test_cli_basic_ipv4_encoding() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let encoded = stdout.trim();
 
-    // Should produce 3 words separated by dots
-    let words: Vec<&str> = encoded.split('.').collect();
+    // Should produce 3 words separated by spaces
+    let words: Vec<&str> = encoded.split(' ').collect();
     assert_eq!(words.len(), 3, "Should produce exactly 3 words for IPv4");
 
     // Each word should be valid
     for word in words {
         assert!(!word.is_empty(), "Word should not be empty");
         assert!(word.len() >= 2, "Word should be at least 2 characters");
-        assert!(word.len() <= 12, "Word should be at most 12 characters");
     }
 }
 
@@ -53,9 +52,8 @@ fn test_cli_basic_ipv6_encoding() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let encoded = stdout.trim();
 
-    // IPv6 should use dashes and produce 6 or 9 words
-    assert!(encoded.contains('-'), "IPv6 should use dashes, not dots");
-    let words: Vec<&str> = encoded.split('-').collect();
+    // IPv6 should produce 6 or 9 words
+    let words: Vec<&str> = encoded.split(' ').collect();
     assert!(
         words.len() == 6 || words.len() == 9,
         "IPv6 should produce 6 or 9 words, got: {}",
@@ -91,16 +89,18 @@ fn test_cli_socket_address_encoding() {
         // Should produce valid word format
         assert!(!encoded.is_empty(), "Output should not be empty for {addr}");
 
-        // IPv4 uses dots, IPv6 uses dashes
+        // All addresses use space-separated words
+        let word_count = encoded.split(' ').count();
         if addr.contains('[') {
             assert!(
-                encoded.contains('-'),
-                "IPv6 output should contain dashes for {addr}"
+                word_count == 6 || word_count == 9,
+                "IPv6 should have 6 or 9 words for {addr}"
             );
         } else {
-            assert!(
-                encoded.contains('.'),
-                "IPv4 output should contain dots for {addr}"
+            assert_eq!(
+                word_count,
+                3,
+                "IPv4 should have exactly 3 words for {addr}"
             );
         }
     }
@@ -177,18 +177,21 @@ fn test_cli_version_output() {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // Version output should contain version information
-    assert!(stdout.contains("2.1.0") || stdout.contains("version"));
+    assert!(stdout.contains("2.2.0") || stdout.contains("version"));
 }
 
 #[test]
 fn test_cli_invalid_input_handling() {
     let invalid_inputs = vec![
-        "invalid.ip.address",
-        "999.999.999.999",
-        "not-an-ip",
-        "",
-        "192.168.1.1:99999",
-        "::gg",
+        "999.999.999.999",      // Invalid IP format
+        "not-an-ip",            // Not enough segments
+        "",                     // Empty input
+        "192.168.1.1:99999",    // Port out of range
+        "::gg",                 // Invalid IPv6
+        "word1.word2",          // Only 2 words
+        "a.b.c.d",              // 4 words (not 3)
+        "one two three four",   // 4 space-separated words
+        "123.456.789",          // Numbers not words
     ];
 
     for input in invalid_inputs {

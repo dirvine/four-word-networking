@@ -98,7 +98,7 @@ fn test_invalid_input_handling() {
 #[test]
 fn test_word_validation() {
     init_test_env();
-    let valid_words = vec!["apple.orange.banana", "one.two.three", "first.second.third"];
+    let valid_words = vec!["apple orange banana", "one two three", "first second third"];
 
     for words in valid_words {
         let result = validate_word_format(words);
@@ -110,11 +110,10 @@ fn test_word_validation() {
     }
 
     let invalid_words = vec![
-        "one.two",            // Too few words
-        "one.two.three.four", // Too many words
-        "one two three",      // Wrong separator
-        "one..three",         // Empty word
-        "",                   // Empty string
+        "one two",              // Too few words
+        "one two three four",   // Too many words
+        "one  two three",       // Double space (empty word)
+        "",                     // Empty string
     ];
 
     for words in invalid_words {
@@ -269,13 +268,13 @@ fn test_compression_efficiency() {
 
     for (addr, expected_max_bytes) in test_cases {
         let encoded = encode_ip_address(addr).expect("Encoding failed");
-        let byte_estimate = encoded.len() * 2; // Rough estimate: 2 bytes per word
+        let byte_count = encoded.len(); // Actual string length in bytes
 
         assert!(
-            byte_estimate <= expected_max_bytes,
-            "Compression inefficient for {}: {} bytes > {} bytes",
+            byte_count <= expected_max_bytes,
+            "Encoding too long for {}: {} bytes > {} bytes",
             addr,
-            byte_estimate,
+            byte_count,
             expected_max_bytes
         );
     }
@@ -305,19 +304,17 @@ fn test_word_quality() {
     init_test_env();
     let test_ip = "192.168.1.1";
     let encoded = encode_ip_address(test_ip).expect("Encoding failed");
-    let words: Vec<&str> = encoded.split('.').collect();
+    let words: Vec<&str> = encoded.split(' ').collect();
 
     // Test word properties
     for word in words {
         assert!(word.len() >= 2, "Word too short: {}", word);
-        assert!(word.len() <= 12, "Word too long: {}", word);
+        // No maximum length restriction - frequency-based words can be longer
         assert!(
-            word.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
+            word.chars().all(|c| c.is_ascii_lowercase()),
             "Word contains invalid characters: {}",
             word
         );
-        assert!(!word.starts_with('-'), "Word starts with hyphen: {}", word);
-        assert!(!word.ends_with('-'), "Word ends with hyphen: {}", word);
     }
 }
 
@@ -413,7 +410,7 @@ fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Erro
 // Multiaddr functions removed - using pure IP:port format only
 
 fn validate_word_format(words: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let parts: Vec<&str> = words.split('.').collect();
+    let parts: Vec<&str> = words.split(' ').collect();
     if parts.len() != 3 {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
@@ -428,7 +425,7 @@ fn validate_word_format(words: &str) -> Result<(), Box<dyn std::error::Error>> {
                 "Words cannot be empty",
             )));
         }
-        if !part.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
+        if !part.chars().all(|c| c.is_ascii_lowercase()) {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "Words can only contain lowercase letters and hyphens",

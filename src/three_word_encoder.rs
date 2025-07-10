@@ -25,7 +25,7 @@ pub struct ThreeWordEncoding {
 
 impl fmt::Display for ThreeWordEncoding {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}", self.words[0], self.words[1], self.words[2])
+        write!(f, "{} {} {}", self.words[0], self.words[1], self.words[2])
     }
 }
 

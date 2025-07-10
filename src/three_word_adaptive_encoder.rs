@@ -19,36 +19,24 @@ pub struct ThreeWordEncoding {
 impl ThreeWordEncoding {
     /// Convert to string representation
     pub fn to_string(&self) -> String {
-        if self.is_ipv6 {
-            // IPv6 uses dashes and title case
-            self.words
-                .iter()
-                .map(|w| capitalize(w))
-                .collect::<Vec<_>>()
-                .join("-")
-        } else {
-            // IPv4 uses dots and lowercase
-            self.words.join(".")
-        }
+        // All addresses use space-separated lowercase words
+        self.words.join(" ")
     }
 
     /// Parse from string representation
     pub fn from_string(s: &str) -> Result<Self> {
-        // Determine if IPv6 based on separators (dashes)
-        let is_ipv6 = s.contains('-');
-
-        // Split by appropriate separator
-        let parts: Vec<&str> = if is_ipv6 {
+        // Split by whitespace, dots, or dashes (backward compatibility)
+        let parts: Vec<&str> = if s.contains('.') {
+            s.split('.').collect()
+        } else if s.contains('-') {
             s.split('-').collect()
         } else {
-            // For IPv4, support both dots and spaces
-            if s.contains('.') {
-                s.split('.').collect()
-            } else {
-                s.split_whitespace().collect()
-            }
+            s.split_whitespace().collect()
         };
 
+        // Determine IPv4 vs IPv6 based on word count
+        let is_ipv6 = parts.len() == 6 || parts.len() == 9;
+        
         // IPv4 needs exactly 3 words, IPv6 needs 6 or 9 (groups of 3)
         let valid_count = match is_ipv6 {
             false => parts.len() == 3,
@@ -339,13 +327,6 @@ impl ThreeWordAdaptiveEncoder {
 }
 
 /// Capitalize first letter of a word
-fn capitalize(s: &str) -> String {
-    let mut chars = s.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -376,7 +357,7 @@ mod tests {
 
             // Verify it's exactly 3 words for IPv4
             assert_eq!(
-                encoded.split('.').count(),
+                encoded.split(' ').count(),
                 3,
                 "IPv4 should use exactly 3 words"
             );
@@ -402,7 +383,7 @@ mod tests {
 
         for address in test_cases {
             let encoded = encoder.encode(address).unwrap();
-            let word_count = encoded.split('-').count();
+            let word_count = encoded.split(' ').count();
             println!("{address} -> {encoded} ({word_count} words)");
 
             // Verify it's 6 or 9 words for IPv6
@@ -410,18 +391,11 @@ mod tests {
                 word_count == 6 || word_count == 9,
                 "IPv6 should use 6 or 9 words, got {word_count}"
             );
-
-            // Verify format (dashes and title case)
-            assert!(encoded.contains('-'), "IPv6 should use dashes");
-            assert!(
-                encoded.chars().any(|c| c.is_uppercase()),
-                "IPv6 should use title case"
-            );
         }
     }
 
     #[test]
-    fn test_visual_distinction() {
+    fn test_word_count_distinction() {
         let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
 
         let ipv4 = encoder.encode("192.168.1.1:443").unwrap();
@@ -430,19 +404,16 @@ mod tests {
         println!("IPv4: {ipv4}");
         println!("IPv6: {ipv6}");
 
-        // Visual distinctions
-        assert!(
-            ipv4.contains('.') && !ipv4.contains('-'),
-            "IPv4 uses dots only"
+        // Count distinctions
+        assert_eq!(
+            ipv4.split(' ').count(),
+            3,
+            "IPv4 uses exactly 3 words"
         );
+        let ipv6_count = ipv6.split(' ').count();
         assert!(
-            !ipv6.contains('.') && ipv6.contains('-'),
-            "IPv6 uses dashes only"
+            ipv6_count == 6 || ipv6_count == 9,
+            "IPv6 uses 6 or 9 words"
         );
-        assert!(
-            ipv4.chars().all(|c| !c.is_uppercase() || c == '.'),
-            "IPv4 is lowercase"
-        );
-        assert!(ipv6.chars().any(|c| c.is_uppercase()), "IPv6 has uppercase");
     }
 }

@@ -11,10 +11,10 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 mod tests {
     use super::*;
 
-    // Property: IPv4 addresses should always encode to exactly 3 dot-separated words
+    // Property: IPv4 addresses should always encode to exactly 3 space-separated words
     proptest! {
         #[test]
-        fn prop_ipv4_always_4_words(
+        fn prop_ipv4_always_3_words(
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
@@ -22,12 +22,9 @@ mod tests {
             let addr_str = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
-                // Should have exactly 3 words separated by dots
-                let word_count = words.split('.').count();
+                // Should have exactly 3 words separated by spaces
+                let word_count = words.split(' ').count();
                 prop_assert_eq!(word_count, 3);
-
-                // Should not contain dashes (IPv6 format)
-                prop_assert!(!words.contains('-'));
 
                 // Should be lowercase
                 prop_assert_eq!(words.clone(), words.to_lowercase());
@@ -35,7 +32,7 @@ mod tests {
         }
     }
 
-    // Property: IPv6 addresses should always encode to 6 or 9 dash-separated words
+    // Property: IPv6 addresses should always encode to 6 or 9 space-separated words
     proptest! {
         #[test]
         fn prop_ipv6_format_consistency(
@@ -46,23 +43,12 @@ mod tests {
             let addr_str = format!("[{ip}]:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
-                // Should contain dashes (IPv6 format)
-                prop_assert!(words.contains('-'));
-
-                // Should not contain dots (IPv4 format)
-                prop_assert!(!words.contains('.'));
-
-                // Should have 6 or 9 words (groups of 3)
-                let word_count = words.split('-').count();
+                // Should have 6 or 9 words separated by spaces
+                let word_count = words.split(' ').count();
                 prop_assert!(word_count == 6 || word_count == 9);
 
-                // Should be title case (first letter uppercase)
-                for word in words.split('-') {
-                    if !word.is_empty() {
-                        let first_char = word.chars().next().unwrap();
-                        prop_assert!(first_char.is_uppercase());
-                    }
-                }
+                // Should be lowercase
+                prop_assert_eq!(words.clone(), words.to_lowercase());
             }
         }
     }
@@ -135,10 +121,10 @@ mod tests {
 
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Each word should be from the dictionary
-                for word in words.split('.') {
+                for word in words.split(' ') {
                     prop_assert!(word.len() >= 2);  // Dictionary has 2-letter minimum words
                     // No maximum length restriction - frequency-based words can be longer
-                    prop_assert!(word.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()));
+                    prop_assert!(word.chars().all(|c| c.is_ascii_lowercase()));
                 }
             }
         }
@@ -159,7 +145,7 @@ mod tests {
             match encoder.encode(&addr_str) {
                 Ok(words) => {
                     // If encoding succeeds, it should produce valid format
-                    prop_assert_eq!(words.split('.').count(), 3);
+                    prop_assert_eq!(words.split(' ').count(), 3);
                     prop_assert!(!words.is_empty());
                 },
                 Err(_) => {

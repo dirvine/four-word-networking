@@ -98,14 +98,14 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 
 ```bash
 # IPv4 addresses: Always exactly 3 words (perfect reconstruction)
-192.168.1.10:443   →  sodium.inguinal.studbooks
-192.168.1.5:443    →  contra.hame.stannum
-127.0.0.1:8080     →  rider.convulsion.naturopathy
+192.168.1.10:443   →  erase classicist geosynchronous
+192.168.1.5:443    →  recalibration misallocation dessert
+127.0.0.1:8080     →  landscapers parachute precedes
 
 # IPv6 addresses: Groups of 3 words (6 or 9 total)
-[::1]:443          →  Saunier-Surplus-Beefed-Crapser-Tyger-Hamberg
-[fe80::1]:22       →  Casuist-Prattle-Inno-Alky-Stimuli-Bugger
-[2001:db8::1]:443  →  Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
+[::1]:443          →  marlins parathyroid fairest hep afflict trailed
+[fe80::1]:22       →  grunt conchoidal dwindled coaxially chairperson menagerie
+[2001:db8::1]:443  →  dehydrogenase davenport reassessments hep afflict trailed
 ```
 
 ## Overview
@@ -117,7 +117,7 @@ Three-Word Networking provides a production-ready solution for converting IP add
 - **Perfect IPv4 Reconstruction**: IPv4 always produces exactly 3 words with 100% perfect reconstruction
 - **Consistent IPv6 Groups**: IPv6 uses groups of 3 words (6 or 9 total) for natural rhythm
 - **Voice-Friendly Dictionary**: 65,536 carefully selected English words optimized for clarity
-- **Visual Distinction**: IPv4 uses dots (lowercase), IPv6 uses dashes (title case)
+- **Simple Format**: All addresses use space-separated words for maximum simplicity
 - **Zero Collisions**: Deterministic encoding with guaranteed reversibility
 - **Production Performance**: Sub-microsecond encoding with minimal memory footprint
 - **Simple Integration**: Clean API supporting String, &str, SocketAddr, and IpAddr inputs
@@ -140,7 +140,7 @@ Three-Word Networking uses sophisticated bit manipulation and a large dictionary
 - **Category-Based Compression**: Optimizes encoding based on IPv6 address type
 - **Pattern Recognition**: 6 words for common patterns (loopback, link-local, documentation)
 - **Full Support**: 9 words for complex global unicast addresses
-- **Clear Differentiation**: Visual format ensures IPv6 is never confused with IPv4
+- **Clear Differentiation**: Word count (3 vs 6/9) ensures IPv6 is never confused with IPv4
 
 ### Dictionary System
 
@@ -185,14 +185,14 @@ cargo install three-word-networking
 
 # Convert IP to words
 3wn 192.168.1.1:443
-# Output: lehr.delfs.enrages
+# Output: gelsemium readdressed colophons
 
 # Convert words back to IP
-3wn lehr.delfs.enrages
+3wn "gelsemium readdressed colophons"
 # Output: 192.168.1.1:443
 
-# Also supports space-separated input
-3wn lehr delfs enrages
+# Also supports backward compatibility with dots
+3wn gelsemium.readdressed.colophons
 # Output: 192.168.1.1:443
 ```
 
@@ -212,33 +212,30 @@ three-word-networking = "2.0.0"
 ```bash
 # IPv4 addresses (always 3 words - perfect reconstruction)
 3wn 192.168.1.10:443
-# sodium.inguinal.studbooks
+# erase classicist geosynchronous
 
 3wn 192.168.1.5:443
-# contra.hame.stannum
+# recalibration misallocation dessert
 
-# IPv6 addresses (6 or 9 words in groups of 3)
+# IPv6 addresses (6 or 9 words)
 3wn "[::1]:443"
-# Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
+# marlins parathyroid fairest hep afflict trailed
 
 3wn "[2001:db8::1]:443"
-# Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
+# dehydrogenase davenport reassessments hep afflict trailed
 
-# Reverse conversion (dots or spaces for IPv4)
-3wn sodium.inguinal.studbooks
+# Reverse conversion
+3wn "erase classicist geosynchronous"
 # 192.168.1.10:443
 
-3wn sodium inguinal studbooks
-# 192.168.1.10:443
-
-3wn Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
+3wn "marlins parathyroid fairest hep afflict trailed"
 # [::1]:443
 
 # Verbose mode shows details
 3wn -v 192.168.1.10:443
 # Input: 192.168.1.10:443
-# Type: IPv4 (dot separators, lowercase)
-# Words: sodium.inguinal.studbooks
+# Type: IPv4
+# Words: erase classicist geosynchronous
 # Count: 3 words
 # Method: Perfect reconstruction (0% data loss)
 # Note: IPv4 addresses always use exactly 3 words
@@ -253,23 +250,23 @@ let encoder = ThreeWordAdaptiveEncoder::new()?;
 
 // Encode IPv4 (always 3 words, perfect reconstruction)
 let words = encoder.encode("192.168.1.10:443")?;
-assert_eq!(words, "sodium.inguinal.studbooks");
+assert_eq!(words, "erase classicist geosynchronous");
 
 // Decode back to exact address
-let decoded = encoder.decode("sodium.inguinal.studbooks")?;
+let decoded = encoder.decode("erase classicist geosynchronous")?;
 assert_eq!(decoded, "192.168.1.10:443");
 
-// IPv6 examples (6 or 9 words in groups)
+// IPv6 examples (6 or 9 words)
 let ipv6_words = encoder.encode("[::1]:443")?;
-assert_eq!(ipv6_words, "Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger"); // 6 words
+assert_eq!(ipv6_words, "marlins parathyroid fairest hep afflict trailed"); // 6 words
 let decoded_ipv6 = encoder.decode(&ipv6_words)?;
 assert_eq!(decoded_ipv6, "[::1]:443");
 
 // Word count depends on address type
 // IPv4: Always exactly 3 words
-// IPv6: 6 or 9 words (always groups of 3)
-assert_eq!(words.split('.').count(), 3); // IPv4
-assert_eq!(ipv6_words.split('-').count(), 6); // IPv6 (common pattern)
+// IPv6: 6 or 9 words
+assert_eq!(words.split(' ').count(), 3); // IPv4
+assert_eq!(ipv6_words.split(' ').count(), 6); // IPv6
 ```
 
 ### Advanced Usage
@@ -282,16 +279,16 @@ let encoder = ThreeWordAdaptiveEncoder::new()?;
 // IPv4 perfect reconstruction details
 let ipv4_words = encoder.encode("192.168.1.10:443")?;
 println!("IPv4: {} -> {}", "192.168.1.10:443", ipv4_words);
-// IPv4: 192.168.1.10:443 -> sodium.inguinal.studbooks
+// IPv4: 192.168.1.10:443 -> erase classicist geosynchronous
 
 // IPv6 adaptive compression
 let ipv6_words = encoder.encode("[fe80::1]:22")?;
 println!("IPv6: {} -> {}", "[fe80::1]:22", ipv6_words);
-// IPv6: [fe80::1]:22 -> Casuist-Prattle-Inno-Alky-Stimuli-Bugger
+// IPv6: [fe80::1]:22 -> grunt conchoidal dwindled coaxially chairperson menagerie
 
-// Visual distinction is automatic
-// IPv4: dots, lowercase (sodium.inguinal.studbooks)
-// IPv6: dashes, title case (groups of 3)
+// Simple format for all addresses
+// IPv4: 3 words (erase classicist geosynchronous)
+// IPv6: 6 or 9 words
 
 // Integration with existing code
 fn get_server_words(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -323,19 +320,19 @@ Three-word addresses are optimized for verbal communication:
 
 ```
 "What's your server address?"
-"soulful kann take" (192.168.1.10:443)
+"erase classicist geosynchronous" (192.168.1.10:443)
 
 "Can you share the IPv6 endpoint?"
-"Saunier Surplus Beefed, Crapser Tyger Hamberg" ([::1]:443)
+"marlins parathyroid fairest hep afflict trailed" ([::1]:443)
 
 "I need the development server"
-"cranium hillier strums" (192.168.1.5:443)
+"recalibration misallocation dessert" (192.168.1.5:443)
 
 Real-world scenarios:
-- Phone support: "Connect to soulful kann take"
-- Team meetings: "The API is at cranium hillier strums"
-- Documentation: "Default: rudden.cries.mets"
-- Voice assistants: "Connect me to soulful kann take"
+- Phone support: "Connect to erase classicist geosynchronous"
+- Team meetings: "The API is at recalibration misallocation dessert"
+- Documentation: "Default: landscapers parachute precedes"
+- Voice assistants: "Connect me to erase classicist geosynchronous"
 ```
 
 ### Word Selection Criteria
@@ -369,30 +366,30 @@ Real-world scenarios:
 ### Network Administration
 ```bash
 # Server configuration files
-api_server = "soulful.kann.take"      # 192.168.1.10:443
-db_primary = "cranium.hillier.strums"  # 192.168.1.5:443
-db_replica = "rudden.cries.mets"      # 127.0.0.1:8080
+api_server = "erase classicist geosynchronous"      # 192.168.1.10:443
+db_primary = "recalibration misallocation dessert"  # 192.168.1.5:443
+db_replica = "landscapers parachute precedes"      # 127.0.0.1:8080
 ```
 
 ### Technical Support
 ```
-Support: "Please connect to soulful kann take"
-User: "Is that S-O-U-L-F-U-L?"
-Support: "Yes, soulful kann take, all lowercase"
+Support: "Please connect to erase classicist geosynchronous"
+User: "Is that E-R-A-S-E?"
+Support: "Yes, erase classicist geosynchronous"
 User: "Connected successfully!"
 ```
 
 ### IoT Device Configuration
 ```rust
 // Device announces its address verbally
-device.announce("Device ready at cranium hillier strums");
+device.announce("Device ready at recalibration misallocation dessert");
 ```
 
 ### Monitoring and Alerts
 ```
-Alert: Connection lost to rudden.cries.mets (127.0.0.1:8080)
-Action: Reconnecting to rudden.cries.mets...
-Status: Restored connection to rudden.cries.mets
+Alert: Connection lost to landscapers parachute precedes (127.0.0.1:8080)
+Action: Reconnecting to landscapers parachute precedes...
+Status: Restored connection to landscapers parachute precedes
 ```
 
 ## Integration Examples
@@ -422,22 +419,22 @@ async fn main() {
 ```toml
 # config.toml
 [servers]
-primary = "soulful.kann.take"     # 192.168.1.10:443
-backup = "cranium.hillier.strums" # 192.168.1.5:443
+primary = "erase classicist geosynchronous"     # 192.168.1.10:443
+backup = "recalibration misallocation dessert" # 192.168.1.5:443
 
 [database]
-master = "soulful.kann.take"      # 192.168.1.10:5432
-replica = "cranium.hillier.strums" # 192.168.1.5:5432
+master = "erase classicist geosynchronous"      # 192.168.1.10:5432
+replica = "recalibration misallocation dessert" # 192.168.1.5:5432
 ```
 
 ### Logging and Monitoring
 ```rust
 // Convert addresses in logs for readability
 log::info!("Connected to {}", twn.encode(peer_addr)?);
-// Output: Connected to soulful.kann.take
+// Output: Connected to erase classicist geosynchronous
 
 // Parse from logs
-if let Ok(addr) = twn.decode("soulful.kann.take") {
+if let Ok(addr) = twn.decode("erase classicist geosynchronous") {
     reconnect(addr);
 }
 ```
