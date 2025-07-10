@@ -2,10 +2,10 @@
 
 [package]
 name = "three-word-networking"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2024"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
-description = "Convert IP addresses to memorable word groups. IPv4 = 3 words, IPv6 = 6 or 9 words. Always reversible."
+description = "Convert IP addresses to memorable, family-friendly word groups. IPv4 = 3 words, IPv6 = 6 or 9 words. Perfect reconstruction with human-readable vocabulary."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dirvine/three-word-networking"
 documentation = "https://docs.rs/three-word-networking"
@@ -13,7 +13,21 @@ homepage = "https://github.com/dirvine/three-word-networking"
 readme = "README.md"
 keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
 categories = ["network-programming", "command-line-utilities"]
-exclude = ["src/bin/debug_*", "src/bin/test_*", "*.disabled"]
+exclude = [
+    "src/bin/debug_*", 
+    "src/bin/test_*", 
+    "src/bin/create_*",
+    "src/bin/improve_*",
+    "src/bin/build_*",
+    "src/bin/demo_*",
+    "src/bin/filter_*",
+    "src/bin/reorder_*",
+    "src/bin/trace_*",
+    "src/bin/validate_*",
+    "src/bin/verify_*",
+    "src/bin/benchmark_*",
+    "*.disabled"
+]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
