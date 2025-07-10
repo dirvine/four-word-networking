@@ -51,3 +51,22 @@ node_modules/
 # Local development files
 local/
 tmp/
+
+# Temporary data files
+data/common-words-79k-raw.csv
+data/common-words-processed.csv
+data/high_value_missing_forms.txt
+data/quality_improvements.txt
+data/simulated_frequency_word_list_65k.txt
+data/ultra_readable_word_list_65k.txt
+data/words_to_add.txt
+data/words_to_remove.txt
+download_dataset.py
+
+# Temporary/development binaries
+src/bin/analyze_huggingface_dataset.rs
+src/bin/analyze_suffix_gaps.rs
+src/bin/apply_dictionary_improvements.rs
+src/bin/fix_dictionary_simple.rs
+src/bin/pad_dictionary_to_65k.rs
+src/bin/simulate_frequency_based_dictionary.rs
