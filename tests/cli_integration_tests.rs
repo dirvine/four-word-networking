@@ -5,6 +5,7 @@ use tempfile::TempDir;
 use std::fs;
 
 mod test_config;
+#[allow(unused_imports)]
 use test_config::*;
 
 /// Test CLI basic functionality
@@ -28,7 +29,7 @@ fn test_cli_basic_ipv4_encoding() {
     // Each word should be valid
     for word in words {
         assert!(!word.is_empty(), "Word should not be empty");
-        assert!(word.len() >= 3, "Word should be at least 3 characters");
+        assert!(word.len() >= 2, "Word should be at least 2 characters");
         assert!(word.len() <= 12, "Word should be at most 12 characters");
     }
 }
@@ -46,8 +47,9 @@ fn test_cli_basic_ipv6_encoding() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let encoded = stdout.trim();
     
-    // IPv6 should produce 4-6 words
-    let words: Vec<&str> = encoded.split('.').collect();
+    // IPv6 should use dashes and produce 4-6 words
+    assert!(encoded.contains('-'), "IPv6 should use dashes, not dots");
+    let words: Vec<&str> = encoded.split('-').collect();
     assert!(words.len() >= 4 && words.len() <= 6, 
         "IPv6 should produce 4-6 words, got: {}", words.len());
 }
@@ -76,7 +78,13 @@ fn test_cli_socket_address_encoding() {
         
         // Should produce valid word format
         assert!(!encoded.is_empty(), "Output should not be empty for {}", addr);
-        assert!(encoded.contains('.'), "Output should contain dots for {}", addr);
+        
+        // IPv4 uses dots, IPv6 uses dashes
+        if addr.contains('[') {
+            assert!(encoded.contains('-'), "IPv6 output should contain dashes for {}", addr);
+        } else {
+            assert!(encoded.contains('.'), "IPv4 output should contain dots for {}", addr);
+        }
     }
 }
 
@@ -100,7 +108,8 @@ fn test_cli_word_decoding() {
     assert!(output.status.success(), "CLI decoding failed: {}", 
         String::from_utf8_lossy(&output.stderr));
     
-    let decoded = String::from_utf8_lossy(&output.stdout).trim();
+    let decoded_output = String::from_utf8_lossy(&output.stdout);
+    let decoded = decoded_output.trim();
     assert!(decoded.contains("192.168.1.1"), 
         "Decoded address should contain original IP: {}", decoded);
 }
@@ -199,7 +208,7 @@ fn test_cli_batch_processing() {
         .expect("Failed to execute CLI");
     
     // This might not be supported yet, so we'll just check if it runs
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let _stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     
     // Either succeeds or fails gracefully
@@ -494,7 +503,8 @@ fn test_cli_workflow_integration() {
         assert!(output.status.success(), 
             "Decoding failed for: {}", encoded);
         
-        let decoded = String::from_utf8_lossy(&output.stdout).trim();
+        let decoded_output = String::from_utf8_lossy(&output.stdout);
+        let decoded = decoded_output.trim();
         // The decoded address should contain the original IP
         let original_ip = addresses[i].split(':').next().unwrap();
         assert!(decoded.contains(original_ip), 

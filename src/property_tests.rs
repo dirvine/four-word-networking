@@ -136,9 +136,9 @@ mod tests {
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Each word should be from the dictionary
                 for word in words.split('.') {
-                    prop_assert!(word.len() >= 4);
-                    prop_assert!(word.len() <= 8);
-                    prop_assert!(word.chars().all(|c| c.is_ascii_lowercase()));
+                    prop_assert!(word.len() >= 2);  // Dictionary has 2-letter words
+                    prop_assert!(word.len() <= 9);  // Dictionary has up to 9-letter words
+                    prop_assert!(word.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()));
                 }
             }
         }

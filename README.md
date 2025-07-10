@@ -217,23 +217,23 @@ fn get_server_words(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
 
 ## Voice Communication
 
-Three-word addresses are optimized for verbal communication:
+Four-word addresses are optimized for verbal communication:
 
 ```
 "What's your server address?"
-"ocean thunder falcon" (192.168.1.1:443)
+"paper broaden smith bully" (192.168.1.1:443)
 
 "Can you share the IPv6 endpoint?"
-"book book smell book" ([::1]:80)
+"Bully Book Book Book" ([::1]:443)
 
 "I need the development server"
-"mountain river eagle" (10.0.0.1:22)
+"game weather july general" (10.0.0.1:8080)
 
 Real-world scenarios:
-- Phone support: "Connect to ocean thunder falcon"
-- Team meetings: "The API is at storm crystal phoenix"
-- Documentation: "Default: mountain.river.eagle"
-- Voice assistants: "Connect me to ocean thunder falcon"
+- Phone support: "Connect to paper broaden smith bully"
+- Team meetings: "The API is at game december physical state"
+- Documentation: "Default: game.weather.july.general"
+- Voice assistants: "Connect me to paper broaden smith bully"
 ```
 
 ### Word Selection Criteria
@@ -267,30 +267,30 @@ Real-world scenarios:
 ### Network Administration
 ```bash
 # Server configuration files
-api_server = "ocean.thunder.falcon"    # 192.168.1.1:443
-db_primary = "mountain.river.eagle"    # 10.0.0.1:22
-db_replica = "storm.crystal.phoenix"   # 10.0.0.2:22
+api_server = "paper.broaden.smith.bully"    # 192.168.1.1:443
+db_primary = "game.weather.july.general"    # 10.0.0.1:8080
+db_replica = "game.december.physical.state"  # 8.8.8.8:53
 ```
 
 ### Technical Support
 ```
-Support: "Please connect to ocean thunder falcon"
-User: "Is that O-C-E-A-N?"
-Support: "Yes, ocean thunder falcon, all lowercase"
+Support: "Please connect to paper broaden smith bully"
+User: "Is that P-A-P-E-R?"
+Support: "Yes, paper broaden smith bully, all lowercase"
 User: "Connected successfully!"
 ```
 
 ### IoT Device Configuration
 ```rust
 // Device announces its address verbally
-device.announce("Device ready at mountain river eagle");
+device.announce("Device ready at game weather july general");
 ```
 
 ### Monitoring and Alerts
 ```
-Alert: Connection lost to storm.crystal.phoenix (8.8.8.8:53)
-Action: Reconnecting to storm.crystal.phoenix...
-Status: Restored connection to storm.crystal.phoenix
+Alert: Connection lost to game.december.physical.state (8.8.8.8:53)
+Action: Reconnecting to game.december.physical.state...
+Status: Restored connection to game.december.physical.state
 ```
 
 ## Integration Examples
@@ -320,22 +320,22 @@ async fn main() {
 ```toml
 # config.toml
 [servers]
-primary = "ocean.thunder.falcon"    # 192.168.1.1:443
-backup = "mountain.river.eagle"     # 10.0.0.1:443
+primary = "paper.broaden.smith.bully"    # 192.168.1.1:443
+backup = "game.weather.july.general"     # 10.0.0.1:8080
 
 [database]
-master = "storm.crystal.phoenix"    # 10.0.0.100:5432
-replica = "wind.forest.dragon"      # 10.0.0.101:5432
+master = "paper.broaden.smith.bully"    # 192.168.1.1:5432
+replica = "game.weather.july.general"   # 10.0.0.1:5432
 ```
 
 ### Logging and Monitoring
 ```rust
 // Convert addresses in logs for readability
 log::info!("Connected to {}", twn.encode(peer_addr)?);
-// Output: Connected to ocean.thunder.falcon
+// Output: Connected to paper.broaden.smith.bully
 
 // Parse from logs
-if let Ok(addr) = twn.decode("ocean.thunder.falcon") {
+if let Ok(addr) = twn.decode("paper.broaden.smith.bully") {
     reconnect(addr);
 }
 ```

@@ -37,8 +37,7 @@ pub mod compression;
 pub mod dictionary16k;
 pub mod encoder16k;
 pub mod error;
-pub mod universal;
-// pub mod balanced_encoder; // Temporarily disabled - needs update for new compression API
+// Experimental modules removed
 pub mod adaptive_encoder;
 pub mod api;
 pub mod compressed_encoder;
@@ -56,8 +55,7 @@ pub mod perfect_encoder;
 pub mod pure_ip_compression;
 pub mod simple_adaptive_encoder;
 pub mod simple_perfect_encoder;
-pub mod ultra_compact_encoder;
-pub mod ultra_compression;
+// Ultra modules removed - used outdated 3-word system
 pub mod universal_encoder;
 pub mod universal_ip_compression;
 pub mod variable_dictionary;
@@ -67,8 +65,7 @@ mod property_tests;
 
 pub use error::{FourWordError, Result};
 pub use ip_port_encoder::{IpPortAddress, IpPortEncoder};
-pub use universal::{EncodingStrategy, UniversalEncoding};
-// pub use balanced_encoder::{BalancedEncoder, BalancedEncoding};
+// Experimental modules removed - use FourWordAdaptiveEncoder instead
 pub use adaptive_encoder::{
     AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis,
 };
@@ -83,7 +80,7 @@ pub use ipv6_perfect_patterns::{IPv6Pattern, IPv6PatternDetector};
 pub use perfect_adaptive_encoder::PerfectAdaptiveEncoder;
 pub use pure_ip_compression::{MathematicalCompressor, PureIpCompressor};
 pub use simple_adaptive_encoder::SimpleAdaptiveEncoder;
-pub use ultra_compact_encoder::{UltraCompactEncoder, UltraCompactEncoding};
+// UltraCompactEncoder removed - used outdated 3-word system
 pub use universal_encoder::{CompressionAnalysis, StrategyResult, UniversalEncoder};
 pub use universal_ip_compression::UniversalIpCompressor;
 pub use variable_dictionary::{AdaptiveEncoding, CapacityInfo, VariableDictionary};

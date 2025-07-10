@@ -43,23 +43,43 @@ impl PerfectAdaptiveEncoder {
     pub fn decode(&self, words: &str) -> Result<String> {
         let encoding = MultiDimEncoding::from_string(words, &self.dictionary)?;
 
-        // Try IPv4 first (it will check bit 47)
-        match self.ipv4_codec.decode(&encoding) {
-            Ok((ip, port)) => {
-                // Successfully decoded as IPv4
-                if port == 0 {
-                    Ok(ip.to_string())
-                } else {
-                    Ok(format!("{}:{}", ip, port))
-                }
+        // Determine IP version based on separator format
+        let is_ipv6 = words.contains('-');
+        let is_ipv4 = words.contains('.');
+
+        if is_ipv6 && !is_ipv4 {
+            // IPv6 format (dashes)
+            let (ip, port) = self.ipv6_codec.decode(&encoding)?;
+            if port == 0 {
+                Ok(format!("[{}]", ip))
+            } else {
+                Ok(format!("[{}]:{}", ip, port))
             }
-            Err(_) => {
-                // Not IPv4, try IPv6
-                let (ip, port) = self.ipv6_codec.decode(&encoding)?;
-                if port == 0 {
-                    Ok(format!("[{}]", ip))
-                } else {
-                    Ok(format!("[{}]:{}", ip, port))
+        } else if is_ipv4 && !is_ipv6 {
+            // IPv4 format (dots)
+            let (ip, port) = self.ipv4_codec.decode(&encoding)?;
+            if port == 0 {
+                Ok(ip.to_string())
+            } else {
+                Ok(format!("{}:{}", ip, port))
+            }
+        } else {
+            // Fallback: try IPv4 first, then IPv6
+            match self.ipv4_codec.decode(&encoding) {
+                Ok((ip, port)) => {
+                    if port == 0 {
+                        Ok(ip.to_string())
+                    } else {
+                        Ok(format!("{}:{}", ip, port))
+                    }
+                }
+                Err(_) => {
+                    let (ip, port) = self.ipv6_codec.decode(&encoding)?;
+                    if port == 0 {
+                        Ok(format!("[{}]", ip))
+                    } else {
+                        Ok(format!("[{}]:{}", ip, port))
+                    }
                 }
             }
         }

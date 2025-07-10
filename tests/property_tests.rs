@@ -1,16 +1,16 @@
 /// Property-based testing using proptest and quickcheck
 use proptest::prelude::*;
-use quickcheck::{quickcheck, TestResult};
+use quickcheck::TestResult;
+use quickcheck_macros::quickcheck;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::str::FromStr;
 use four_word_networking::*;
 
 mod test_config;
+#[allow(unused_imports)]
 use test_config::*;
 
 // Property tests using proptest
 
-/// Test that encoding/decoding is always reversible for IPv4 addresses
 proptest! {
     #[test]
     fn prop_ipv4_roundtrip(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
@@ -27,7 +27,6 @@ proptest! {
     }
 }
 
-/// Test that encoding produces valid word format
 proptest! {
     #[test]
     fn prop_ipv4_valid_encoding(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
@@ -53,7 +52,6 @@ proptest! {
     }
 }
 
-/// Test encoding determinism
 proptest! {
     #[test]
     fn prop_encoding_deterministic(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
@@ -68,7 +66,6 @@ proptest! {
     }
 }
 
-/// Test that different IPs produce different encodings
 proptest! {
     #[test]
     fn prop_different_ips_different_encodings(
@@ -92,7 +89,6 @@ proptest! {
     }
 }
 
-/// Test port encoding properties
 proptest! {
     #[test]
     fn prop_port_encoding(
@@ -111,7 +107,6 @@ proptest! {
     }
 }
 
-/// Test IPv6 address properties (basic cases)
 proptest! {
     #[test]
     fn prop_ipv6_basic_roundtrip(
@@ -134,7 +129,6 @@ proptest! {
     }
 }
 
-/// Test compression properties
 proptest! {
     #[test]
     fn prop_compression_bounds(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
@@ -159,7 +153,6 @@ proptest! {
     }
 }
 
-/// Test performance properties
 proptest! {
     #[test]
     fn prop_performance_bounds(a in 0u8..=255, b in 0u8..=255, c in 0u8..=255, d in 0u8..=255) {
@@ -369,24 +362,24 @@ fn test_special_ipv6_addresses() {
 }
 
 // Helper functions (placeholders - replace with actual implementation)
-fn encode_ip_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Placeholder implementation
-    let ip: IpAddr = addr.parse()?;
-    Ok(format!("word1.word2.word3.word4")) // Replace with actual encoding
+fn encode_ip_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.encode(addr).map_err(|e| e.into())
 }
 
-fn decode_words(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Placeholder implementation
-    Ok("192.168.1.1".to_string()) // Replace with actual decoding
+fn decode_words(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.decode(words).map_err(|e| e.into())
 }
 
-fn encode_socket_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let socket: SocketAddr = addr.parse()?;
-    Ok("socket.encoded.words.here".to_string()) // Replace with actual encoding
+fn encode_socket_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.encode(addr).map_err(|e| e.into())
 }
 
-fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    Ok("192.168.1.1:8080".to_string()) // Replace with actual decoding
+fn decode_socket_address(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.decode(words).map_err(|e| e.into())
 }
 
 // Test configuration

@@ -6,10 +6,10 @@ Thank you for your interest in contributing to Four-Word Networking! This docume
 
 Four-Word Networking aims to make network addressing human-friendly by:
 
-- Converting complex multiaddrs into memorable four-word combinations
+- Converting complex IP addresses into memorable four-word combinations
 - Providing deterministic, collision-resistant encoding
 - Supporting massive scale addressing (quadrillions of addresses)  
-- Maintaining universal compatibility with multiaddr formats
+- Maintaining universal compatibility with IP address formats
 - Being voice-friendly and error-resistant
 
 ## 🚀 Getting Started
@@ -18,7 +18,7 @@ Four-Word Networking aims to make network addressing human-friendly by:
 
 - Rust 1.70 or later
 - Git
-- Basic understanding of networking concepts and multiaddrs
+- Basic understanding of networking concepts and IP addresses
 
 ### Development Setup
 
@@ -86,7 +86,7 @@ cargo test
 cargo test -- --nocapture
 
 # Run specific tests
-cargo test test_three_word_address_parsing
+cargo test test_four_word_address_parsing
 
 # Check code formatting
 cargo fmt --check
@@ -165,7 +165,7 @@ mod tests {
 /// 
 /// # Returns
 /// 
-/// A `ThreeWordAddress` representing the encoded address.
+/// A `FourWordAddress` representing the encoded address.
 /// 
 /// # Examples
 /// 
@@ -174,10 +174,10 @@ mod tests {
 /// 
 /// let encoder = WordEncoder::new();
 /// let words = encoder.encode_multiaddr_string("/ip6/::1/tcp/8080")?;
-/// println!("Three-word address: {}", words);
+/// println!("Four-word address: {}", words);
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub fn encode_multiaddr_string(&self, multiaddr: &str) -> Result<ThreeWordAddress> {
+pub fn encode_multiaddr_string(&self, multiaddr: &str) -> Result<FourWordAddress> {
     // Implementation...
 }
 ```

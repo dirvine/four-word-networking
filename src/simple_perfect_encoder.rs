@@ -6,10 +6,10 @@
 use crate::{FourWordError, Result};
 use std::collections::HashMap;
 
-/// Simple encoding using just four words
+/// Simple encoding using four words
 #[derive(Debug, Clone)]
 pub struct SimpleEncoding {
-    pub words: [String; 3],
+    pub words: [String; 4],
     pub is_ipv6: bool,
 }
 
@@ -19,14 +19,15 @@ impl SimpleEncoding {
         if self.is_ipv6 {
             // IPv6 uses dashes and title case
             format!(
-                "{}-{}-{}",
+                "{}-{}-{}-{}",
                 capitalize(&self.words[0]),
                 capitalize(&self.words[1]),
-                capitalize(&self.words[2])
+                capitalize(&self.words[2]),
+                capitalize(&self.words[3])
             )
         } else {
             // IPv4 uses dots and lowercase
-            format!("{}.{}.{}", self.words[0], self.words[1], self.words[2])
+            format!("{}.{}.{}.{}", self.words[0], self.words[1], self.words[2], self.words[3])
         }
     }
 
@@ -42,7 +43,7 @@ impl SimpleEncoding {
             s.split('.').collect()
         };
 
-        if parts.len() != 3 {
+        if parts.len() != 4 {
             return Err(FourWordError::InvalidInput(format!(
                 "Expected 4 words, found {}",
                 parts.len()
@@ -54,6 +55,7 @@ impl SimpleEncoding {
             parts[0].to_lowercase(),
             parts[1].to_lowercase(),
             parts[2].to_lowercase(),
+            parts[3].to_lowercase(),
         ];
 
         // Verify all words exist in dictionary
@@ -125,20 +127,21 @@ impl SimplePerfectEncoder {
         })
     }
 
-    /// Encode 48 bits into four words
+    /// Encode 48 bits into four words (max capacity of 4 × 14 = 56 bits)
     pub fn encode_48_bits(&self, data: u64, is_ipv6: bool) -> Result<SimpleEncoding> {
         // We have 16384 words (14 bits), so we can use 14 bits per word
-        // But for 48-bit data, we need 16 bits per word
-        // So we'll map the 16-bit chunks to our 14-bit dictionary
-        let word1_idx = ((data >> 32) & 0x3FFF) as usize; // Take lower 14 bits of first 16
-        let word2_idx = ((data >> 16) & 0x3FFF) as usize; // Take lower 14 bits of second 16
-        let word3_idx = (data & 0x3FFF) as usize; // Take lower 14 bits of third 16
+        // With 4 words, we can encode 4 × 14 = 56 bits maximum (enough for 48 bits)
+        let word1_idx = ((data >> 42) & 0x3FFF) as usize; // Bits 42-55 (14 bits)
+        let word2_idx = ((data >> 28) & 0x3FFF) as usize; // Bits 28-41 (14 bits)
+        let word3_idx = ((data >> 14) & 0x3FFF) as usize; // Bits 14-27 (14 bits)
+        let word4_idx = (data & 0x3FFF) as usize;         // Bits 0-13 (14 bits)
 
         Ok(SimpleEncoding {
             words: [
                 self.dictionary.get_word(word1_idx),
                 self.dictionary.get_word(word2_idx),
                 self.dictionary.get_word(word3_idx),
+                self.dictionary.get_word(word4_idx),
             ],
             is_ipv6,
         })
@@ -162,10 +165,14 @@ impl SimplePerfectEncoder {
             .find_word(&encoding.words[2])
             .ok_or_else(|| FourWordError::InvalidInput("Word 3 not found".to_string()))?
             as u64;
+        let word4_idx = self
+            .dictionary
+            .find_word(&encoding.words[3])
+            .ok_or_else(|| FourWordError::InvalidInput("Word 4 not found".to_string()))?
+            as u64;
 
-        // Reconstruct what we can (only 42 bits out of 48)
-        // This means we lose 6 bits of precision
-        let data = (word1_idx << 32) | (word2_idx << 16) | word3_idx;
+        // Reconstruct 48 bits properly
+        let data = (word1_idx << 42) | (word2_idx << 28) | (word3_idx << 14) | word4_idx;
 
         Ok(data)
     }
@@ -191,7 +198,7 @@ mod tests {
         // Test various values
         let test_values = vec![
             (0x0000_0000_0000u64, false),
-            (0x0FFF_FFFF_FFFFu64, false), // Max 42 bits
+            (0x0FFF_FFFF_FFFFu64, false), // Max 48 bits
             (0x1234_5678_9ABCu64, true),
             (0x0000_0000_0001u64, true),
         ];
@@ -200,9 +207,9 @@ mod tests {
             let encoded = encoder.encode_48_bits(value, is_ipv6).unwrap();
             let decoded = encoder.decode_48_bits(&encoded).unwrap();
 
-            // Only lower 42 bits are preserved
+            // All 48 bits are preserved
             assert_eq!(
-                value & 0x0FFF_FFFF_FFFF,
+                value & 0xFFFF_FFFF_FFFF,
                 decoded,
                 "Failed for value: 0x{:012X}",
                 value

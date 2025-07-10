@@ -1,7 +1,8 @@
+#![allow(unused_imports)]
+
 /// Comprehensive integration tests for four-word networking
-use four_word_networking::*;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::str::FromStr;
+use four_word_networking::FourWordAdaptiveEncoder;
+use std::net::{IpAddr, SocketAddr};
 use std::time::Instant;
 
 mod test_config;
@@ -50,15 +51,25 @@ fn test_socket_address_workflow() {
 }
 
 #[test]
-fn test_multiaddr_workflow() {
+fn test_ip_address_workflow() {
     init_test_env();
     let generator = AddressGenerator::new();
     
-    for multiaddr in generator.multiaddrs() {
-        // Test multiaddr encoding if available
-        if let Ok(encoded) = encode_multiaddr(multiaddr) {
-            let decoded = decode_multiaddr(&encoded).expect("Decoding failed");
-            assert_encoding_roundtrip(multiaddr, &encoded, &decoded);
+    // Test IPv4 addresses with ports
+    for addr in generator.ipv4_with_ports() {
+        let encoder = FourWordAdaptiveEncoder::new().unwrap();
+        if let Ok(encoded) = encoder.encode(addr) {
+            let decoded = encoder.decode(&encoded).expect("Decoding failed");
+            assert_eq!(addr, &decoded, "Roundtrip failed for {}", addr);
+        }
+    }
+    
+    // Test IPv6 addresses with ports
+    for addr in generator.ipv6_with_ports() {
+        let encoder = FourWordAdaptiveEncoder::new().unwrap();
+        if let Ok(encoded) = encoder.encode(addr) {
+            let decoded = encoder.decode(&encoded).expect("Decoding failed");
+            assert_eq!(addr, &decoded, "Roundtrip failed for {}", addr);
         }
     }
 }
@@ -350,7 +361,7 @@ fn test_cli_integration() {
 // Helper functions for testing
 fn encode_ip_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
     // Use the main library API
-    let ip: IpAddr = addr.parse()?;
+    let ip: IpAddr = addr.parse().map_err(|e| format!("Parse error: {}", e))?;
     Ok(format!("{}", ip)) // Placeholder - replace with actual encoding
 }
 
@@ -360,7 +371,7 @@ fn decode_words(words: &str) -> Result<String, Box<dyn std::error::Error>> {
 }
 
 fn encode_socket_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let socket: SocketAddr = addr.parse()?;
+    let socket: SocketAddr = addr.parse().map_err(|e| format!("Parse error: {}", e))?;
     Ok(socket.to_string()) // Placeholder
 }
 
@@ -368,26 +379,29 @@ fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Erro
     Ok(words.to_string()) // Placeholder
 }
 
-fn encode_multiaddr(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    Ok(addr.to_string()) // Placeholder
-}
-
-fn decode_multiaddr(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    Ok(words.to_string()) // Placeholder
-}
+// Multiaddr functions removed - using pure IP:port format only
 
 fn validate_word_format(words: &str) -> Result<(), Box<dyn std::error::Error>> {
     let parts: Vec<&str> = words.split('.').collect();
     if parts.len() != 4 {
-        return Err("Must have exactly 4 words".into());
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Must have exactly 4 words"
+        )));
     }
     
     for part in parts {
         if part.is_empty() {
-            return Err("Words cannot be empty".into());
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Words cannot be empty"
+            )));
         }
         if !part.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
-            return Err("Words can only contain lowercase letters and hyphens".into());
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Words can only contain lowercase letters and hyphens"
+            )));
         }
     }
     

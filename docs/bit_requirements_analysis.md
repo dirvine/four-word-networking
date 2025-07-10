@@ -116,7 +116,7 @@ This document analyzes the bit requirements for encoding all possible IP address
    - Smaller dictionaries = more words needed but easier to curate quality words
    - Larger dictionaries = fewer words needed but harder to find memorable words
 
-4. **Recommendation for Three-Word System**:
+4. **Recommendation for Four-Word System**:
    - The current four-word system works only with a 65,536-word dictionary for IPv4
    - For smaller dictionaries, a fourth word (or numeric suffix) is required
    - IPv6 requires significantly more words regardless of dictionary size
@@ -124,7 +124,7 @@ This document analyzes the bit requirements for encoding all possible IP address
 ## Additional Considerations
 
 ### Protocol and Additional Information
-The above calculations assume only IP address and port. Real multiaddrs include:
+The above calculations assume only IP address and port. Real network addresses may include:
 - Protocol type (UDP, TCP, QUIC, etc.)
 - Additional layers (p2p, circuit relay, etc.)
 

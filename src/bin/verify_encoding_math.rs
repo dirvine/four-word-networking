@@ -57,25 +57,25 @@ fn main() {
 
     let dict_16k = 16_384u128;
 
-    println!("\n3 Words (Current Base Format):");
-    let four_word_bits = 3 * 14;
-    let four_word_combos = dict_16k.pow(3);
-    println!("- Bits available: {} bits", four_word_bits);
-    println!("- Combinations: {:e}", four_word_combos);
-    println!("- Can encode up to {} bytes of data", four_word_bits / 8);
+    println!("\n3 Words (Compressed Format):");
+    let three_word_bits = 3 * 14;
+    let three_word_combos = dict_16k.pow(3);
+    println!("- Bits available: {} bits", three_word_bits);
+    println!("- Combinations: {:e}", three_word_combos);
+    println!("- Can encode up to {} bytes of data", three_word_bits / 8);
     println!(
         "- IPv4+Port coverage: {:.2}%",
-        (four_word_combos as f64 / 2f64.powf(48.0)) * 100.0
+        (three_word_combos as f64 / 2f64.powf(48.0)) * 100.0
     );
 
     println!("\n4 Words (Full IPv4 Coverage):");
-    let five_word_bits = 4 * 14;
-    let five_word_combos = dict_16k.pow(4);
-    println!("- Bits available: {} bits", five_word_bits);
-    println!("- Combinations: {:e}", five_word_combos);
+    let four_word_bits = 4 * 14;
+    let four_word_combos = dict_16k.pow(4);
+    println!("- Bits available: {} bits", four_word_bits);
+    println!("- Combinations: {:e}", four_word_combos);
     println!(
         "- IPv4+Port coverage: {:.1}%",
-        (five_word_combos as f64 / 2f64.powf(48.0)) * 100.0
+        (four_word_combos as f64 / 2f64.powf(48.0)) * 100.0
     );
 
     println!("\nCompression Success Rates:");
@@ -95,10 +95,10 @@ fn main() {
         "- Private 172.16-31.x.x: 2^20 addresses = {} (0.024% of IPv4)",
         1048576
     );
-    println!("- Total private: ~1.8% of IPv4 space can be compressed to 4 words");
+    println!("- Total private: ~1.8% of IPv4 space can be compressed to 3 words");
 
     println!("\nConclusion:");
-    println!("- 4 words with 16K dict: Good for private/common addresses only");
+    println!("- 3 words with 16K dict: Good for private/common addresses only");
     println!("- 4 words with 16K dict: Covers 100% of IPv4+port combinations");
     println!("- 4 words with 64K dict: Covers 100% of IPv4+port combinations");
 }

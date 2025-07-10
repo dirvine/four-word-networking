@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 /// Test configuration and utilities for comprehensive testing
 use std::collections::HashMap;
 use std::sync::Once;
@@ -8,7 +11,7 @@ static INIT: Once = Once::new();
 /// Initialize test environment
 pub fn init_test_env() {
     INIT.call_once(|| {
-        env_logger::init();
+        // env_logger removed as per pure IP:port requirement
     });
 }
 
@@ -16,7 +19,8 @@ pub fn init_test_env() {
 pub struct AddressGenerator {
     ipv4_addresses: Vec<String>,
     ipv6_addresses: Vec<String>,
-    multiaddrs: Vec<String>,
+    ipv4_with_ports: Vec<String>,
+    ipv6_with_ports: Vec<String>,
 }
 
 impl AddressGenerator {
@@ -42,11 +46,17 @@ impl AddressGenerator {
                 "2001:4860:4860::8888".to_string(),
                 "2606:4700:4700::1111".to_string(),
             ],
-            multiaddrs: vec![
-                "/ip4/127.0.0.1/tcp/8080".to_string(),
-                "/ip6/::1/tcp/443".to_string(),
-                "/ip4/192.168.1.1/udp/53".to_string(),
-                "/ip6/2001:db8::1/tcp/80".to_string(),
+            ipv4_with_ports: vec![
+                "127.0.0.1:8080".to_string(),
+                "192.168.1.1:53".to_string(),
+                "10.0.0.1:22".to_string(),
+                "8.8.8.8:443".to_string(),
+            ],
+            ipv6_with_ports: vec![
+                "[::1]:443".to_string(),
+                "[2001:db8::1]:80".to_string(),
+                "[fe80::1]:22".to_string(),
+                "[2001:4860:4860::8888]:53".to_string(),
             ],
         }
     }
@@ -59,8 +69,12 @@ impl AddressGenerator {
         &self.ipv6_addresses
     }
 
-    pub fn multiaddrs(&self) -> &[String] {
-        &self.multiaddrs
+    pub fn ipv4_with_ports(&self) -> &[String] {
+        &self.ipv4_with_ports
+    }
+
+    pub fn ipv6_with_ports(&self) -> &[String] {
+        &self.ipv6_with_ports
     }
 }
 

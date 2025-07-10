@@ -1,6 +1,18 @@
 #!/bin/bash
 
-# Exhaustive Testing Runner for Universal Word Encoding System
+# DEPRECATED: This script was for the experimental universal encoding modules
+# which have been removed from the codebase.
+# 
+# Use ./run_main_tests.sh instead for testing the production four-word encoder.
+
+echo "⚠️  This test script is deprecated!"
+echo ""
+echo "The experimental universal encoding modules have been removed."
+echo "Please use ./run_main_tests.sh to test the main four-word encoder."
+echo ""
+exit 1
+
+# Original script content below (no longer functional)
 # 
 # This script runs the complete test suite that validates README claims:
 # ✅ 10 million random network addresses

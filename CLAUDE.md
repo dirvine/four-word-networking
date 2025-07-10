@@ -23,7 +23,7 @@ cargo test
 cargo test -- --nocapture
 
 # Run specific test
-cargo test test_three_word_address_parsing
+cargo test test_four_word_address_parsing
 
 # Run exhaustive test suite (fast mode - 12,000+ tests)
 ./run_exhaustive_tests.sh
@@ -98,10 +98,10 @@ cargo run --bin debug_aim_issue
 
 - **`src/dictionary16k.rs`**: 16,384-word dictionary with quality filtering
 - **`src/encoder16k.rs`**: Enhanced encoder using 14-bit word indices
-- **`src/compression.rs`**: Multiaddress compression achieving 40-60% reduction
+- **`src/compression.rs`**: IP address compression achieving 40-60% reduction
 - **`src/balanced_encoder.rs`**: Natural word grouping with compression
 - **`src/ultra_compression.rs`**: Aggressive compression for ≤5 byte output
-- **`src/ultra_compact_encoder.rs`**: Perfect 3-word encoding with 75-87% compression
+- **`src/ultra_compact_encoder.rs`**: Perfect 4-word encoding with 75-87% compression
 
 ### Universal Encoding Module (`src/universal/`)
 
@@ -132,7 +132,7 @@ Experimental system for encoding arbitrary 32-byte data:
 ### Compression Techniques
 ```rust
 // Example: Localhost compression
-// /ip4/127.0.0.1/tcp/8080 → 3 bytes total
+// 127.0.0.1:8080 → 3 bytes total
 // Header: 0b10000000 (localhost marker)
 // Port: 2 bytes for 8080
 ```
@@ -157,12 +157,12 @@ Experimental system for encoding arbitrary 32-byte data:
 ### Error Handling
 ```rust
 // Always use Result types
-pub fn encode(addr: &str) -> Result<String, ThreeWordError> {
+pub fn encode(addr: &str) -> Result<String, FourWordError> {
     // Implementation
 }
 
 // Use ? operator for propagation
-let parsed = parse_multiaddr(addr)?;
+let parsed = parse_address(addr)?;
 ```
 
 ### Testing Strategy
@@ -189,7 +189,7 @@ let parsed = parse_multiaddr(addr)?;
 ## Current Implementation Status
 
 ### Production Ready
-- Ultra-compact multiaddr encoding
+- Ultra-compact IP address encoding
 - 16K word dictionary system
 - CLI with full feature set
 - Comprehensive test coverage
@@ -202,7 +202,7 @@ let parsed = parse_multiaddr(addr)?;
 ### Known Limitations
 - English-only dictionaries currently
 - Simplified address recovery in demo mode
-- Some edge cases in exotic multiaddr formats
+- Some edge cases in exotic IP address formats
 
 ## Future Development Areas
 
@@ -210,7 +210,7 @@ let parsed = parse_multiaddr(addr)?;
 - Perfect address reconstruction
 - Multi-language dictionary support
 - WebAssembly bindings
-- Integration with libp2p
+- Integration with networking libraries
 
 ### Medium Priority
 - GUI applications

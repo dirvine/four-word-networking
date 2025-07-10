@@ -241,7 +241,10 @@ mod tests {
 
         // Test IPv6
         let words = twn.encode("[::1]:443").unwrap();
-        assert_eq!(words.split('.').count(), 4); // Minimum 4 for IPv6
+        println!("IPv6 encoded: '{}'", words);
+        let word_count = words.split('.').count();
+        println!("IPv6 word count: {}", word_count);
+        assert!(word_count >= 4, "IPv6 should use at least 4 words, got {}", word_count);
     }
 
     #[test]

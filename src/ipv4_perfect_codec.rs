@@ -37,7 +37,7 @@ impl IPv4PerfectCodec {
         // Decode to 48 bits
         let combined = self.encoder.decode_48_bits(encoding)?;
 
-        // Extract IP and port
+        // Extract IP and port - ensure proper 32-bit masking
         let ip_bits = ((combined >> 16) & 0xFFFFFFFF) as u32;
         let port = (combined & 0xFFFF) as u16;
 

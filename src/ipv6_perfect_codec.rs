@@ -12,8 +12,8 @@ use std::net::Ipv6Addr;
 /// IPv6 compression categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IPv6Category {
-    Loopback,      // ::1
     Unspecified,   // ::
+    Loopback,      // ::1
     LinkLocal,     // fe80::/10
     UniqueLocal,   // fc00::/7
     Multicast,     // ff00::/8
@@ -248,8 +248,8 @@ impl IPv6PerfectCodec {
 
         // Force IPv6 to always use dashes and title case
         // This ensures visual distinction from IPv4
-        encoding.separators = [Separator::Dash, Separator::Dash];
-        encoding.case_patterns = [CasePattern::Title, CasePattern::Title, CasePattern::Title];
+        encoding.separators = [Separator::Dash, Separator::Dash, Separator::Dash];
+        encoding.case_patterns = [CasePattern::Title, CasePattern::Title, CasePattern::Title, CasePattern::Title];
 
         Ok(encoding)
     }
@@ -260,9 +260,9 @@ impl IPv6PerfectCodec {
         let packed_bits = self.encoder.decode_48_bits(encoding)?;
 
         // Extract fields
-        let category_bits = ((packed_bits >> 45) & 0x7) as u8;
-        let port = ((packed_bits >> 29) & 0xFFFF) as u16;
-        let data_bits = packed_bits & 0x1FFFFFFF;
+        let category_bits = ((packed_bits >> 44) & 0x7) as u8;
+        let port = ((packed_bits >> 28) & 0xFFFF) as u16;
+        let data_bits = packed_bits & 0x0FFFFFFF;
 
         let category = match category_bits {
             0 => IPv6Category::Unspecified,

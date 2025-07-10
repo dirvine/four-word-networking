@@ -76,7 +76,7 @@ pub struct FourWordDictionary {
 
 impl FourWordDictionary {
     pub fn new() -> Result<Self> {
-        // Load the standard 16k dictionary
+        // Load the standard 16k dictionary (now deduplicated)
         let wordlist_data = include_str!("../data/wordlist_16384_common.txt");
         let words: Vec<String> = wordlist_data
             .lines()
@@ -137,11 +137,13 @@ impl FourWordPerfectEncoder {
         };
         let combined = (has_port_flag << 48) | (ip_bits << 16) | port_bits;
 
+
         // Split into 4 × 14-bit chunks
         let word1_idx = ((combined >> 42) & 0x3FFF) as usize;
         let word2_idx = ((combined >> 28) & 0x3FFF) as usize;
         let word3_idx = ((combined >> 14) & 0x3FFF) as usize;
         let word4_idx = (combined & 0x3FFF) as usize;
+
 
         Ok(FourWordEncoding {
             words: vec![
@@ -172,8 +174,10 @@ impl FourWordPerfectEncoder {
             indices.push(idx as u64);
         }
 
+
         // Reconstruct bits
         let combined = (indices[0] << 42) | (indices[1] << 28) | (indices[2] << 14) | indices[3];
+
 
         // Check port flag (bit 48)
         let has_port = (combined >> 48) & 1 == 1;
@@ -187,6 +191,7 @@ impl FourWordPerfectEncoder {
         } else {
             None
         };
+
 
         Ok((ip, port))
     }

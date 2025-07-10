@@ -95,13 +95,13 @@ impl CasePattern {
 #[derive(Debug, Clone)]
 pub struct MultiDimEncoding {
     /// Base words (from dictionary)
-    pub words: [String; 3],
-    /// Order of words (0-5, representing one of 6 permutations)
+    pub words: [String; 4],
+    /// Order of words (0-23, representing one of 24 permutations for 4 words)
     pub order: u8,
     /// Case pattern for each word
-    pub case_patterns: [CasePattern; 3],
+    pub case_patterns: [CasePattern; 4],
     /// Separators between words
-    pub separators: [Separator; 2],
+    pub separators: [Separator; 3],
 }
 
 impl MultiDimEncoding {
@@ -120,12 +120,14 @@ impl MultiDimEncoding {
 
         // Join with separators
         format!(
-            "{}{}{}{}{}",
+            "{}{}{}{}{}{}{}",
             ordered_words[0],
             self.separators[0].as_str(),
             ordered_words[1],
             self.separators[1].as_str(),
-            ordered_words[2]
+            ordered_words[2],
+            self.separators[2].as_str(),
+            ordered_words[3]
         )
     }
 
@@ -142,16 +144,16 @@ impl MultiDimEncoding {
             }
         }
 
-        if separators.len() != 2 {
+        if separators.len() != 3 {
             return Err(FourWordError::InvalidInput(format!(
-                "Expected 2 separators, found {}",
+                "Expected 3 separators, found {}",
                 separators.len()
             )));
         }
 
         // Split into words
         let parts: Vec<&str> = s.split(|c: char| ".-_+".contains(c)).collect();
-        if parts.len() != 3 {
+        if parts.len() != 4 {
             return Err(FourWordError::InvalidInput(format!(
                 "Expected 4 words, found {}",
                 parts.len()
@@ -172,12 +174,12 @@ impl MultiDimEncoding {
         }
 
         // Detect word order by finding which permutation matches
-        let mut base_words = [String::new(), String::new(), String::new()];
-        let mut base_case_patterns = [CasePattern::Lower; 3];
+        let mut base_words = [String::new(), String::new(), String::new(), String::new()];
+        let mut base_case_patterns = [CasePattern::Lower; 4];
         let mut order = 0;
 
         // Try each permutation to find the original order
-        for perm in 0..6 {
+        for perm in 0..8 {
             let indices = Self::permutation_indices(perm);
             let matches = indices.iter().enumerate().all(|(_target, &source)| {
                 // Check if this permutation could produce the observed order
@@ -198,20 +200,22 @@ impl MultiDimEncoding {
             words: base_words,
             order,
             case_patterns: base_case_patterns,
-            separators: [separators[0], separators[1]],
+            separators: [separators[0], separators[1], separators[2]],
         })
     }
 
-    /// Get permutation indices for a given order (0-5)
-    fn permutation_indices(order: u8) -> [usize; 3] {
-        match order {
-            0 => [0, 1, 2],
-            1 => [0, 2, 1],
-            2 => [1, 0, 2],
-            3 => [1, 2, 0],
-            4 => [2, 0, 1],
-            5 => [2, 1, 0],
-            _ => [0, 1, 2], // Default
+    /// Get permutation indices for a given order (0-23 for 4 words, simplified to 8 common permutations)
+    fn permutation_indices(order: u8) -> [usize; 4] {
+        match order % 8 {
+            0 => [0, 1, 2, 3],
+            1 => [0, 1, 3, 2],
+            2 => [0, 2, 1, 3],
+            3 => [0, 2, 3, 1],
+            4 => [1, 0, 2, 3],
+            5 => [1, 0, 3, 2],
+            6 => [2, 1, 0, 3],
+            7 => [3, 2, 1, 0],
+            _ => [0, 1, 2, 3], // Default
         }
     }
 }
@@ -276,44 +280,28 @@ impl PerfectEncoder {
         // Ensure we only have 48 bits
         let data = data & 0xFFFF_FFFF_FFFF;
 
-        // Distribute bits across dimensions:
-        // - 42 bits for word indices (14 bits × 3)
-        // - 2.58 bits for word order (6 permutations)
-        // - 2 bits for case patterns (4 patterns on 2 words)
-        // - 1.42 bits for separator choice (3 choices)
+        // Now we have 4 words × 14 bits = 56 bits capacity, more than enough for 48 bits
+        // Bit distribution:
+        // - First 3 words: 42 bits (14 bits each)  
+        // - Fourth word: remaining 6 bits + padding
 
-        // Extract word indices (42 bits)
-        let word1_idx = ((data >> 28) & 0x3FFF) as usize;
-        let word2_idx = ((data >> 14) & 0x3FFF) as usize;
-        let word3_idx = (data & 0x3FFF) as usize;
+        // Extract word indices (use full 14-bit dictionary access)
+        let word1_idx = ((data >> 34) & 0x3FFF) as usize;
+        let word2_idx = ((data >> 20) & 0x3FFF) as usize;
+        let word3_idx = ((data >> 6) & 0x3FFF) as usize;
+        let word4_idx = (data & 0x3F) as usize; // Only 6 bits for 4th word
 
-        // Extract order (3 bits, but only use values 0-5)
-        let order_bits = ((data >> 42) & 0x7) as u8;
-        let order = order_bits % 6;
-
-        // Extract case patterns (2 bits)
-        let case_bits = ((data >> 45) & 0x3) as u8;
-        let case_patterns = match case_bits {
-            0 => [CasePattern::Lower, CasePattern::Lower, CasePattern::Lower],
-            1 => [CasePattern::Title, CasePattern::Lower, CasePattern::Lower],
-            2 => [CasePattern::Lower, CasePattern::Title, CasePattern::Lower],
-            3 => [CasePattern::Title, CasePattern::Title, CasePattern::Lower],
-            _ => [CasePattern::Lower, CasePattern::Lower, CasePattern::Lower],
-        };
-
-        // Extract separator choice (1 bit)
-        let sep_bit = ((data >> 47) & 0x1) as u8;
-        let separators = match sep_bit {
-            0 => [Separator::Dot, Separator::Dot],
-            1 => [Separator::Dot, Separator::Dash],
-            _ => [Separator::Dot, Separator::Dot],
-        };
+        // Simple encoding - no complex permutations needed
+        let order = 0;
+        let case_patterns = [CasePattern::Lower, CasePattern::Lower, CasePattern::Lower, CasePattern::Lower];
+        let separators = [Separator::Dot, Separator::Dot, Separator::Dot];
 
         Ok(MultiDimEncoding {
             words: [
                 self.dictionary.get_word(word1_idx),
                 self.dictionary.get_word(word2_idx),
                 self.dictionary.get_word(word3_idx),
+                self.dictionary.get_word(word4_idx),
             ],
             order,
             case_patterns,
@@ -323,49 +311,30 @@ impl PerfectEncoder {
 
     /// Decode multi-dimensional format back to 48 bits
     pub fn decode_48_bits(&self, encoding: &MultiDimEncoding) -> Result<u64> {
-        // Get word indices
+        // Get word indices (14 bits for first 3 words, 6 bits for 4th word)
         let word1_idx = self
             .dictionary
             .find_word(&encoding.words[0])
             .ok_or_else(|| FourWordError::InvalidInput("Word 1 not found".to_string()))?
-            as u64;
+            as u64 & 0x3FFF;
         let word2_idx = self
             .dictionary
             .find_word(&encoding.words[1])
             .ok_or_else(|| FourWordError::InvalidInput("Word 2 not found".to_string()))?
-            as u64;
+            as u64 & 0x3FFF;
         let word3_idx = self
             .dictionary
             .find_word(&encoding.words[2])
             .ok_or_else(|| FourWordError::InvalidInput("Word 3 not found".to_string()))?
-            as u64;
+            as u64 & 0x3FFF;
+        let word4_idx = self
+            .dictionary
+            .find_word(&encoding.words[3])
+            .ok_or_else(|| FourWordError::InvalidInput("Word 4 not found".to_string()))?
+            as u64 & 0x3F; // Only 6 bits used
 
-        // Encode order (3 bits)
-        let order_bits = (encoding.order as u64) & 0x7;
-
-        // Encode case patterns (2 bits)
-        let case_bits = match encoding.case_patterns {
-            [CasePattern::Lower, CasePattern::Lower, CasePattern::Lower] => 0u64,
-            [CasePattern::Title, CasePattern::Lower, CasePattern::Lower] => 1u64,
-            [CasePattern::Lower, CasePattern::Title, CasePattern::Lower] => 2u64,
-            [CasePattern::Title, CasePattern::Title, CasePattern::Lower] => 3u64,
-            _ => 0u64,
-        };
-
-        // Encode separator (1 bit)
-        let sep_bit = match encoding.separators {
-            [Separator::Dot, Separator::Dot] => 0u64,
-            [Separator::Dot, Separator::Dash] => 1u64,
-            _ => 0u64,
-        };
-
-        // Combine all bits
-        let data = (sep_bit << 47)
-            | (case_bits << 45)
-            | (order_bits << 42)
-            | (word1_idx << 28)
-            | (word2_idx << 14)
-            | word3_idx;
+        // Combine all bits (48 bits total)
+        let data = (word1_idx << 34) | (word2_idx << 20) | (word3_idx << 6) | word4_idx;
 
         Ok(data)
     }
@@ -409,12 +378,13 @@ mod tests {
                 "ocean".to_string(),
                 "thunder".to_string(),
                 "falcon".to_string(),
+                "meadow".to_string(),
             ],
             order: 0,
-            case_patterns: [CasePattern::Title, CasePattern::Lower, CasePattern::Lower],
-            separators: [Separator::Dot, Separator::Dash],
+            case_patterns: [CasePattern::Title, CasePattern::Lower, CasePattern::Lower, CasePattern::Lower],
+            separators: [Separator::Dot, Separator::Dash, Separator::Dot],
         };
 
-        assert_eq!(encoding.to_string(), "Ocean.thunder-falcon");
+        assert_eq!(encoding.to_string(), "Ocean.thunder-falcon.meadow");
     }
 }

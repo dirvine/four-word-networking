@@ -33,8 +33,8 @@ impl SimpleAdaptiveEncoder {
                 let ip_bits = u32::from_be_bytes(ipv4.octets()) as u64;
                 let port_bits = port as u64;
                 let combined = (ip_bits << 16) | port_bits;
-                // Limit to 42 bits as that's what our encoder supports
-                combined & 0x3FFFFFFFFFF
+                // Now we can handle full 48 bits with 4 words
+                combined & 0xFFFFFFFFFFFF
             }
             IpAddr::V6(ipv6) => {
                 // For IPv6, we'll use a simple hash for demo purposes
@@ -44,7 +44,7 @@ impl SimpleAdaptiveEncoder {
                     ^ (segments[1] as u64) << 16
                     ^ (segments[7] as u64) << 32
                     ^ (port as u64);
-                hash & 0x0FFF_FFFF_FFFF // Limit to 42 bits
+                hash & 0xFFFFFFFFFFFF // Limit to 48 bits
             }
         };
 
@@ -64,13 +64,11 @@ impl SimpleAdaptiveEncoder {
             // In production, you'd need proper decompression
             Ok(format!("[::1]:{}", data & 0xFFFF))
         } else {
-            // IPv4 decoding - note that we only have 42 bits total
-            // So we can only store 26 bits of IP + 16 bits of port
+            // IPv4 decoding - now we have full 48 bits
+            // 32 bits of IP + 16 bits of port
             let port = (data & 0xFFFF) as u16;
-            let ip_bits = ((data >> 16) & 0x3FFFFFF) as u32; // Only 26 bits
+            let ip_bits = ((data >> 16) & 0xFFFFFFFF) as u32; // Full 32 bits
 
-            // For perfect reconstruction, we'd need a different approach
-            // This is just for demonstration
             let ip = Ipv4Addr::from(ip_bits);
 
             if port == 0 {

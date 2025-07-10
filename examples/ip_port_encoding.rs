@@ -1,12 +1,12 @@
-//! Example: Pure IP+Port Three-Word Encoding
+//! Example: Pure IP+Port Four-Word Encoding
 //!
 //! This example demonstrates encoding IP addresses with ports directly
-//! into three memorable words, without multiaddr overhead.
+//! into four memorable words, without multiaddr overhead.
 
 use four_word_networking::ip_port_encoder_v2::{IpPortEncoderV2, IpPortErrorV2};
 
 fn main() -> Result<(), IpPortErrorV2> {
-    println!("=== Pure IP+Port Three-Word Encoding ===\n");
+    println!("=== Pure IP+Port Four-Word Encoding ===\n");
 
     let encoder = IpPortEncoderV2::new()?;
 
