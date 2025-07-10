@@ -95,9 +95,9 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 
 ```bash
 # IPv4 addresses: Always exactly 3 words (perfect reconstruction)
-192.168.1.10:443   →  soulful.kann.take
-192.168.1.5:443    →  cranium.hillier.strums
-127.0.0.1:8080     →  rudden.cries.mets
+192.168.1.10:443   →  sodium.inguinal.studbooks
+192.168.1.5:443    →  contra.hame.stannum
+127.0.0.1:8080     →  rider.convulsion.naturopathy
 
 # IPv6 addresses: Groups of 3 words (6 or 9 total)
 [::1]:443          →  Saunier-Surplus-Beefed-Crapser-Tyger-Hamberg
@@ -141,12 +141,14 @@ Three-Word Networking uses sophisticated bit manipulation and a large dictionary
 
 ### Dictionary System
 
-The system uses a carefully curated 65,536-word dictionary:
+The system uses a frequency-based 65,536-word dictionary derived from the [Hugging Face Common Words 79k dataset](https://huggingface.co/datasets/jaagli/common-words-79k):
 
 - **65,536 Words**: 2^16 words enabling perfect 16-bit encoding per word
+- **Frequency-Based**: Most common English words prioritized for maximum recognizability
+- **Natural Word Forms**: Includes natural suffixes like -ing, -ed, -er, -s for better readability
 - **Voice-Optimized**: Words selected for clear pronunciation and minimal confusion
 - **Quality Filtered**: No homophones, offensive words, or ambiguous terms
-- **Length Range**: 3-7 characters for optimal memorability
+- **Length Flexible**: 3+ character words, allowing natural language patterns
 
 ## Performance Characteristics
 
@@ -206,10 +208,10 @@ three-word-networking = "2.0.0"
 ```bash
 # IPv4 addresses (always 3 words - perfect reconstruction)
 3wn 192.168.1.10:443
-# soulful.kann.take
+# sodium.inguinal.studbooks
 
 3wn 192.168.1.5:443
-# cranium.hillier.strums
+# contra.hame.stannum
 
 # IPv6 addresses (6 or 9 words in groups of 3)
 3wn "[::1]:443"
@@ -219,10 +221,10 @@ three-word-networking = "2.0.0"
 # Kaufhof-Rebukes-Khowar-Roupe-Stimuli-Bugger
 
 # Reverse conversion (dots or spaces for IPv4)
-3wn soulful.kann.take
+3wn sodium.inguinal.studbooks
 # 192.168.1.10:443
 
-3wn soulful kann take
+3wn sodium inguinal studbooks
 # 192.168.1.10:443
 
 3wn Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
@@ -232,7 +234,7 @@ three-word-networking = "2.0.0"
 3wn -v 192.168.1.10:443
 # Input: 192.168.1.10:443
 # Type: IPv4 (dot separators, lowercase)
-# Words: soulful.kann.take
+# Words: sodium.inguinal.studbooks
 # Count: 3 words
 # Method: Perfect reconstruction (0% data loss)
 # Note: IPv4 addresses always use exactly 3 words
@@ -247,10 +249,10 @@ let encoder = ThreeWordAdaptiveEncoder::new()?;
 
 // Encode IPv4 (always 3 words, perfect reconstruction)
 let words = encoder.encode("192.168.1.10:443")?;
-assert_eq!(words, "soulful.kann.take");
+assert_eq!(words, "sodium.inguinal.studbooks");
 
 // Decode back to exact address
-let decoded = encoder.decode("soulful.kann.take")?;
+let decoded = encoder.decode("sodium.inguinal.studbooks")?;
 assert_eq!(decoded, "192.168.1.10:443");
 
 // IPv6 examples (6 or 9 words in groups)
@@ -276,7 +278,7 @@ let encoder = ThreeWordAdaptiveEncoder::new()?;
 // IPv4 perfect reconstruction details
 let ipv4_words = encoder.encode("192.168.1.10:443")?;
 println!("IPv4: {} -> {}", "192.168.1.10:443", ipv4_words);
-// IPv4: 192.168.1.10:443 -> soulful.kann.take
+// IPv4: 192.168.1.10:443 -> sodium.inguinal.studbooks
 
 // IPv6 adaptive compression
 let ipv6_words = encoder.encode("[fe80::1]:22")?;
@@ -284,7 +286,7 @@ println!("IPv6: {} -> {}", "[fe80::1]:22", ipv6_words);
 // IPv6: [fe80::1]:22 -> Casuist-Prattle-Inno-Alky-Stimuli-Bugger
 
 // Visual distinction is automatic
-// IPv4: dots, lowercase (soulful.kann.take)
+// IPv4: dots, lowercase (sodium.inguinal.studbooks)
 // IPv6: dashes, title case (groups of 3)
 
 // Integration with existing code
@@ -536,6 +538,10 @@ Licensed under either of:
 - MIT License ([LICENSE-MIT](LICENSE-MIT))
 
 at your option.
+
+## Acknowledgments
+
+- **Word Dictionary**: The frequency-based dictionary is derived from the [Hugging Face Common Words 79k dataset](https://huggingface.co/datasets/jaagli/common-words-79k), which provides a comprehensive list of the most common English words based on frequency analysis. This ensures our three-word addresses use the most recognizable and memorable words possible.
 
 ## Support
 
