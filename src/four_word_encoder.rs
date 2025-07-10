@@ -236,10 +236,10 @@ impl FourWordPerfectEncoder {
         let multi_dim_encoding = IPv6MultiDimEncoding::from_string(&words_str, &ipv6_dict)?;
 
         // Create IPv6PerfectEncoding from the multi-dimensional encoding
-        // Note: We need to reverse-engineer the pattern from the encoding
+        // The pattern is stored in the multi-dimensional encoding
         let perfect_encoding = IPv6PerfectEncoding {
-            encoding: multi_dim_encoding,
-            pattern: crate::ipv6_perfect_patterns::IPv6Pattern::Unstructured, // Will be determined during decoding
+            encoding: multi_dim_encoding.clone(),
+            pattern: multi_dim_encoding.pattern,
             word_count: encoding.words.len(),
             compression_ratio: 0.0, // Not needed for decoding
             is_perfect: true,

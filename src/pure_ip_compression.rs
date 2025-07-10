@@ -366,12 +366,12 @@ mod tests {
 
         for _ in 0..total_tests {
             let ip = Ipv4Addr::new(
-                rng.gen::<u8>(),
-                rng.gen::<u8>(),
-                rng.gen::<u8>(),
-                rng.gen::<u8>(),
+                rng.r#gen::<u8>(),
+                rng.r#gen::<u8>(),
+                rng.r#gen::<u8>(),
+                rng.r#gen::<u8>(),
             );
-            let port = rng.gen::<u16>();
+            let port = rng.r#gen::<u16>();
 
             if let Ok(_) = PureIpCompressor::compress(ip, port) {
                 success_count += 1;

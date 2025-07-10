@@ -187,7 +187,7 @@ impl Ipv6Compressor {
         let non_zero_segments: Vec<(usize, u16)> = segments[4..8]
             .iter()
             .enumerate()
-            .filter(|(_, &seg)| seg != 0)
+            .filter(|&(_, &seg)| seg != 0)
             .map(|(i, &seg)| (i + 4, seg))
             .collect();
 
@@ -287,7 +287,7 @@ impl Ipv6Compressor {
         let non_zero_segments: Vec<(usize, u16)> = segments[2..8]
             .iter()
             .enumerate()
-            .filter(|(_, &seg)| seg != 0)
+            .filter(|&(_, &seg)| seg != 0)
             .map(|(i, &seg)| (i + 2, seg))
             .collect();
 

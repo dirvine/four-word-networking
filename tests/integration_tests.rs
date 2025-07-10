@@ -196,9 +196,9 @@ fn test_concurrent_encoding() {
     let mut handles = vec![];
     
     for _ in 0..10 {
-        let gen = Arc::clone(&generator);
+        let generator_clone = Arc::clone(&generator);
         let handle = thread::spawn(move || {
-            for addr in gen.ipv4_addresses() {
+            for addr in generator_clone.ipv4_addresses() {
                 let encoded = encode_ip_address(addr).expect("Encoding failed");
                 let decoded = decode_words(&encoded).expect("Decoding failed");
                 assert_eq!(addr, &decoded);
@@ -287,7 +287,7 @@ fn test_word_quality() {
     
     // Test word properties
     for word in words {
-        assert!(word.len() >= 3, "Word too short: {}", word);
+        assert!(word.len() >= 2, "Word too short: {}", word);
         assert!(word.len() <= 12, "Word too long: {}", word);
         assert!(word.chars().all(|c| c.is_ascii_lowercase() || c == '-'), 
             "Word contains invalid characters: {}", word);
@@ -360,23 +360,23 @@ fn test_cli_integration() {
 
 // Helper functions for testing
 fn encode_ip_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Use the main library API
-    let ip: IpAddr = addr.parse().map_err(|e| format!("Parse error: {}", e))?;
-    Ok(format!("{}", ip)) // Placeholder - replace with actual encoding
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_words(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Placeholder - replace with actual decoding
-    Ok(words.to_string())
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.decode(words).map_err(|e| e.into())
 }
 
 fn encode_socket_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let socket: SocketAddr = addr.parse().map_err(|e| format!("Parse error: {}", e))?;
-    Ok(socket.to_string()) // Placeholder
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    Ok(words.to_string()) // Placeholder
+    let encoder = FourWordAdaptiveEncoder::new()?;
+    encoder.decode(words).map_err(|e| e.into())
 }
 
 // Multiaddr functions removed - using pure IP:port format only

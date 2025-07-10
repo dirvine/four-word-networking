@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
-use four_word_networking::*;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
+use four_word_networking::{*, four_word_encoder::FourWordDictionary};
+// use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 
 fn bench_ipv4_encoding(c: &mut Criterion) {
@@ -96,7 +96,7 @@ fn bench_dictionary_performance(c: &mut Criterion) {
         b.iter(|| {
             let words = ["apple", "orange", "banana", "grape", "cherry"];
             for word in words {
-                let _ = dict.get_index(black_box(word));
+                let _ = dict.find_word(black_box(word));
             }
         })
     });
@@ -313,7 +313,7 @@ fn bench_error_handling(c: &mut Criterion) {
 }
 
 // Helper function for compression benchmark
-fn test_compression(data: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+fn test_compression(data: &[u8]) -> std::result::Result<Vec<u8>, Box<dyn std::error::Error>> {
     // Simple compression test - replace with actual compression logic
     Ok(data.to_vec())
 }

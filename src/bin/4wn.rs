@@ -78,10 +78,10 @@ fn looks_like_words(input: &str) -> bool {
         return false;
     }
 
-    // Check if all segments are alphabetic
+    // Check if all segments are alphabetic and meet minimum length requirement
     segments
         .iter()
-        .all(|segment| !segment.is_empty() && segment.chars().all(|c| c.is_alphabetic()))
+        .all(|segment| segment.len() >= 2 && segment.chars().all(|c| c.is_alphabetic()))
 }
 
 /// Encode IP address to words

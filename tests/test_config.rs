@@ -223,7 +223,7 @@ pub fn assert_compression_ratio(original_size: usize, compressed_size: usize, mi
 /// Test macros
 #[macro_export]
 macro_rules! test_roundtrip {
-    ($encoder:expr, $input:expr) => {
+    ($encoder:expr_2021, $input:expr_2021) => {
         let encoded = $encoder.encode($input).expect("Encoding failed");
         let decoded = $encoder.decode(&encoded).expect("Decoding failed");
         assert_eq!($input, decoded, "Roundtrip failed for: {}", $input);
@@ -232,7 +232,7 @@ macro_rules! test_roundtrip {
 
 #[macro_export]
 macro_rules! test_performance {
-    ($name:expr, $operation:expr, $max_time_us:expr) => {
+    ($name:expr_2021, $operation:expr_2021, $max_time_us:expr_2021) => {
         let start = std::time::Instant::now();
         $operation;
         let duration = start.elapsed();
@@ -245,7 +245,7 @@ macro_rules! test_performance {
 
 #[macro_export]
 macro_rules! test_batch {
-    ($test_fn:expr, $inputs:expr) => {
+    ($test_fn:expr_2021, $inputs:expr_2021) => {
         for (i, input) in $inputs.iter().enumerate() {
             match std::panic::catch_unwind(|| $test_fn(input)) {
                 Ok(_) => {},
