@@ -84,7 +84,7 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 
 ---
 
-**Near production-ready system for converting IP addresses and ports into memorable word combinations. IPv4 addresses always produce exactly 3 words with perfect reconstruction, while IPv6 addresses use groups of 3 words (6 or 9 total) maintaining the same clean user experience.**
+**System for converting IP addresses and ports into memorable word combinations. IPv4 addresses always produce exactly 3 words with perfect reconstruction, while IPv6 addresses use 2 or 3 groups of 3 words (6 or 9 words total) maintaining the same clean user experience.**
 
 > **🚧 Status: Release Candidate** - The core technology is complete and functional. We are currently:
 > - **Actively curating our 65,536-word dictionary** to ensure all words are highly readable and memorable
@@ -102,7 +102,7 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 192.168.1.5:443    →  recalibration misallocation dessert
 127.0.0.1:8080     →  landscapers parachute precedes
 
-# IPv6 addresses: Groups of 3 words (6 or 9 total)
+# IPv6 addresses: 2 or 3 groups of 3 words (6 or 9 words total)
 [::1]:443          →  marlins parathyroid fairest hep afflict trailed
 [fe80::1]:22       →  grunt conchoidal dwindled coaxially chairperson menagerie
 [2001:db8::1]:443  →  dehydrogenase davenport reassessments hep afflict trailed
@@ -110,16 +110,16 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 
 ## Overview
 
-Three-Word Networking provides a production-ready solution for converting IP addresses into human-memorable word combinations. The system uses a 65,536-word dictionary to achieve perfect encoding for IPv4 addresses in just 3 words, while IPv6 addresses use groups of 3 words (6 or 9 total) for consistent user experience.
+Three-Word Networking provides a solution for converting IP addresses into human-memorable word combinations. The system uses a 65,536-word dictionary to achieve perfect encoding for IPv4 addresses in just 3 words, while IPv6 addresses use 2 or 3 groups of 3 words (6 or 9 words total) for consistent user experience.
 
 ### Key Features
 
 - **Perfect IPv4 Reconstruction**: IPv4 always produces exactly 3 words with 100% perfect reconstruction
-- **Consistent IPv6 Groups**: IPv6 uses groups of 3 words (6 or 9 total) for natural rhythm
+- **Consistent IPv6 Groups**: IPv6 uses 2 or 3 groups of 3 words (6 or 9 words total) for natural rhythm
 - **Voice-Friendly Dictionary**: 65,536 carefully selected English words optimized for clarity
 - **Simple Format**: All addresses use space-separated words for maximum simplicity
 - **Zero Collisions**: Deterministic encoding with guaranteed reversibility
-- **Production Performance**: Sub-microsecond encoding with minimal memory footprint
+- **High Performance**: Sub-microsecond encoding with minimal memory footprint
 - **Simple Integration**: Clean API supporting String, &str, SocketAddr, and IpAddr inputs
 - **Instant CLI Tool**: Install `3wn` command with `cargo install three-word-networking`
 
@@ -135,8 +135,8 @@ Three-Word Networking uses sophisticated bit manipulation and a large dictionary
 - **Optimal Efficiency**: 3 words provide perfect capacity for IPv4+port data
 - **Feistel Network**: 8-round cryptographic bit diffusion for security
 
-#### IPv6 Adaptive Encoding (Groups of 3 Words)
-- **Consistent UX**: Always groups of 3 words (6 or 9 total) for natural speaking rhythm
+#### IPv6 Adaptive Encoding (2 or 3 Groups of 3 Words)
+- **Consistent UX**: Always 2 or 3 groups of 3 words (6 or 9 words total) for natural speaking rhythm
 - **Category-Based Compression**: Optimizes encoding based on IPv6 address type
 - **Pattern Recognition**: 6 words for common patterns (loopback, link-local, documentation)
 - **Full Support**: 9 words for complex global unicast addresses
@@ -167,7 +167,7 @@ The system uses a carefully curated 65,536-word dictionary optimized for human r
 | IPv6 Global | [2001:db8::1]:443 | **6** | <2μs |
 | IPv6 Complex | [2001:db8:85a3::8a2e:370:7334]:8080 | **9** | <2μs |
 
-### Production Characteristics
+### Performance Characteristics
 
 - **Zero Collisions**: Deterministic encoding with perfect reversibility
 - **Memory Usage**: ~1MB total footprint including dictionary
@@ -264,7 +264,7 @@ assert_eq!(decoded_ipv6, "[::1]:443");
 
 // Word count depends on address type
 // IPv4: Always exactly 3 words
-// IPv6: 6 or 9 words
+// IPv6: 6 or 9 words (2 or 3 groups of 3)
 assert_eq!(words.split(' ').count(), 3); // IPv4
 assert_eq!(ipv6_words.split(' ').count(), 6); // IPv6
 ```
@@ -311,7 +311,7 @@ fn get_server_words(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
 1. **Input**: IPv6 address + port (18 bytes total)
 2. **Analysis**: Categorize address type (loopback, link-local, global, etc.)
 3. **Compression**: Category-based compression to reduce data size
-4. **Group Encoding**: Encode in groups of 3 words (48 bits per group)
+4. **Group Encoding**: Encode in 2 or 3 groups of 3 words (48 bits per group)
 5. **Output**: 6 words (2 groups) or 9 words (3 groups) based on complexity
 
 ## Voice Communication
@@ -323,7 +323,7 @@ Three-word addresses are optimized for verbal communication:
 "erase classicist geosynchronous" (192.168.1.10:443)
 
 "Can you share the IPv6 endpoint?"
-"marlins parathyroid fairest hep afflict trailed" ([::1]:443)
+"marlins parathyroid fairest hep afflict trailed" ([::1]:443) - 2 groups of 3 words
 
 "I need the development server"
 "recalibration misallocation dessert" (192.168.1.5:443)
@@ -343,7 +343,7 @@ Real-world scenarios:
 - **Appropriate length**: 3-7 characters for clarity
 - **Professional tone**: Suitable for business use
 
-## Production Validation
+## Testing Validation
 
 ### Comprehensive Testing
 
@@ -353,7 +353,7 @@ Real-world scenarios:
 - **Deterministic**: Same input always produces same output
 - **Reversible**: 100% perfect reconstruction of original address
 
-### Production Metrics
+### Performance Metrics
 
 - **Zero Collisions**: Mathematical proof of uniqueness
 - **Performance**: 1M+ encodings/second on modern hardware
@@ -466,7 +466,7 @@ pub enum AddressInput {
 
 ### Clarity Through Separation
 - **IPv4 = 3 words**: Instant recognition of IPv4 addresses
-- **IPv6 = 6/9 words**: Groups of 3 maintain consistent rhythm
+- **IPv6 = 6/9 words**: 2 or 3 groups of 3 words maintain consistent rhythm
 - **No ambiguity**: Format (dots vs dashes, case) identifies IP version
 
 ### Mathematical Foundation
@@ -480,9 +480,9 @@ pub enum AddressInput {
 - **Memory-friendly**: Common English words in groups of 3
 - **Error-resistant**: Word boundaries prevent confusion
 
-### Near Production Ready (v2.0.0-rc)
+### Release Candidate (v2.0.0-rc)
 - **IPv4**: 100% perfect reconstruction for all addresses - always exactly 3 words
-- **IPv6**: Groups of 3 words (6 or 9 total) for consistent user experience
+- **IPv6**: 2 or 3 groups of 3 words (6 or 9 words total) for consistent user experience
 - **Use Cases**: Ideal for all networking scenarios requiring human-friendly addresses
 
 ## Current Features & Status
