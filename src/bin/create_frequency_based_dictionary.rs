@@ -8,16 +8,15 @@ use std::process::Command;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Creating frequency-based dictionary from Hugging Face dataset...\n");
     
-    // First, check if Python is available
-    let python_check = Command::new("python3")
+    // First, check if uv is available
+    let uv_check = Command::new("uv")
         .arg("--version")
         .output();
         
-    if python_check.is_err() {
-        println!("Error: Python 3 is required to download the dataset.");
-        println!("Please install Python 3 and the 'datasets' library:");
-        println!("  1. Install Python 3 from python.org");
-        println!("  2. Run: pip3 install datasets pandas");
+    if uv_check.is_err() {
+        println!("Error: UV is required to run the Python script.");
+        println!("Please install UV:");
+        println!("  curl -LsSf https://astral.sh/uv/install.sh | sh");
         return Ok(());
     }
     
@@ -62,9 +61,15 @@ except Exception as e:
     // Write Python script
     fs::write("download_dataset.py", python_script)?;
     
-    // Execute Python script
-    println!("Executing Python script to download dataset...");
-    let output = Command::new("python3")
+    // Execute Python script with uv
+    println!("Executing Python script with UV to download dataset...");
+    let output = Command::new("uv")
+        .arg("run")
+        .arg("--with")
+        .arg("datasets")
+        .arg("--with")
+        .arg("pandas")
+        .arg("python")
         .arg("download_dataset.py")
         .output()?;
         

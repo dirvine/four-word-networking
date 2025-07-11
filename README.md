@@ -92,9 +92,18 @@ In a world where we struggle to remember phone numbers, where we rely on corpora
 > - Conducting extensive real-world testing and security analysis
 > - Gathering community feedback on word selection and international usage
 > 
-> **Note on Word Readability**: We are continuously improving our word list. The Feistel network used for cryptographic bit diffusion selects from all positions in our 65,536-word dictionary with equal probability. This means every single word must be readable and memorable. We're actively working to replace any remaining obscure words to ensure consistently high-quality three-word addresses. Our latest dictionary update incorporates over 72,000 high-quality English words from linguistic datasets, from which we select the most readable 65,536 words.
+> **GOLD_WORDLIST.txt - Our Premium Word Dictionary**: After enormous effort, we've created GOLD_WORDLIST.txt, a meticulously curated dictionary of exactly 65,536 words. This represents countless hours of algorithmic generation, AI-assisted refinement, and human curation. The creation process involved:
 > 
-> Early adopters and developers are encouraged to test and provide feedback!
+> - **Algorithmic Generation**: Initial word lists were created programmatically, but these weren't sufficiently human-readable
+> - **AI-Assisted Refinement**: We developed `wordlist_openai_improver.py`, a sophisticated script that uses bloom filters to enable AI-based word improvement at scale
+> - **Bloom Filter Innovation**: Since LLMs can't process 65,536 words at once, we created a bloom filter system that allows the AI to process small batches while checking if suggested replacements already exist in the larger list
+> - **Continuous Improvement**: The wordlist is still being refined - it's not finished, but it represents the best balance of readability and coverage we've achieved so far
+> 
+> This approach solves a fundamental challenge: creating a massive dictionary where EVERY word must be readable, pronounceable, and memorable. The Feistel network selects from all 65,536 positions with equal probability, so we can't hide poor words in rarely-used positions.
+> 
+> **Future Vision**: We intend to test this system in real-world network infrastructure with 100% P2P connectivity. Our plans include integration with a secured DHT (Distributed Hash Table) where our three-word mechanism, combined with reversible hash expansion mechanisms, will create innovative patterns for human-friendly networking UX.
+> 
+> Early adopters and developers are encouraged to test and provide feedback! If you're interested in improving the wordlist, check out `wordlist_openai_improver.py` to see how we use AI to enhance word quality at scale.
 
 ```bash
 # IPv4 addresses: Always exactly 3 words (perfect reconstruction)

@@ -32,7 +32,7 @@ fn test_cli_basic_ipv4_encoding() {
     // Each word should be valid
     for word in words {
         assert!(!word.is_empty(), "Word should not be empty");
-        assert!(word.len() >= 2, "Word should be at least 2 characters");
+        assert!(word.len() >= 1, "Word should be at least 1 character (GOLD wordlist includes single-character words)");
     }
 }
 
@@ -184,7 +184,7 @@ fn test_cli_version_output() {
 fn test_cli_invalid_input_handling() {
     let invalid_inputs = vec![
         "999.999.999.999",      // Invalid IP format
-        "not-an-ip",            // Not enough segments
+        "xyz123.invalid",       // Not valid words
         "",                     // Empty input
         "192.168.1.1:99999",    // Port out of range
         "::gg",                 // Invalid IPv6

@@ -1,0 +1,13 @@
+[project]
+name = "three-word-networking"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datasets>=4.0.0",
+    "pandas>=2.3.1",
+    "pronouncing>=0.2.0",
+    "syllables>=1.0.9",
+    "wordfreq>=3.1.1",
+]

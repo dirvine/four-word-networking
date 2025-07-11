@@ -209,12 +209,13 @@ impl AdaptiveEncoder {
         if input.starts_with('[') {
             if let Some(close_idx) = input.find(']') {
                 let addr_part = &input[1..close_idx];
-                let port_part =
-                    if close_idx + 1 < input.len() && &input[close_idx + 1..close_idx + 2] == ":" {
-                        Some(&input[close_idx + 2..])
-                    } else {
-                        None
-                    };
+                // Use UTF-8 safe string handling
+                let remaining = &input[close_idx + 1..];
+                let port_part = if remaining.starts_with(':') {
+                    Some(&remaining[1..])
+                } else {
+                    None
+                };
 
                 let ip = addr_part.parse::<Ipv6Addr>().map_err(|_| {
                     FourWordError::InvalidInput(format!("Invalid IPv6 address: {addr_part}"))

@@ -246,29 +246,34 @@ impl Ipv6Compressor {
         let segments = ip.segments();
 
         // Unique local: fcxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
-        // Store: L bit + Global ID + Subnet ID + Interface ID
-        // But we can optimize by storing patterns
+        // Check if interface ID (last 64 bits) is non-zero
+        let interface_id_is_zero = segments[4] == 0 && segments[5] == 0 && segments[6] == 0 && segments[7] == 0;
 
-        let prefix_byte = (segments[0] >> 8) as u8;
-        let global_id = [
-            segments[0] as u8,
-            (segments[1] >> 8) as u8,
-            segments[1] as u8,
-            (segments[2] >> 8) as u8,
-            segments[2] as u8,
-        ];
-        let subnet = segments[3];
+        let mut compressed = vec![];
+        
+        // Store segments[0-3] as 8 bytes (prefix + global ID + subnet)
+        compressed.extend_from_slice(&segments[0].to_be_bytes()); // segments[0] (includes fc/fd prefix)
+        compressed.extend_from_slice(&segments[1].to_be_bytes()); // segments[1]
+        compressed.extend_from_slice(&segments[2].to_be_bytes()); // segments[2]
+        compressed.extend_from_slice(&segments[3].to_be_bytes()); // segments[3] (subnet)
 
-        // Store essential parts: prefix + global_id + subnet (7 bytes = 56 bits)
-        let mut compressed = vec![prefix_byte];
-        compressed.extend_from_slice(&global_id);
-        compressed.extend_from_slice(&subnet.to_be_bytes());
+        let compressed_bits = if interface_id_is_zero {
+            // Interface ID is zero, only store prefix + global ID + subnet
+            3 + 64 // category + 4 segments (8 bytes)
+        } else {
+            // Interface ID is non-zero, store all 8 segments
+            compressed.extend_from_slice(&segments[4].to_be_bytes()); // segments[4]
+            compressed.extend_from_slice(&segments[5].to_be_bytes()); // segments[5]
+            compressed.extend_from_slice(&segments[6].to_be_bytes()); // segments[6]
+            compressed.extend_from_slice(&segments[7].to_be_bytes()); // segments[7]
+            3 + 128 // category + 8 segments (16 bytes)
+        };
 
         Ok(CompressedIpv6 {
             category: Ipv6Category::UniqueLocal,
             compressed_data: compressed,
             original_bits: 128,
-            compressed_bits: 3 + 56, // category + essential parts
+            compressed_bits,
             port,
         })
     }
@@ -501,27 +506,37 @@ impl Ipv6Compressor {
     }
 
     fn decompress_unique_local(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
-        if data.len() >= 7 {
-            let prefix = (data[0] as u16) << 8;
-            let global_id_part = ((data[1] as u16) << 8) | (data[2] as u16);
-            let subnet = ((data[5] as u16) << 8) | (data[6] as u16);
-
+        if data.len() == 8 {
+            // Interface ID is zero, only prefix + global ID + subnet are stored
             let segments = [
-                prefix,
-                global_id_part,
-                subnet,
-                0x0000,
-                0x0000,
-                0x0000,
-                0x0000,
-                0x0001, // Simplified interface ID
+                ((data[0] as u16) << 8) | (data[1] as u16), // segments[0] (fc/fd prefix)
+                ((data[2] as u16) << 8) | (data[3] as u16), // segments[1]
+                ((data[4] as u16) << 8) | (data[5] as u16), // segments[2]
+                ((data[6] as u16) << 8) | (data[7] as u16), // segments[3] (subnet)
+                0x0000, // segments[4] - interface ID is zero
+                0x0000, // segments[5] - interface ID is zero
+                0x0000, // segments[6] - interface ID is zero
+                0x0000, // segments[7] - interface ID is zero
             ];
-
+            Ok(Ipv6Addr::from(segments))
+        } else if data.len() == 16 {
+            // Interface ID is non-zero, all 8 segments are stored
+            let segments = [
+                ((data[0] as u16) << 8) | (data[1] as u16),   // segments[0] (fc/fd prefix)
+                ((data[2] as u16) << 8) | (data[3] as u16),   // segments[1]
+                ((data[4] as u16) << 8) | (data[5] as u16),   // segments[2]
+                ((data[6] as u16) << 8) | (data[7] as u16),   // segments[3] (subnet)
+                ((data[8] as u16) << 8) | (data[9] as u16),   // segments[4] - interface ID
+                ((data[10] as u16) << 8) | (data[11] as u16), // segments[5] - interface ID
+                ((data[12] as u16) << 8) | (data[13] as u16), // segments[6] - interface ID
+                ((data[14] as u16) << 8) | (data[15] as u16), // segments[7] - interface ID
+            ];
             Ok(Ipv6Addr::from(segments))
         } else {
-            Err(FourWordError::InvalidInput(
-                "Invalid unique local data".to_string(),
-            ))
+            Err(FourWordError::InvalidInput(format!(
+                "Invalid unique local data length: {} (expected 8 or 16 bytes)",
+                data.len()
+            )))
         }
     }
 

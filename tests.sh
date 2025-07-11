@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Comprehensive Test Suite for Four-Word Networking
+# Comprehensive Test Suite for Three-Word Networking
 # This script runs all types of tests following the comprehensive test framework guide
 
 set -e
@@ -18,7 +18,7 @@ COVERAGE_THRESHOLD=95
 MUTATION_THRESHOLD=80
 FUZZ_TIME=60 # seconds
 
-echo -e "${BLUE}🚀 Four-Word Networking - Comprehensive Test Suite${NC}"
+echo -e "${BLUE}🚀 Three-Word Networking - Comprehensive Test Suite${NC}"
 echo "=============================================="
 echo ""
 

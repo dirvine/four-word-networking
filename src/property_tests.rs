@@ -122,7 +122,7 @@ mod tests {
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Each word should be from the dictionary
                 for word in words.split(' ') {
-                    prop_assert!(word.len() >= 2);  // Dictionary has 2-letter minimum words
+                    prop_assert!(word.len() >= 1);  // GOLD wordlist includes single-character words
                     // No maximum length restriction - frequency-based words can be longer
                     prop_assert!(word.chars().all(|c| c.is_ascii_lowercase()));
                 }

@@ -3,10 +3,16 @@
 //! This module provides a dictionary of exactly 65,536 words (2^16)
 //! to enable perfect three-word encoding of IPv4+port combinations (48 bits).
 //! Each word can be represented with exactly 16 bits.
+//!
+//! # Thread Safety
+//!
+//! The dictionary uses a thread-safe lazy initialization pattern with `once_cell::sync::Lazy`
+//! and `Arc` for safe concurrent access. The global dictionary is initialized on first access
+//! and can be safely used from multiple threads without data races.
 
 use std::collections::HashMap;
-use std::ptr;
-use std::sync::Once;
+use once_cell::sync::Lazy;
+use std::sync::Arc;
 
 /// Number of words in the dictionary (2^16)
 pub const WORD_COUNT: usize = 65_536;
@@ -49,8 +55,8 @@ pub struct Dictionary65K {
 impl Dictionary65K {
     /// Create a new 65K dictionary instance
     pub fn new() -> Result<Self, Dictionary65KError> {
-        // Load the human readable 65K wordlist (readability-scored words)
-        let wordlist_data = include_str!("../data/human_readable_word_list_65k.txt");
+        // Load the GOLD 65K wordlist (high-quality curated words)
+        let wordlist_data = include_str!("../GOLD_WORDLIST.txt");
         let words: Vec<String> = wordlist_data
             .lines()
             .map(|s| s.trim().to_string())
@@ -65,10 +71,10 @@ impl Dictionary65K {
             });
         }
 
-        // Validate word quality (minimum 2 characters to allow common words like "be", "to", "is")
+        // Validate word quality (minimum 1 character for GOLD wordlist, max 25 for voice-friendliness)
         for word in words.iter() {
             let len = word.len();
-            if len < 2 {
+            if len < 1 || len > 25 {
                 return Err(Dictionary65KError::SourceFileError);
             }
         }
@@ -163,31 +169,19 @@ pub struct Dictionary65KStats {
     pub length_distribution: HashMap<usize, usize>,
 }
 
-/// Global dictionary instance (lazy-loaded)
-static INIT_DICTIONARY: Once = Once::new();
-static mut GLOBAL_DICTIONARY: *const Dictionary65K = ptr::null();
+/// Global dictionary instance (lazy-loaded with thread safety)
+static GLOBAL_DICTIONARY: Lazy<Arc<Dictionary65K>> = Lazy::new(|| {
+    Arc::new(Dictionary65K::new().expect("Failed to initialize 65K dictionary"))
+});
 
 /// Get global dictionary instance
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads concurrently.
+/// The dictionary is initialized exactly once on first access using lazy initialization.
 pub fn get_global_dictionary() -> Result<&'static Dictionary65K, Dictionary65KError> {
-    unsafe {
-        INIT_DICTIONARY.call_once(|| {
-            match Dictionary65K::new() {
-                Ok(dict) => {
-                    let boxed = Box::new(dict);
-                    GLOBAL_DICTIONARY = Box::into_raw(boxed);
-                }
-                Err(_) => {
-                    // Keep null pointer to indicate failure
-                }
-            }
-        });
-
-        if GLOBAL_DICTIONARY.is_null() {
-            Err(Dictionary65KError::NotInitialized)
-        } else {
-            Ok(&*GLOBAL_DICTIONARY)
-        }
-    }
+    Ok(&**GLOBAL_DICTIONARY)
 }
 
 /// Utility functions for encoding/decoding with the 65K dictionary

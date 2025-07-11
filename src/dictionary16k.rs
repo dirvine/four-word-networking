@@ -3,10 +3,16 @@
 //! This module provides a high-quality dictionary of exactly 16,384 words
 //! selected from multiple sources including EFF, BIP39, and curated wordlists.
 //! Each word can be represented with exactly 14 bits (2^14 = 16,384).
+//!
+//! # Thread Safety
+//!
+//! The dictionary uses a thread-safe lazy initialization pattern with `once_cell::sync::Lazy`
+//! and `Arc` for safe concurrent access. The global dictionary is initialized on first access
+//! and can be safely used from multiple threads without data races.
 
 use std::collections::HashMap;
-use std::ptr;
-use std::sync::Once;
+use once_cell::sync::Lazy;
+use std::sync::Arc;
 
 /// Number of words in the dictionary (2^14)
 pub const WORD_COUNT: usize = 16_384;
@@ -258,31 +264,19 @@ pub struct DictionaryStats {
     pub length_distribution: HashMap<usize, usize>,
 }
 
-/// Global dictionary instance (lazy-loaded)
-static INIT_DICTIONARY: Once = Once::new();
-static mut GLOBAL_DICTIONARY: *const Dictionary16K = ptr::null();
+/// Global dictionary instance (lazy-loaded with thread safety)
+static GLOBAL_DICTIONARY: Lazy<Arc<Dictionary16K>> = Lazy::new(|| {
+    Arc::new(Dictionary16K::new().expect("Failed to initialize 16K dictionary"))
+});
 
 /// Get global dictionary instance
+///
+/// # Thread Safety
+///
+/// This function is thread-safe and can be called from multiple threads concurrently.
+/// The dictionary is initialized exactly once on first access using lazy initialization.
 pub fn get_global_dictionary() -> Result<&'static Dictionary16K, DictionaryError> {
-    unsafe {
-        INIT_DICTIONARY.call_once(|| {
-            match Dictionary16K::new() {
-                Ok(dict) => {
-                    let boxed = Box::new(dict);
-                    GLOBAL_DICTIONARY = Box::into_raw(boxed);
-                }
-                Err(_) => {
-                    // Keep null pointer to indicate failure
-                }
-            }
-        });
-
-        if GLOBAL_DICTIONARY.is_null() {
-            Err(DictionaryError::NotInitialized)
-        } else {
-            Ok(&*GLOBAL_DICTIONARY)
-        }
-    }
+    Ok(&**GLOBAL_DICTIONARY)
 }
 
 /// Utility functions for encoding/decoding with the dictionary

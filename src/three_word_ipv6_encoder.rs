@@ -469,29 +469,53 @@ impl ThreeWordIpv6Encoder {
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfe80;
 
-                // Similar to Documentation, skip metadata bytes
-                if data.len() >= 3 {
-                    // Skip the first two bytes (metadata) and get the actual value
-                    segments[7] = data[2] as u16;
+                // The link-local compressed data from ipv6_compression has format:
+                // For fe80::e00:0:0:0, it's [01, 03, 0e, 00, 00, 00, 00] (marker + pos + val + padding)
+                // The position is stored as offset from segment 4, not absolute position
+                if data.len() >= 3 && data[0] == 1 {
+                    // Single value pattern: marker + position + value
+                    let pos = data[1] as usize + 4; // Convert back to absolute position
+                    let val = data[2] as u16;
+                    if pos < 8 {
+                        segments[pos] = val;
+                    }
+                } else if data.len() >= 4 && data[0] == 1 {
+                    // Single value pattern with 16-bit value: marker + position + value_hi + value_lo
+                    let pos = data[1] as usize + 4;
+                    let val = ((data[2] as u16) << 8) | (data[3] as u16);
+                    if pos < 8 {
+                        segments[pos] = val;
+                    }
                 } else if data.len() >= 2 {
-                    // Fallback: interpret as direct value
-                    segments[7] = ((data[0] as u16) << 8) | (data[1] as u16);
+                    // Fallback: interpret as direct value at segment 7
+                    let val = ((data[0] as u16) << 8) | (data[1] as u16);
+                    segments[7] = val;
                 }
+                
                 Ok(Ipv6Addr::from(segments))
             }
             Ipv6Category::UniqueLocal => {
                 // Reconstruct fc00::/7 addresses
-                let mut segments = [0u16; 8];
-                segments[0] = 0xfc00;
-
-                // Extract additional segments from data
-                if data.len() >= 2 {
-                    segments[1] = ((data[0] as u16) << 8) | (data[1] as u16);
+                // Handle both 8-byte and 16-byte compressed data from the compression module
+                if data.len() >= 8 {
+                    // Extract first 8 bytes for prefix + global ID + subnet
+                    let segments = [
+                        ((data[0] as u16) << 8) | (data[1] as u16), // segments[0] (fc/fd prefix)
+                        ((data[2] as u16) << 8) | (data[3] as u16), // segments[1]
+                        ((data[4] as u16) << 8) | (data[5] as u16), // segments[2]
+                        ((data[6] as u16) << 8) | (data[7] as u16), // segments[3] (subnet)
+                        if data.len() >= 10 { ((data[8] as u16) << 8) | (data[9] as u16) } else { 0x0000 }, // segments[4]
+                        if data.len() >= 12 { ((data[10] as u16) << 8) | (data[11] as u16) } else { 0x0000 }, // segments[5]
+                        if data.len() >= 14 { ((data[12] as u16) << 8) | (data[13] as u16) } else { 0x0000 }, // segments[6]
+                        if data.len() >= 16 { ((data[14] as u16) << 8) | (data[15] as u16) } else { 0x0000 }, // segments[7]
+                    ];
+                    Ok(Ipv6Addr::from(segments))
+                } else {
+                    Err(FourWordError::InvalidInput(format!(
+                        "Invalid unique local data length: {} (expected at least 8 bytes)",
+                        data.len()
+                    )))
                 }
-                if data.len() >= 4 {
-                    segments[7] = ((data[2] as u16) << 8) | (data[3] as u16);
-                }
-                Ok(Ipv6Addr::from(segments))
             }
             Ipv6Category::Documentation => {
                 // Reconstruct 2001:db8::/32 addresses

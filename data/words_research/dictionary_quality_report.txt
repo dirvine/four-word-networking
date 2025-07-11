@@ -1,0 +1,93 @@
+Dictionary Quality Report: claude_filtered_words.txt
+============================================================
+=== Word Count Check ===
+✓ Word count: 65,536 (correct)
+
+=== Duplicate Check ===
+✓ No duplicates found
+
+=== Word Length Check ===
+✓ All words are 2+ characters
+
+Length distribution (min: 2, max: 22):
+   2 chars:    547 (  0.8%) 
+   3 chars:  3,336 (  5.1%) ██
+   4 chars:  4,740 (  7.2%) ███
+   5 chars:  7,090 ( 10.8%) █████
+   6 chars:  8,988 ( 13.7%) ██████
+   7 chars:  9,630 ( 14.7%) ███████
+   8 chars:  8,840 ( 13.5%) ██████
+   9 chars:  7,289 ( 11.1%) █████
+  10 chars:  5,658 (  8.6%) ████
+  11 chars:  3,839 (  5.9%) ██
+  12 chars:  2,473 (  3.8%) █
+  13 chars:  1,496 (  2.3%) █
+  14 chars:    797 (  1.2%) 
+  15 chars:    443 (  0.7%) 
+  16 chars:    189 (  0.3%) 
+  17 chars:    107 (  0.2%) 
+  18 chars:     37 (  0.1%) 
+  19 chars:     23 (  0.0%) 
+  20 chars:     10 (  0.0%) 
+  21 chars:      1 (  0.0%) 
+  22 chars:      3 (  0.0%) 
+
+=== Character Validity Check ===
+✓ All words contain only alphabetic characters
+
+=== Homophone Check ===
+⚠ Found 21 groups of homophones:
+  - to, too, two
+  - there, their
+  - by, buy
+  - know, no
+  - write, right, rite
+  - hear, here
+  - wear, where
+  - break, brake
+  - peace, piece
+  - mail, male
+  ... and 11 more groups
+
+=== Problematic Combination Check ===
+⚠ Found 11 potentially problematic words:
+  - bad
+  - bang
+  - big
+  - blow
+  - core
+  - dumb
+  - gang
+  - hand
+  - hard
+  - job
+  Note: These could form inappropriate combinations
+
+=== Pattern Analysis ===
+
+Most common 2-letter prefixes:
+  co: 2,297 words
+  re: 1,870 words
+  in: 1,544 words
+  ma: 1,297 words
+  de: 1,220 words
+  pr: 1,217 words
+  ca: 1,097 words
+  di: 1,064 words
+  st: 1,004 words
+  pa: 940 words
+
+Most common 2-letter suffixes:
+  ed: 4,248 words
+  ng: 3,694 words
+  es: 3,533 words
+  er: 2,475 words
+  on: 2,435 words
+  ly: 1,561 words
+  rs: 1,461 words
+  al: 1,450 words
+  ns: 1,385 words
+  ts: 1,330 words
+
+=== Summary ===
+✓ Dictionary passes all critical quality checks!
