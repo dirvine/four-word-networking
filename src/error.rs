@@ -45,17 +45,6 @@ pub enum FourWordError {
     DictionaryError(String),
 }
 
-impl From<crate::encoder16k::EncodingError> for FourWordError {
-    fn from(err: crate::encoder16k::EncodingError) -> Self {
-        FourWordError::EncodingError(err.to_string())
-    }
-}
-
-impl From<crate::encoder16k::DecodingError> for FourWordError {
-    fn from(err: crate::encoder16k::DecodingError) -> Self {
-        FourWordError::DecodingError(err.to_string())
-    }
-}
 
 impl From<crate::dictionary16k::DictionaryError> for FourWordError {
     fn from(err: crate::dictionary16k::DictionaryError) -> Self {

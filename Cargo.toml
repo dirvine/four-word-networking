@@ -65,10 +65,6 @@ temp-env = "0.3"
 tempfile = "3.8"
 
 [[bin]]
-name = "three-word-networking"
-path = "src/main.rs"
-
-[[bin]]
 name = "3wn"
 path = "src/bin/3wn.rs"
 

@@ -43,13 +43,13 @@ echo ""
 # Test the CLI
 echo "3️⃣  Testing CLI functionality..."
 echo "   Testing IPv4 encoding..."
-./target/release/4wn 192.168.1.1:443
+./target/release/3wn 192.168.1.1:443
 echo ""
 echo "   Testing IPv4 decoding..."
-./target/release/4wn paper.broaden.smith.bully
+./target/release/3wn paper.broaden.smith.bully
 echo ""
 echo "   Testing IPv6 encoding..."
-./target/release/4wn "[::1]:443"
+./target/release/3wn "[::1]:443"
 echo ""
 
 END_TIME=$(date +%s)

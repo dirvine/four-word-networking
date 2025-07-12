@@ -34,9 +34,7 @@
 //! ```
 
 pub mod compression;
-pub mod dictionary16k;
 pub mod dictionary65k;
-pub mod encoder16k;
 pub mod error;
 pub mod three_word_encoder;
 pub mod three_word_ipv6_encoder;
@@ -44,9 +42,6 @@ pub mod unified_three_word_encoder;
 // Experimental modules removed
 pub mod adaptive_encoder;
 pub mod api;
-pub mod compressed_encoder;
-pub mod ip_port_encoder;
-pub mod ip_port_encoder_v2;
 pub mod ipv4_perfect_codec;
 pub mod ipv6_compression;
 pub mod ipv6_multi_dimensional;
@@ -61,22 +56,17 @@ pub mod simple_adaptive_encoder;
 pub mod simple_perfect_encoder;
 pub mod three_word_adaptive_encoder;
 // Ultra modules removed - used outdated 3-word system
-pub mod universal_encoder;
 pub mod universal_ip_compression;
-pub mod variable_dictionary;
 
 #[cfg(test)]
 mod property_tests;
 
 pub use error::{FourWordError, Result};
-pub use ip_port_encoder::{IpPortAddress, IpPortEncoder};
 // Experimental modules removed - use FourWordAdaptiveEncoder instead
 pub use adaptive_encoder::{
     AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis,
 };
 pub use api::{AddressInput, AddressType as ApiAddressType, EncodingInfo, FourWordNetworking};
-pub use compressed_encoder::{CompressedEncoder, CompressionStats};
-pub use ip_port_encoder_v2::{IpPortEncoderV2, IpPortEncodingV2, IpPortErrorV2};
 pub use ipv6_compression::{CompressedIpv6, Ipv6Category, Ipv6Compressor};
 pub use ipv6_multi_dimensional::{IPv6MultiDimEncoder, IPv6MultiDimEncoding};
 pub use ipv6_pattern_feistel::{IPv6PatternFeistel, IPv6PatternId};
@@ -92,9 +82,7 @@ pub use three_word_ipv6_encoder::{
     Ipv6ThreeWordGroupEncoding, ThreeWordGroup, ThreeWordIpv6Encoder,
 };
 pub use unified_three_word_encoder::{UnifiedThreeWordEncoder, UnifiedThreeWordEncoding};
-pub use universal_encoder::{CompressionAnalysis, StrategyResult, UniversalEncoder};
 pub use universal_ip_compression::UniversalIpCompressor;
-pub use variable_dictionary::{AdaptiveEncoding, CapacityInfo, VariableDictionary};
 
 /// Version of the three-word networking library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

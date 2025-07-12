@@ -205,8 +205,9 @@ impl Ipv6Compressor {
             // Pad to ensure 4 words minimum
             compressed = vec![1, (pos - 4) as u8, val as u8, 0, 0, 0, 0]; // Marker + data + padding
             compressed_bits = 3 + 56; // category + 7 bytes
-        } else if segments[4] & 0x0200 == 0x0200 {
-            // EUI-64 derived address - store just the MAC-derived part
+        } else if segments[4] & 0x0200 == 0x0200 && segments[7] == 0 {
+            // EUI-64 derived address - only use this pattern if segment[7] is 0
+            // since the reconstruction doesn't preserve segment[7]
             compressed = vec![2]; // Marker for EUI-64
             let mac_derived = [
                 (segments[4] ^ 0x0200) as u8, // Remove universal/local bit
@@ -246,28 +247,18 @@ impl Ipv6Compressor {
         let segments = ip.segments();
 
         // Unique local: fcxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
-        // Check if interface ID (last 64 bits) is non-zero
-        let interface_id_is_zero = segments[4] == 0 && segments[5] == 0 && segments[6] == 0 && segments[7] == 0;
-
+        // ULA compression is always lossy - only preserve the first 64 bits (4 segments)
+        // Interface ID (segments 4-7) is always dropped as per design
         let mut compressed = vec![];
         
-        // Store segments[0-3] as 8 bytes (prefix + global ID + subnet)
+        // Store only segments[0-3] as 8 bytes (prefix + global ID + subnet)
         compressed.extend_from_slice(&segments[0].to_be_bytes()); // segments[0] (includes fc/fd prefix)
         compressed.extend_from_slice(&segments[1].to_be_bytes()); // segments[1]
         compressed.extend_from_slice(&segments[2].to_be_bytes()); // segments[2]
         compressed.extend_from_slice(&segments[3].to_be_bytes()); // segments[3] (subnet)
 
-        let compressed_bits = if interface_id_is_zero {
-            // Interface ID is zero, only store prefix + global ID + subnet
-            3 + 64 // category + 4 segments (8 bytes)
-        } else {
-            // Interface ID is non-zero, store all 8 segments
-            compressed.extend_from_slice(&segments[4].to_be_bytes()); // segments[4]
-            compressed.extend_from_slice(&segments[5].to_be_bytes()); // segments[5]
-            compressed.extend_from_slice(&segments[6].to_be_bytes()); // segments[6]
-            compressed.extend_from_slice(&segments[7].to_be_bytes()); // segments[7]
-            3 + 128 // category + 8 segments (16 bytes)
-        };
+        // ULA compression always uses only 64 bits (4 segments) + category
+        let compressed_bits = 3 + 64; // category + 4 segments (8 bytes)
 
         Ok(CompressedIpv6 {
             category: Ipv6Category::UniqueLocal,

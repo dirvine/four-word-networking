@@ -469,27 +469,59 @@ impl ThreeWordIpv6Encoder {
                 let mut segments = [0u16; 8];
                 segments[0] = 0xfe80;
 
-                // The link-local compressed data from ipv6_compression has format:
-                // For fe80::e00:0:0:0, it's [01, 03, 0e, 00, 00, 00, 00] (marker + pos + val + padding)
-                // The position is stored as offset from segment 4, not absolute position
-                if data.len() >= 3 && data[0] == 1 {
-                    // Single value pattern: marker + position + value
-                    let pos = data[1] as usize + 4; // Convert back to absolute position
-                    let val = data[2] as u16;
-                    if pos < 8 {
-                        segments[pos] = val;
+                // The link-local compressed data from ipv6_compression has different patterns:
+                // Pattern 0: All zeros pattern: fe80::
+                // Pattern 1: Single small value (<=255): fe80::1
+                // Pattern 2: EUI-64 derived address
+                // Pattern 3: Complex pattern with RLE for larger values like fe80::e00:0:0:0
+                
+                match data.get(0) {
+                    Some(0) => {
+                        // All zeros pattern: fe80::
+                        // segments already initialized correctly
                     }
-                } else if data.len() >= 4 && data[0] == 1 {
-                    // Single value pattern with 16-bit value: marker + position + value_hi + value_lo
-                    let pos = data[1] as usize + 4;
-                    let val = ((data[2] as u16) << 8) | (data[3] as u16);
-                    if pos < 8 {
-                        segments[pos] = val;
+                    Some(1) => {
+                        // Single value pattern
+                        if data.len() >= 3 {
+                            let pos = data[1] as usize + 4; // Convert back to absolute position
+                            let val = data[2] as u16;
+                            if (4..8).contains(&pos) {
+                                segments[pos] = val;
+                            }
+                        }
                     }
-                } else if data.len() >= 2 {
-                    // Fallback: interpret as direct value at segment 7
-                    let val = ((data[0] as u16) << 8) | (data[1] as u16);
-                    segments[7] = val;
+                    Some(2) => {
+                        // EUI-64 derived address
+                        if data.len() >= 7 {
+                            segments[4] = ((data[2] as u16) << 8) | (data[1] as u16) | 0x0200;
+                            segments[5] = ((data[4] as u16) << 8) | (data[3] as u16);
+                            segments[6] = ((data[6] as u16) << 8) | (data[5] as u16);
+                            // segments[7] remains 0 - simplified reconstruction
+                        }
+                    }
+                    Some(3) => {
+                        // Complex pattern with RLE - this is what handles fe80::e00:0:0:1
+                        let mut i = 1;
+                        while i < data.len() && data[i] != 255 {
+                            if i + 2 < data.len() {
+                                let pos = data[i] as usize + 4; // Convert back to absolute position
+                                let val = ((data[i + 1] as u16) << 8) | (data[i + 2] as u16);
+                                if (4..8).contains(&pos) {
+                                    segments[pos] = val;
+                                }
+                                i += 3;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                    _ => {
+                        // Fallback: interpret as direct value at segment 7
+                        if data.len() >= 2 {
+                            let val = ((data[0] as u16) << 8) | (data[1] as u16);
+                            segments[7] = val;
+                        }
+                    }
                 }
                 
                 Ok(Ipv6Addr::from(segments))
