@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed production-ready claims from README documentation
 - Clarified IPv6 encoding uses 2 or 3 groups of 3 words for better readability
 
+### Removed
+- Deleted legacy 16K dictionary system and all dependent modules
+- Removed all development/test binaries except production `3wn` CLI
+- Cleaned up redundant wordlists and research files
+- Removed legacy encoders: encoder16k, ip_port_encoder, compressed_encoder, universal_encoder, variable_dictionary
+
+### Fixed
+- Consolidated to single GOLD_WORDLIST.txt with 65,536 words
+- Eliminated dictionary confusion between 16K and 65K systems
+
 ## [2.0.0] - 2025-01-10
 
 ### Major Architecture Update - Three-Word Networking

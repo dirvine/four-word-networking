@@ -44,10 +44,3 @@ pub enum FourWordError {
     #[error("Dictionary error: {0}")]
     DictionaryError(String),
 }
-
-
-impl From<crate::dictionary16k::DictionaryError> for FourWordError {
-    fn from(err: crate::dictionary16k::DictionaryError) -> Self {
-        FourWordError::DictionaryError(err.to_string())
-    }
-}

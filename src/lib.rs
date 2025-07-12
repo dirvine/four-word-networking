@@ -40,20 +40,10 @@ pub mod three_word_encoder;
 pub mod three_word_ipv6_encoder;
 pub mod unified_three_word_encoder;
 // Experimental modules removed
-pub mod adaptive_encoder;
-pub mod api;
-pub mod ipv4_perfect_codec;
 pub mod ipv6_compression;
-pub mod ipv6_multi_dimensional;
 pub mod ipv6_pattern_feistel;
-pub mod ipv6_perfect_codec;
-pub mod ipv6_perfect_encoder;
 pub mod ipv6_perfect_patterns;
-pub mod perfect_adaptive_encoder;
-pub mod perfect_encoder;
 pub mod pure_ip_compression;
-pub mod simple_adaptive_encoder;
-pub mod simple_perfect_encoder;
 pub mod three_word_adaptive_encoder;
 // Ultra modules removed - used outdated 3-word system
 pub mod universal_ip_compression;
@@ -63,18 +53,10 @@ mod property_tests;
 
 pub use error::{FourWordError, Result};
 // Experimental modules removed - use FourWordAdaptiveEncoder instead
-pub use adaptive_encoder::{
-    AdaptiveEncoder, AdaptiveResult, AddressType, CompressionAnalysis as AdaptiveAnalysis,
-};
-pub use api::{AddressInput, AddressType as ApiAddressType, EncodingInfo, FourWordNetworking};
 pub use ipv6_compression::{CompressedIpv6, Ipv6Category, Ipv6Compressor};
-pub use ipv6_multi_dimensional::{IPv6MultiDimEncoder, IPv6MultiDimEncoding};
 pub use ipv6_pattern_feistel::{IPv6PatternFeistel, IPv6PatternId};
-pub use ipv6_perfect_encoder::{IPv6PerfectEncoder, IPv6PerfectEncoding};
 pub use ipv6_perfect_patterns::{IPv6Pattern, IPv6PatternDetector};
-pub use perfect_adaptive_encoder::PerfectAdaptiveEncoder;
 pub use pure_ip_compression::{MathematicalCompressor, PureIpCompressor};
-pub use simple_adaptive_encoder::SimpleAdaptiveEncoder;
 pub use three_word_adaptive_encoder::ThreeWordAdaptiveEncoder;
 // UltraCompactEncoder removed - used outdated 3-word system
 pub use three_word_encoder::{ThreeWordEncoder, ThreeWordEncoding};
