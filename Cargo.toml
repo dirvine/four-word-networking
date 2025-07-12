@@ -2,7 +2,7 @@
 
 [package]
 name = "three-word-networking"
-version = "2.2.0"
+version = "2.3.0"
 edition = "2024"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
 description = "Convert IP addresses to memorable, family-friendly word groups. IPv4 = 3 words, IPv6 = 6 or 9 words. Perfect reconstruction with human-readable vocabulary."
