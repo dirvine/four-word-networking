@@ -1,9 +1,9 @@
 #![allow(unused_imports)]
 
+/// Comprehensive integration tests for four-word networking
+use four_word_networking::FourWordAdaptiveEncoder;
 use std::net::{IpAddr, SocketAddr};
 use std::time::Instant;
-/// Comprehensive integration tests for three-word networking
-use three_word_networking::ThreeWordAdaptiveEncoder;
 
 mod test_config;
 use test_config::*;
@@ -57,7 +57,7 @@ fn test_ip_address_workflow() {
 
     // Test IPv4 addresses with ports
     for addr in generator.ipv4_with_ports() {
-        let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+        let encoder = FourWordAdaptiveEncoder::new().unwrap();
         if let Ok(encoded) = encoder.encode(addr) {
             let decoded = encoder.decode(&encoded).expect("Decoding failed");
             assert_eq!(addr, &decoded, "Roundtrip failed for {}", addr);
@@ -66,7 +66,7 @@ fn test_ip_address_workflow() {
 
     // Test IPv6 addresses with ports
     for addr in generator.ipv6_with_ports() {
-        let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+        let encoder = FourWordAdaptiveEncoder::new().unwrap();
         if let Ok(encoded) = encoder.encode(addr) {
             let decoded = encoder.decode(&encoded).expect("Decoding failed");
             assert_eq!(addr, &decoded, "Roundtrip failed for {}", addr);
@@ -98,7 +98,11 @@ fn test_invalid_input_handling() {
 #[test]
 fn test_word_validation() {
     init_test_env();
-    let valid_words = vec!["apple orange banana", "one two three", "first second third"];
+    let valid_words = vec![
+        "apple orange banana cherry",
+        "one two three four",
+        "first second third fourth",
+    ];
 
     for words in valid_words {
         let result = validate_word_format(words);
@@ -110,10 +114,10 @@ fn test_word_validation() {
     }
 
     let invalid_words = vec![
-        "one two",              // Too few words
-        "one two three four",   // Too many words
-        "one  two three",       // Double space (empty word)
-        "",                     // Empty string
+        "one two three",           // Too few words
+        "one two three four five", // Too many words
+        "one  two three four",     // Double space (empty word)
+        "",                        // Empty string
     ];
 
     for words in invalid_words {
@@ -260,8 +264,8 @@ fn test_edge_cases() {
 fn test_compression_efficiency() {
     init_test_env();
     let test_cases = vec![
-        ("127.0.0.1", 48), // 3 words × 16 chars/word max = 48 bytes max
-        ("192.168.1.1", 48),
+        ("127.0.0.1", 64), // 4 words × 16 chars/word max = 64 bytes max
+        ("192.168.1.1", 64),
         ("::1", 96), // IPv6 uses 6 words × 16 chars/word max = 96 bytes max
         ("2001:db8::1", 96),
     ];
@@ -308,7 +312,7 @@ fn test_word_quality() {
 
     // Test word properties
     for word in words {
-        assert!(word.len() >= 2, "Word too short: {}", word);
+        assert!(word.len() >= 1, "Word too short: {}", word);
         // No maximum length restriction - frequency-based words can be longer
         assert!(
             word.chars().all(|c| c.is_ascii_lowercase()),
@@ -323,8 +327,8 @@ fn test_word_quality() {
 fn test_error_recovery() {
     init_test_env();
     let malformed_words = vec![
-        "one.two",                    // Missing word (need 3 for IPv4)
-        "one.two.three.four",         // Extra word
+        "one.two.three",              // Missing word (need 4 for IPv4)
+        "one.two.three.four.five",    // Extra word
         "zzzzz999.xxxxx888.qqqqq777", // Invalid words not in dictionary
         ".two.three",                 // Empty first word
         "one..three",                 // Empty middle word
@@ -353,7 +357,7 @@ fn test_cli_integration() {
 
     // Test CLI encoding
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "3wn", "--", test_ip])
+        .args(&["run", "--bin", "4wn", "--", test_ip])
         .output()
         .expect("Failed to execute CLI");
 
@@ -366,7 +370,7 @@ fn test_cli_integration() {
 
     // Test CLI decoding
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "3wn", "--", &encoded])
+        .args(&["run", "--bin", "4wn", "--", &encoded])
         .output()
         .expect("Failed to execute CLI");
 
@@ -377,33 +381,28 @@ fn test_cli_integration() {
         .trim()
         .to_string();
 
-    // The CLI adds default port :80 to IPv4 addresses
-    let expected = if !test_ip.contains(':') {
-        format!("{}:80", test_ip)
-    } else {
-        test_ip.to_string()
-    };
-    assert_eq!(expected, decoded, "CLI roundtrip failed");
+    // With smart port handling, IP addresses without ports should roundtrip exactly
+    assert_eq!(test_ip, decoded, "CLI roundtrip failed");
 }
 
 // Helper functions for testing
 fn encode_ip_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_words(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 
 fn encode_socket_address(addr: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 
@@ -411,10 +410,10 @@ fn decode_socket_address(words: &str) -> Result<String, Box<dyn std::error::Erro
 
 fn validate_word_format(words: &str) -> Result<(), Box<dyn std::error::Error>> {
     let parts: Vec<&str> = words.split(' ').collect();
-    if parts.len() != 3 {
+    if parts.len() != 4 {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            "Must have exactly 3 words",
+            "Must have exactly 4 words",
         )));
     }
 

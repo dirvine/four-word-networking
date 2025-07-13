@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Three-Word Networking is a Rust library and CLI that converts IP addresses into memorable word combinations for human-friendly networking. The system provides perfect reconstruction for IPv4 addresses using exactly 3 words, and adaptive compression for IPv6 addresses using 6 or 9 words (groups of 3) with intelligent category-based optimization.
+Four-Word Networking is a Rust library and CLI that converts IP addresses into memorable word combinations for human-friendly networking. The system provides perfect reconstruction for IPv4 addresses using exactly 4 words, and adaptive compression for IPv6 addresses using 6, 9, or 12 words (groups of 4) with intelligent category-based optimization.
 
 ## Common Development Commands
 
@@ -23,13 +23,13 @@ cargo test
 cargo test -- --nocapture
 
 # Run specific test
-cargo test test_three_word_address_parsing
+cargo test test_four_word_address_parsing
 
 # Run main test suite
 ./run_main_tests.sh
 
 # Run the CLI
-cargo run --bin 3wn -- 192.168.1.1:443
+cargo run --bin 4wn -- 192.168.1.1:443
 ```
 
 ### Code Quality
@@ -49,21 +49,21 @@ cargo machete
 
 ### CLI Usage Examples
 ```bash
-# Convert IPv4 to three words (perfect reconstruction)
-cargo run --bin 3wn -- 192.168.1.1:443
+# Convert IPv4 to four words (perfect reconstruction)
+cargo run --bin 4wn -- 192.168.1.1:443
 
 # Convert IPv6 to 6 or 9 words (groups of 3)
-cargo run --bin 3wn -- "[::1]:443"
+cargo run --bin 4wn -- "[::1]:443"
 
 # Decode words back to IP addresses (dots or spaces)
-cargo run --bin 3wn -- lehr.delfs.enrages
-cargo run --bin 3wn -- lehr delfs enrages
+cargo run --bin 4wn -- beatniks.contrarily.stockholm
+cargo run --bin 4wn -- beatniks contrarily stockholm
 
 # Decode IPv6 from words
-cargo run --bin 3wn -- Kaufhof-Dingley-Inno-Roupe-Stimuli-Bugger
+cargo run --bin 4wn -- sectorial supper ballparks consider tri gram
 
 # Verbose output
-cargo run --bin 3wn -- -v 192.168.1.1:443
+cargo run --bin 4wn -- -v 192.168.1.1:443
 ```
 
 ### Binary Tools
@@ -77,8 +77,8 @@ cargo run --bin check_word_quality
 # Create clean dictionary (removes homophones, offensive words)
 cargo run --bin create_clean_dictionary
 
-# Test three-word system
-cargo run --bin test_three_word
+# Test four-word system
+cargo run --bin test_four_word
 
 # Benchmark three vs four word systems
 cargo run --bin benchmark_three_vs_four
@@ -89,18 +89,18 @@ cargo run --bin benchmark_three_vs_four
 ### Core Components
 
 - **`src/lib.rs`**: Main library interface and public API
-- **`src/three_word_adaptive_encoder.rs`**: Three-word adaptive encoder system for perfect IPv4 and adaptive IPv6
+- **`src/four_word_adaptive_encoder.rs`**: Four-word adaptive encoder system for perfect IPv4 and adaptive IPv6
 - **`src/ipv6_compression.rs`**: IPv6 category-based compression algorithms
 - **`src/error.rs`**: Comprehensive error types using `thiserror`
 - **`src/main.rs`**: CLI application using `clap`
-- **`src/bin/3wn.rs`**: Command-line interface for three-word networking
+- **`src/bin/4wn.rs`**: Command-line interface for four-word networking
 
-### Three-Word Encoding Systems
+### Four-Word Encoding Systems
 
-- **`src/dictionary65k.rs`**: 65,536-word dictionary for IPv4 3-word encoding (2^16 words)
-- **`src/three_word_encoder.rs`**: Perfect 3-word encoding for IPv4 with Feistel network
-- **`src/three_word_ipv6_encoder.rs`**: Groups of 3 encoding for IPv6 (6 or 9 words)
-- **`src/dictionary16k.rs`**: 16,384-word dictionary used in legacy four-word system
+- **`src/dictionary4k.rs`**: 4,096-word dictionary for IPv4 4-word encoding (2^12 words)
+- **`src/four_word_encoder.rs`**: Perfect 4-word encoding for IPv4 with Feistel network
+- **`src/four_word_ipv6_encoder.rs`**: Groups of 4 encoding for IPv6 (6, 9, or 12 words)
+- **`src/four_word_adaptive_encoder.rs`**: Main interface for encoding/decoding IP addresses
 
 ### Advanced Encoding Systems
 
@@ -112,26 +112,26 @@ cargo run --bin benchmark_three_vs_four
 
 ### Key Data Structures
 
-- **`ThreeWordEncoding`**: Three-word IPv4 address structure
-- **`ThreeWordAdaptiveEncoder`**: Main interface for encoding/decoding IP addresses
-- **`Dictionary65K`**: 65,536-word dictionary for 16-bit per word encoding
-- **`Ipv6ThreeWordGroupEncoding`**: IPv6 encoding in groups of 3 words
-- **`ThreeWordGroup`**: Container for 3-word groups
+- **`FourWordEncoding`**: Four-word IPv4 address structure
+- **`FourWordAdaptiveEncoder`**: Main interface for encoding/decoding IP addresses
+- **`Dictionary4K`**: 4,096-word dictionary for 12-bit per word encoding
+- **`Ipv6FourWordGroupEncoding`**: IPv6 encoding in groups of 4 words
+- **`FourWordGroup`**: Container for 4-word groups
 - **`CompressedIpv6`**: IPv6 compression with category-based optimization
 - **`Ipv6Category`**: IPv6 address types (Loopback, LinkLocal, GlobalUnicast, etc.)
 
 ## Encoding Strategies
 
-### Three-Word IPv4 Encoding
-- **Perfect Reconstruction**: 48 bits (IPv4 + port) encoded in 3 × 16-bit words
+### Four-Word IPv4 Encoding
+- **Perfect Reconstruction**: 48 bits (IPv4 + port) encoded in 4 × 12-bit words
 - **Feistel Network**: 8 rounds of cryptographic bit diffusion
-- **Dictionary**: 65,536 words (2^16) for perfect 16-bit encoding
+- **Dictionary**: 4,096 words (2^12) for perfect 12-bit encoding
 - **Format**: Lowercase words separated by dots or spaces
 
 ### IPv6 Group Encoding
-- **Groups of 3**: Always 6 or 9 words (2 or 3 groups)
+- **Groups of 4**: Always 6, 9, or 12 words (variable groups)
 - **Category Detection**: Optimizes based on IPv6 type
-- **Compression**: 6 words for common patterns, 9 for complex addresses
+- **Compression**: 6 words for common patterns, 9 for medium complexity, 12 for complex addresses
 - **Format**: Title case words separated by dashes
 
 ### Compression Techniques
@@ -147,10 +147,10 @@ match category {
 
 ## Dictionary Management
 
-### 65K Dictionary (IPv4)
-- **Size**: 65,536 words (2^16)
+### 4K Dictionary (IPv4)
+- **Size**: 4,096 words (2^12)
 - **Sources**: EFF, BIP39, Diceware, custom English words
-- **Quality**: Voice-friendly, no homophones, 3-7 characters
+- **Quality**: Voice-friendly, no homophones, 3-7 characters preferred
 
 ### Word Quality Criteria
 - Length: 3-7 characters optimal
@@ -196,15 +196,15 @@ let parsed = parse_address(addr)?;
 ## Current Implementation Status
 
 ### Production Ready
-- Three-word IPv4 encoding with perfect reconstruction
-- IPv6 encoding in groups of 3 (6 or 9 words)
-- 65K word dictionary system
+- Four-word IPv4 encoding with perfect reconstruction
+- IPv6 encoding in groups of 3 (6 or 9 or 12 words)
+- 4K word dictionary system
 - CLI with full feature set (`3wn`)
 - Space-separated word support
 - Comprehensive test coverage
 
 ### Features
-- IPv4: Always exactly 3 words
+- IPv4: Always exactly 4 words
 - IPv6: 6 words for common patterns, 9 for complex
 - Visual distinction: dots vs dashes, case differences
 - Voice-optimized dictionary
@@ -246,4 +246,4 @@ let parsed = parse_address(addr)?;
 - **Test Script**: `./run_main_tests.sh` for test suite
 - **Binary Tools**: Multiple utilities in `src/bin/` for development
 - **Word Lists**: Raw dictionaries in `wordlists/` directory
-- **65K Dictionary**: Pre-built in `data/dictionary_65536.txt`
+- **4K Dictionary**: Pre-built in `data/dictionary_4096.txt`

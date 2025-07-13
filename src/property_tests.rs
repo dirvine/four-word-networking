@@ -1,9 +1,9 @@
-//! Property-based testing for Three-Word Networking
+//! Property-based testing for Four-Word Networking
 //!
 //! This module contains property-based tests that verify mathematical invariants
 //! and properties of the encoding system using proptest.
 
-use crate::ThreeWordAdaptiveEncoder;
+use crate::FourWordAdaptiveEncoder;
 use proptest::prelude::*;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
@@ -11,20 +11,20 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 mod tests {
     use super::*;
 
-    // Property: IPv4 addresses should always encode to exactly 3 space-separated words
+    // Property: IPv4 addresses should always encode to exactly 4 space-separated words
     proptest! {
         #[test]
-        fn prop_ipv4_always_3_words(
+        fn prop_ipv4_always_4_words(
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr_str = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
-                // Should have exactly 3 words separated by spaces
+                // Should have exactly 4 words separated by spaces
                 let word_count = words.split(' ').count();
-                prop_assert_eq!(word_count, 3);
+                prop_assert_eq!(word_count, 4);
 
                 // Should be lowercase
                 prop_assert_eq!(words.clone(), words.to_lowercase());
@@ -32,20 +32,20 @@ mod tests {
         }
     }
 
-    // Property: IPv6 addresses should always encode to 6 or 9 space-separated words
+    // Property: IPv6 addresses should always encode to 6, 9, or 12 space-separated words
     proptest! {
         #[test]
         fn prop_ipv6_format_consistency(
             ip in any::<Ipv6Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr_str = format!("[{ip}]:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
-                // Should have 6 or 9 words separated by spaces
+                // Should have 6, 9, or 12 words separated by spaces
                 let word_count = words.split(' ').count();
-                prop_assert!(word_count == 6 || word_count == 9);
+                prop_assert!(word_count == 6 || word_count == 9 || word_count == 12);
 
                 // Should be lowercase
                 prop_assert_eq!(words.clone(), words.to_lowercase());
@@ -60,7 +60,7 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let original = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&original) {
@@ -78,7 +78,7 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr_str = format!("{ip}:{port}");
 
             if let Ok(words1) = encoder.encode(&addr_str) {
@@ -99,7 +99,7 @@ mod tests {
         ) {
             prop_assume!(port1 != port2);
 
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr1_str = format!("{ip}:{port1}");
             let addr2_str = format!("{ip}:{port2}");
 
@@ -116,13 +116,13 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr_str = format!("{ip}:{port}");
 
             if let Ok(words) = encoder.encode(&addr_str) {
                 // Each word should be from the dictionary
                 for word in words.split(' ') {
-                    prop_assert!(word.len() >= 1);  // GOLD wordlist includes single-character words
+                    prop_assert!(word.len() >= 1);  // Dictionary includes single-character words
                     // No maximum length restriction - frequency-based words can be longer
                     prop_assert!(word.chars().all(|c| c.is_ascii_lowercase()));
                 }
@@ -137,7 +137,7 @@ mod tests {
             ip_bytes in prop::array::uniform4(any::<u8>()),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let ip = Ipv4Addr::from(ip_bytes);
             let addr_str = format!("{ip}:{port}");
 
@@ -145,7 +145,7 @@ mod tests {
             match encoder.encode(&addr_str) {
                 Ok(words) => {
                     // If encoding succeeds, it should produce valid format
-                    prop_assert_eq!(words.split(' ').count(), 3);
+                    prop_assert_eq!(words.split(' ').count(), 4);
                     prop_assert!(!words.is_empty());
                 },
                 Err(_) => {
@@ -163,7 +163,7 @@ mod tests {
             ip in any::<Ipv4Addr>(),
             port in any::<u16>()
         ) {
-            let encoder = ThreeWordAdaptiveEncoder::new().unwrap();
+            let encoder = FourWordAdaptiveEncoder::new().unwrap();
             let addr_str1 = format!("{ip}:{port}");
             let addr_str2 = format!("{ip}:{port}");
 

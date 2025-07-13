@@ -1,9 +1,9 @@
+use four_word_networking::*;
 /// Property-based testing using proptest and quickcheck
 use proptest::prelude::*;
 use quickcheck::TestResult;
 use quickcheck_macros::quickcheck;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use three_word_networking::*;
 
 mod test_config;
 #[allow(unused_imports)]
@@ -17,13 +17,12 @@ proptest! {
         let ip = Ipv4Addr::new(a, b, c, d);
         let ip_str = ip.to_string();
 
-        // Test roundtrip property - encode_ip_address adds default port 80
+        // Test roundtrip property - with smart port handling, IP addresses without ports should roundtrip exactly
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             match decode_words(&encoded) {
                 Ok(decoded) => {
-                    // decode_words returns the full socket address with port
-                    let expected_with_port = format!("{}:80", ip_str);
-                    prop_assert_eq!(expected_with_port, decoded);
+                    // With smart port handling using port 65535 as marker, IP addresses without ports roundtrip exactly
+                    prop_assert_eq!(ip_str, decoded);
                 },
                 Err(_) => prop_assert!(false, "Decoding failed for valid encoding"),
             }
@@ -38,9 +37,9 @@ proptest! {
         let ip_str = ip.to_string();
 
         if let Ok(encoded) = encode_ip_address(&ip_str) {
-            // Should have exactly 3 words for IPv4 (now space-separated)
+            // Should have exactly 4 words for IPv4 (now space-separated)
             let words: Vec<&str> = encoded.split(' ').collect();
-            prop_assert_eq!(words.len(), 3);
+            prop_assert_eq!(words.len(), 4);
 
             // Each word should be valid
             for word in words {
@@ -118,7 +117,7 @@ proptest! {
     ) {
         let ip = Ipv6Addr::new(a, b, c, d, e, f, g, h);
         let ip_str = ip.to_string();
-        
+
         // Note: fc/fd addresses only preserve the first 64 bits (prefix + global ID + subnet)
         // Interface IDs are lost during compression for unique local addresses
         // This is a design limitation of the current compression strategy
@@ -129,21 +128,9 @@ proptest! {
 
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             if let Ok(decoded) = decode_words(&encoded) {
-                // decode_words returns the full socket address with port
-                // Extract the IP part from the decoded socket address
-                let decoded_ip = if decoded.starts_with('[') && decoded.contains("]:") {
-                    // IPv6 format: [addr]:port
-                    decoded.split("]:").next().unwrap().trim_start_matches('[')
-                } else if decoded.contains(':') && !decoded.contains("::") {
-                    // IPv4 format: addr:port
-                    decoded.split(':').next().unwrap()
-                } else {
-                    // Just an IP without port
-                    &decoded
-                };
-                
+                // With smart port handling, IPv6 addresses without ports should roundtrip exactly
                 // Parse both IPs to normalize them
-                match (ip_str.parse::<Ipv6Addr>(), decoded_ip.parse::<Ipv6Addr>()) {
+                match (ip_str.parse::<Ipv6Addr>(), decoded.parse::<Ipv6Addr>()) {
                     (Ok(expected), Ok(actual)) => {
                         prop_assert_eq!(expected, actual,
                             "IPv6 roundtrip failed: {} -> {} -> {}",
@@ -151,7 +138,7 @@ proptest! {
                     }
                     _ => {
                         // If parsing fails, fall back to string comparison
-                        prop_assert_eq!(&ip_str, decoded_ip,
+                        prop_assert_eq!(&ip_str, &decoded,
                             "IPv6 roundtrip failed: {} -> {} -> {}",
                             ip_str, encoded, decoded);
                     }
@@ -170,12 +157,12 @@ proptest! {
         if let Ok(encoded) = encode_ip_address(&ip_str) {
             let word_count = encoded.split(' ').count();
 
-            // IPv4 should always produce exactly 3 words
-            prop_assert_eq!(word_count, 3, "IPv4 should produce exactly 3 words");
+            // IPv4 should always produce exactly 4 words
+            prop_assert_eq!(word_count, 4, "IPv4 should produce exactly 4 words");
 
             // Estimate encoding efficiency
             let original_bits = 32; // IPv4 is 32 bits
-            let estimated_encoded_bits = word_count * 14; // Assume 14 bits per word
+            let estimated_encoded_bits = word_count * 12; // Assume 12 bits per word
             let compression_ratio = estimated_encoded_bits as f64 / original_bits as f64;
 
             // Should be reasonably efficient (not more than 4x expansion)
@@ -222,10 +209,9 @@ fn qc_ipv4_roundtrip(a: u8, b: u8, c: u8, d: u8) -> TestResult {
     match encode_ip_address(&ip_str) {
         Ok(encoded) => match decode_words(&encoded) {
             Ok(decoded) => {
-                // decode_words returns the full socket address with port
-                let expected_with_port = format!("{}:80", ip_str);
-                TestResult::from_bool(expected_with_port == decoded)
-            },
+                // With smart port handling using port 65535 as marker, IP addresses without ports roundtrip exactly
+                TestResult::from_bool(ip_str == decoded)
+            }
             Err(_) => TestResult::failed(),
         },
         Err(_) => TestResult::discard(), // Skip invalid cases
@@ -271,7 +257,7 @@ fn qc_word_format_consistency(a: u8, b: u8, c: u8, d: u8) -> TestResult {
             let words: Vec<&str> = encoded.split(' ').collect();
 
             // Check word count
-            if words.len() != 3 {
+            if words.len() != 4 {
                 return TestResult::failed();
             }
 
@@ -391,8 +377,10 @@ fn test_special_ipv4_addresses() {
         let encoded = encode_ip_address(addr).expect("Encoding failed");
         let decoded = decode_words(&encoded).expect("Decoding failed");
         // Check if the decoded address starts with the original (may include port)
-        assert!(decoded.starts_with(addr), 
-            "Special address roundtrip failed: {addr} -> {decoded}");
+        assert!(
+            decoded.starts_with(addr),
+            "Special address roundtrip failed: {addr} -> {decoded}"
+        );
     }
 }
 
@@ -423,22 +411,22 @@ fn test_special_ipv6_addresses() {
 
 // Helper functions (placeholders - replace with actual implementation)
 fn encode_ip_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_words(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 
 fn encode_socket_address(addr: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.encode(addr).map_err(|e| e.into())
 }
 
 fn decode_socket_address(words: &str) -> std::result::Result<String, Box<dyn std::error::Error>> {
-    let encoder = ThreeWordAdaptiveEncoder::new()?;
+    let encoder = FourWordAdaptiveEncoder::new()?;
     encoder.decode(words).map_err(|e| e.into())
 }
 

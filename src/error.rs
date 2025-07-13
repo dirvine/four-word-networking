@@ -1,11 +1,11 @@
-//! Error types for three-word networking
+//! Error types for four-word networking
 
 use thiserror::Error;
 
-/// Result type for three-word networking operations
+/// Result type for four-word networking operations
 pub type Result<T> = std::result::Result<T, FourWordError>;
 
-/// Error types for three-word networking
+/// Error types for four-word networking
 #[derive(Error, Debug)]
 pub enum FourWordError {
     #[error("Invalid word address format: {0}")]
@@ -43,4 +43,13 @@ pub enum FourWordError {
 
     #[error("Dictionary error: {0}")]
     DictionaryError(String),
+
+    #[error("Invalid word: {0}")]
+    InvalidWord(String),
+
+    #[error("Invalid word index: {0}")]
+    InvalidWordIndex(u16),
+
+    #[error("Invalid word count: expected {expected}, got {actual}")]
+    InvalidWordCount { expected: usize, actual: usize },
 }

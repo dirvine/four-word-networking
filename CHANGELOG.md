@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Major Architecture Change - Return to Four-Word Networking
+
+#### Changed
+- **BREAKING**: Complete transition from three-word back to four-word networking system
+- **Dictionary Size**: Reduced from 65,536 words to 4,096 high-quality English words
+- **IPv4 Encoding**: Changed from 3 words (16 bits each) to 4 words (12 bits each)
+- **Word Format**: Space-separated words for all addresses (no more dots)
+- **CLI Command**: Updated from `3wn` to `4wn` binary
+- **Crate Structure**: New four-word encoder modules replace three-word system
+
+#### Added
+- `FourWordAdaptiveEncoder` with comprehensive IPv4/IPv6 support
+- `FourWordEncoder` for perfect IPv4 reconstruction using 4 words
+- `FourWordIpv6Encoder` for adaptive IPv6 encoding (6-12 words)
+- High-quality 4,096-word dictionary with voice-optimized selection
+- Comprehensive documentation explaining four-word rationale
+
+#### Removed
+- Three-word encoding system and related modules
+- 65,536-word dictionary (replaced with 4,096 words)
+- `ThreeWordAdaptiveEncoder` and related components
+- `3wn` CLI binary (replaced with `4wn`)
+
+#### Technical Rationale
+- **Dictionary Quality**: 4,096 words allows careful curation of every word
+- **Voice Communication**: Smaller dictionary enables better pronunciation
+- **Professional Use**: High-quality words suitable for business environments
+- **International Compatibility**: Facilitates quality translations to other languages
+- **Memory Efficiency**: 48 bits still perfectly encoded, but with better word quality
+
+#### Migration
+- IPv4: `192.168.1.1:443` now produces 4 words instead of 3
+- IPv6: Still uses 6, 9, or 12 words (groups of 4)
+- CLI: Use `4wn` instead of `3wn`
+- API: `FourWordAdaptiveEncoder` replaces `ThreeWordAdaptiveEncoder`
+
 ## [2.3.0] - 2025-01-11
 
 ### Changed

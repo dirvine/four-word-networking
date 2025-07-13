@@ -208,15 +208,8 @@ pub fn real_world_data() -> Vec<String> {
 
 /// Assertion helpers
 pub fn assert_encoding_roundtrip(original: &str, encoded: &str, decoded: &str) {
-    // Handle the case where the original doesn't have a port but the decoded does (defaults to :80 for IPv4)
-    if !original.contains(':') && decoded.ends_with(":80") && !original.contains('[') {
-        // IPv4 without port
-        let decoded_without_port = decoded.trim_end_matches(":80");
-        assert_eq!(
-            original, decoded_without_port,
-            "Roundtrip failed: {original} -> {encoded} -> {decoded}"
-        );
-    } else if original.contains(':') && original.split(':').count() > 2 {
+    // With smart port handling, addresses without ports should roundtrip exactly
+    if original.contains(':') && original.split(':').count() > 2 {
         // IPv6 case - check if decoded is in bracket format while original is not
         use std::net::Ipv6Addr;
 

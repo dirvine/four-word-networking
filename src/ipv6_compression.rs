@@ -8,7 +8,7 @@ use crate::error::FourWordError;
 use std::net::Ipv6Addr;
 
 /// IPv6 address categories for compression optimization
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ipv6Category {
     /// ::1 - IPv6 loopback (4 words)
     Loopback,
@@ -26,6 +26,37 @@ pub enum Ipv6Category {
     Special,
 }
 
+impl Ipv6Category {
+    /// Convert category to a 3-bit numeric value for encoding
+    pub fn to_bits(&self) -> u8 {
+        match self {
+            Ipv6Category::Loopback => 0,
+            Ipv6Category::LinkLocal => 1,
+            Ipv6Category::UniqueLocal => 2,
+            Ipv6Category::Documentation => 3,
+            Ipv6Category::GlobalUnicast => 4,
+            Ipv6Category::Unspecified => 5,
+            Ipv6Category::Special => 6,
+        }
+    }
+
+    /// Convert 3-bit numeric value back to category
+    pub fn from_bits(bits: u8) -> Result<Self, FourWordError> {
+        match bits {
+            0 => Ok(Ipv6Category::Loopback),
+            1 => Ok(Ipv6Category::LinkLocal),
+            2 => Ok(Ipv6Category::UniqueLocal),
+            3 => Ok(Ipv6Category::Documentation),
+            4 => Ok(Ipv6Category::GlobalUnicast),
+            5 => Ok(Ipv6Category::Unspecified),
+            6 => Ok(Ipv6Category::Special),
+            _ => Err(FourWordError::InvalidInput(
+                format!("Invalid category bits: {}", bits)
+            )),
+        }
+    }
+}
+
 /// Compressed representation of an IPv6 address
 #[derive(Debug, Clone)]
 pub struct CompressedIpv6 {
@@ -37,6 +68,28 @@ pub struct CompressedIpv6 {
 }
 
 impl CompressedIpv6 {
+    /// Creates compressed IPv6 from bytes and category
+    pub fn from_bytes(data: &[u8], category: Ipv6Category) -> Result<Self, FourWordError> {
+        if data.is_empty() {
+            return Err(FourWordError::InvalidInput(
+                "Empty compressed data".to_string(),
+            ));
+        }
+
+        Ok(CompressedIpv6 {
+            category,
+            compressed_data: data.to_vec(),
+            original_bits: 128,
+            compressed_bits: data.len() * 8,
+            port: None,
+        })
+    }
+
+    /// Get bytes representation
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.compressed_data.clone()
+    }
+
     /// Get the total compressed size including port
     pub fn total_bits(&self) -> usize {
         self.compressed_bits + self.port.map_or(0, |_| 16)
@@ -79,9 +132,24 @@ impl CompressedIpv6 {
 /// Advanced IPv6 compression engine
 pub struct Ipv6Compressor;
 
+impl Default for Ipv6Compressor {
+    fn default() -> Self {
+        Ipv6Compressor
+    }
+}
+
 impl Ipv6Compressor {
+    /// Creates a new IPv6 compressor
+    pub fn new() -> Self {
+        Self
+    }
+
     /// Compress an IPv6 address with optional port
-    pub fn compress(ip: Ipv6Addr, port: Option<u16>) -> Result<CompressedIpv6, FourWordError> {
+    pub fn compress(
+        &self,
+        ip: Ipv6Addr,
+        port: Option<u16>,
+    ) -> Result<CompressedIpv6, FourWordError> {
         let category = Self::categorize_address(&ip);
 
         match category {
@@ -97,6 +165,7 @@ impl Ipv6Compressor {
 
     /// Decompress back to IPv6 address and port
     pub fn decompress(
+        &self,
         compressed: &CompressedIpv6,
     ) -> Result<(Ipv6Addr, Option<u16>), FourWordError> {
         let ip = match compressed.category {
@@ -196,15 +265,15 @@ impl Ipv6Compressor {
 
         if non_zero_segments.is_empty() {
             // fe80:: - all zeros in interface ID
-            // Pad to ensure 4 words minimum
-            compressed = vec![0, 0, 0, 0, 0, 0, 0]; // Marker + padding for 56 bits
-            compressed_bits = 3 + 56; // category + 7 bytes
+            // Use 6 bytes to match loopback and other simple patterns
+            compressed = vec![0, 0, 0, 0, 0, 0]; // Marker + padding for 48 bits
+            compressed_bits = 48; // 6 bytes
         } else if non_zero_segments.len() == 1 && non_zero_segments[0].1 <= 255 {
             // Single small value like fe80::1 - store position + value
             let (pos, val) = non_zero_segments[0];
-            // Pad to ensure 4 words minimum
-            compressed = vec![1, (pos - 4) as u8, val as u8, 0, 0, 0, 0]; // Marker + data + padding
-            compressed_bits = 3 + 56; // category + 7 bytes
+            // Use 6 bytes to match loopback and other simple patterns
+            compressed = vec![1, (pos - 4) as u8, val as u8, 0, 0, 0]; // Marker + data + padding
+            compressed_bits = 48; // 6 bytes
         } else if segments[4] & 0x0200 == 0x0200 && segments[7] == 0 {
             // EUI-64 derived address - only use this pattern if segment[7] is 0
             // since the reconstruction doesn't preserve segment[7]
@@ -215,10 +284,9 @@ impl Ipv6Compressor {
                 (segments[5]) as u8,
                 (segments[5] >> 8) as u8,
                 (segments[6]) as u8,
-                (segments[6] >> 8) as u8,
             ];
             compressed.extend_from_slice(&mac_derived);
-            compressed_bits = 3 + 56; // category + marker + MAC (7 bytes)
+            compressed_bits = 48; // 6 bytes total
         } else {
             // Complex pattern - store efficiently with RLE
             compressed.push(3); // Marker for complex pattern
@@ -250,7 +318,7 @@ impl Ipv6Compressor {
         // ULA compression is always lossy - only preserve the first 64 bits (4 segments)
         // Interface ID (segments 4-7) is always dropped as per design
         let mut compressed = vec![];
-        
+
         // Store only segments[0-3] as 8 bytes (prefix + global ID + subnet)
         compressed.extend_from_slice(&segments[0].to_be_bytes()); // segments[0] (includes fc/fd prefix)
         compressed.extend_from_slice(&segments[1].to_be_bytes()); // segments[1]
@@ -277,38 +345,44 @@ impl Ipv6Compressor {
         let segments = ip.segments();
 
         // Documentation: 2001:0db8:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
-        // Check for common patterns first
-
-        // Check for simple patterns like 2001:db8::1, 2001:db8::2, etc.
-        let non_zero_segments: Vec<(usize, u16)> = segments[2..8]
-            .iter()
-            .enumerate()
-            .filter(|&(_, &seg)| seg != 0)
-            .map(|(i, &seg)| (i + 2, seg))
-            .collect();
+        // For documentation addresses, we need to preserve interface ID segments
+        // to avoid losing data like in 2001:db8:85a3::8a2e:370:7334
 
         let mut compressed = Vec::new();
 
-        if non_zero_segments.is_empty() {
-            // 2001:db8:: - all zeros after prefix
-            // Pad to ensure 4 words minimum
-            compressed = vec![0, 0, 0, 0, 0, 0, 0]; // Marker + padding for 56 bits
-        } else if non_zero_segments.len() == 1 && non_zero_segments[0].1 <= 255 {
-            // Single small value like 2001:db8::1 - store position + value
-            let (pos, val) = non_zero_segments[0];
-            // Pad to ensure 4 words minimum
-            compressed = vec![1, pos as u8, val as u8, 0, 0, 0, 0]; // Marker + data + padding
+        // Store segments 2-3 (routing prefix after 2001:db8)
+        compressed.extend_from_slice(&segments[2].to_be_bytes());
+        compressed.extend_from_slice(&segments[3].to_be_bytes());
+
+        // Check for non-zero segments in the interface ID (segments 4-7)
+        let non_zero_interface: Vec<(usize, u16)> = segments[4..8]
+            .iter()
+            .enumerate()
+            .filter(|&(_, &seg)| seg != 0)
+            .map(|(i, &seg)| (i + 4, seg))
+            .collect();
+
+        if non_zero_interface.is_empty() {
+            // No interface ID - use marker for empty interface
+            compressed.push(0); // Marker
+        } else if non_zero_interface.len() == 1 && non_zero_interface[0].1 <= 255 {
+            // Single small value in interface ID - compact encoding
+            let (pos, val) = non_zero_interface[0];
+            compressed.push(1); // Marker
+            compressed.push((pos - 4) as u8); // Position in interface ID
+            compressed.push(val as u8); // Value (single byte)
         } else {
-            // Complex pattern - store more efficiently with RLE
+            // Complex interface ID - store all non-zero segments with position
             compressed.push(2); // Marker for complex pattern
-            for &(pos, val) in &non_zero_segments {
-                compressed.push(pos as u8);
-                compressed.extend_from_slice(&val.to_be_bytes());
+            for &(pos, val) in &non_zero_interface {
+                compressed.push((pos - 4) as u8); // Position relative to interface ID start
+                compressed.extend_from_slice(&val.to_be_bytes()); // Full 16-bit value
             }
             compressed.push(255); // End marker
         }
 
-        let compressed_bits = 3 + (compressed.len() * 8); // category + data
+        // Variable length depending on complexity
+        let compressed_bits = compressed.len() * 8;
 
         Ok(CompressedIpv6 {
             category: Ipv6Category::Documentation,
@@ -417,8 +491,8 @@ impl Ipv6Compressor {
 
                 // Store the remaining segments after the pattern
                 let remaining_segments = 8 - (prefix_bits / 16);
-                for i in (8 - remaining_segments)..8 {
-                    compressed.extend_from_slice(&segments[i].to_be_bytes());
+                for segment in segments.iter().skip(8 - remaining_segments) {
+                    compressed.extend_from_slice(&segment.to_be_bytes());
                 }
 
                 return Some(compressed);
@@ -463,10 +537,10 @@ impl Ipv6Compressor {
             }
             2 => {
                 // EUI-64 derived address
-                if data.len() >= 7 {
+                if data.len() >= 6 {
                     segments[4] = ((data[2] as u16) << 8) | (data[1] as u16) | 0x0200;
                     segments[5] = ((data[4] as u16) << 8) | (data[3] as u16);
-                    segments[6] = ((data[6] as u16) << 8) | (data[5] as u16);
+                    segments[6] = data[5] as u16;
                     // segments[7] remains 0 - simplified reconstruction
                 }
             }
@@ -504,20 +578,20 @@ impl Ipv6Compressor {
                 ((data[2] as u16) << 8) | (data[3] as u16), // segments[1]
                 ((data[4] as u16) << 8) | (data[5] as u16), // segments[2]
                 ((data[6] as u16) << 8) | (data[7] as u16), // segments[3] (subnet)
-                0x0000, // segments[4] - interface ID is zero
-                0x0000, // segments[5] - interface ID is zero
-                0x0000, // segments[6] - interface ID is zero
-                0x0000, // segments[7] - interface ID is zero
+                0x0000,                                     // segments[4] - interface ID is zero
+                0x0000,                                     // segments[5] - interface ID is zero
+                0x0000,                                     // segments[6] - interface ID is zero
+                0x0000,                                     // segments[7] - interface ID is zero
             ];
             Ok(Ipv6Addr::from(segments))
         } else if data.len() == 16 {
             // Interface ID is non-zero, all 8 segments are stored
             let segments = [
-                ((data[0] as u16) << 8) | (data[1] as u16),   // segments[0] (fc/fd prefix)
-                ((data[2] as u16) << 8) | (data[3] as u16),   // segments[1]
-                ((data[4] as u16) << 8) | (data[5] as u16),   // segments[2]
-                ((data[6] as u16) << 8) | (data[7] as u16),   // segments[3] (subnet)
-                ((data[8] as u16) << 8) | (data[9] as u16),   // segments[4] - interface ID
+                ((data[0] as u16) << 8) | (data[1] as u16), // segments[0] (fc/fd prefix)
+                ((data[2] as u16) << 8) | (data[3] as u16), // segments[1]
+                ((data[4] as u16) << 8) | (data[5] as u16), // segments[2]
+                ((data[6] as u16) << 8) | (data[7] as u16), // segments[3] (subnet)
+                ((data[8] as u16) << 8) | (data[9] as u16), // segments[4] - interface ID
                 ((data[10] as u16) << 8) | (data[11] as u16), // segments[5] - interface ID
                 ((data[12] as u16) << 8) | (data[13] as u16), // segments[6] - interface ID
                 ((data[14] as u16) << 8) | (data[15] as u16), // segments[7] - interface ID
@@ -532,9 +606,9 @@ impl Ipv6Compressor {
     }
 
     fn decompress_documentation(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
-        if data.is_empty() {
+        if data.len() < 5 {
             return Err(FourWordError::InvalidInput(
-                "Empty documentation data".to_string(),
+                "Documentation data too short - expected at least 5 bytes".to_string(),
             ));
         }
 
@@ -542,41 +616,51 @@ impl Ipv6Compressor {
         segments[0] = 0x2001;
         segments[1] = 0x0db8;
 
-        match data[0] {
+        // Read segments 2-3 (routing prefix) from bytes 0-3
+        segments[2] = ((data[0] as u16) << 8) | (data[1] as u16);
+        segments[3] = ((data[2] as u16) << 8) | (data[3] as u16);
+
+        // Read interface ID info starting from byte 4
+        if data.len() <= 4 {
+            return Ok(Ipv6Addr::from(segments)); // No interface ID data
+        }
+
+        let marker = data[4];
+        let mut offset = 5;
+
+        match marker {
             0 => {
-                // All zeros pattern: 2001:db8::
-                // segments already initialized to zeros
+                // No interface ID - segments 4-7 remain zero
             }
             1 => {
-                // Single value pattern
-                if data.len() >= 3 {
-                    let pos = data[1] as usize;
-                    let val = data[2] as u16;
-                    if (2..8).contains(&pos) {
+                // Single small value in interface ID
+                if data.len() >= 7 {
+                    let pos = data[5] as usize + 4; // Position in absolute terms
+                    let val = data[6] as u16;
+                    if (4..8).contains(&pos) {
                         segments[pos] = val;
                     }
                 }
             }
             2 => {
-                // Complex pattern with RLE
-                let mut i = 1;
-                while i < data.len() && data[i] != 255 {
-                    if i + 2 < data.len() {
-                        let pos = data[i] as usize;
-                        let val = ((data[i + 1] as u16) << 8) | (data[i + 2] as u16);
-                        if (2..8).contains(&pos) {
+                // Complex interface ID - read position/value pairs until end marker
+                while offset < data.len() && data[offset] != 255 {
+                    if offset + 2 < data.len() {
+                        let pos = data[offset] as usize + 4; // Position in absolute terms
+                        let val = ((data[offset + 1] as u16) << 8) | (data[offset + 2] as u16);
+                        if (4..8).contains(&pos) {
                             segments[pos] = val;
                         }
-                        i += 3;
+                        offset += 3; // Move to next position/value pair
                     } else {
                         break;
                     }
                 }
             }
             _ => {
-                return Err(FourWordError::InvalidInput(
-                    "Invalid documentation pattern".to_string(),
-                ));
+                return Err(FourWordError::InvalidInput(format!(
+                    "Invalid documentation marker: {marker}"
+                )));
             }
         }
 
@@ -584,15 +668,52 @@ impl Ipv6Compressor {
     }
 
     fn decompress_global_unicast(data: &[u8]) -> Result<Ipv6Addr, FourWordError> {
-        if data.len() >= 16 {
+        if data.len() == 16 {
+            // Fallback case: full 16 bytes (8 segments)
             let mut segments = [0u16; 8];
             for i in 0..8 {
                 segments[i] = ((data[i * 2] as u16) << 8) | (data[i * 2 + 1] as u16);
             }
             Ok(Ipv6Addr::from(segments))
+        } else if data.len() == 13 {
+            // Provider pattern case: 1 byte pattern ID + 12 bytes (6 segments)
+            let pattern_id = data[0];
+            let mut segments = [0u16; 8];
+            
+            // Set the prefix based on pattern ID
+            match pattern_id {
+                0 => {
+                    // Google: 2001:4860::/32
+                    segments[0] = 0x2001;
+                    segments[1] = 0x4860;
+                }
+                1 => {
+                    // Hurricane Electric: 2001:470::/32
+                    segments[0] = 0x2001;
+                    segments[1] = 0x0470;
+                }
+                2 => {
+                    // Comcast: 2001:558::/32
+                    segments[0] = 0x2001;
+                    segments[1] = 0x0558;
+                }
+                _ => {
+                    return Err(FourWordError::InvalidInput(
+                        format!("Invalid provider pattern ID: {}", pattern_id)
+                    ))
+                }
+            }
+            
+            // Decode the remaining 6 segments from the 12 bytes
+            for i in 0..6 {
+                let byte_offset = 1 + (i * 2); // Skip pattern ID byte
+                segments[i + 2] = ((data[byte_offset] as u16) << 8) | (data[byte_offset + 1] as u16);
+            }
+            
+            Ok(Ipv6Addr::from(segments))
         } else {
             Err(FourWordError::InvalidInput(
-                "Invalid global unicast data".to_string(),
+                format!("Invalid global unicast data length: {} bytes", data.len())
             ))
         }
     }
@@ -623,23 +744,25 @@ mod tests {
 
     #[test]
     fn test_loopback_compression() {
+        let compressor = Ipv6Compressor::new();
         let ip = Ipv6Addr::LOCALHOST;
-        let compressed = Ipv6Compressor::compress(ip, Some(443)).unwrap();
+        let compressed = compressor.compress(ip, Some(443)).unwrap();
 
         assert_eq!(compressed.category, Ipv6Category::Loopback);
         assert_eq!(compressed.compressed_data.len(), 6); // Padded to 6 bytes
         // With category byte + 6 bytes data = 56 bits total = 4 words
         assert!(compressed.recommended_word_count() >= 4); // IPv6 minimum 4 words
 
-        let (decompressed_ip, port) = Ipv6Compressor::decompress(&compressed).unwrap();
+        let (decompressed_ip, port) = compressor.decompress(&compressed).unwrap();
         assert_eq!(decompressed_ip, ip);
         assert_eq!(port, Some(443));
     }
 
     #[test]
     fn test_unspecified_compression() {
+        let compressor = Ipv6Compressor::new();
         let ip = Ipv6Addr::UNSPECIFIED;
-        let compressed = Ipv6Compressor::compress(ip, None).unwrap();
+        let compressed = compressor.compress(ip, None).unwrap();
 
         assert_eq!(compressed.category, Ipv6Category::Unspecified);
         assert_eq!(compressed.compressed_data.len(), 6); // Padded to 6 bytes
@@ -648,8 +771,9 @@ mod tests {
 
     #[test]
     fn test_link_local_compression() {
+        let compressor = Ipv6Compressor::new();
         let ip = Ipv6Addr::from_str("fe80::1").unwrap();
-        let compressed = Ipv6Compressor::compress(ip, Some(22)).unwrap();
+        let compressed = compressor.compress(ip, Some(22)).unwrap();
 
         assert_eq!(compressed.category, Ipv6Category::LinkLocal);
         assert!(compressed.recommended_word_count() >= 4); // IPv6 minimum 4 words
@@ -658,8 +782,9 @@ mod tests {
 
     #[test]
     fn test_documentation_compression() {
+        let compressor = Ipv6Compressor::new();
         let ip = Ipv6Addr::from_str("2001:db8::1").unwrap();
-        let compressed = Ipv6Compressor::compress(ip, Some(80)).unwrap();
+        let compressed = compressor.compress(ip, Some(80)).unwrap();
 
         assert_eq!(compressed.category, Ipv6Category::Documentation);
         assert!(
@@ -669,8 +794,9 @@ mod tests {
 
     #[test]
     fn test_category_descriptions() {
+        let compressor = Ipv6Compressor::new();
         let ip = Ipv6Addr::LOCALHOST;
-        let compressed = Ipv6Compressor::compress(ip, None).unwrap();
+        let compressed = compressor.compress(ip, None).unwrap();
         assert_eq!(compressed.category_description(), "IPv6 Loopback (::1)");
     }
 
@@ -683,7 +809,8 @@ mod tests {
         ];
 
         for (ip, name) in test_cases {
-            let compressed = Ipv6Compressor::compress(ip, Some(443)).unwrap();
+            let compressor = Ipv6Compressor::new();
+            let compressed = compressor.compress(ip, Some(443)).unwrap();
             let ratio = compressed.compression_ratio();
             println!("{}: {:.1}% compression", name, ratio * 100.0);
             assert!(ratio > 0.0, "{name} should have some compression");

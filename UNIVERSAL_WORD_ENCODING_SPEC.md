@@ -1,7 +1,7 @@
-# Universal Word Encoding System - Implementation Specification
+# Four-Word Networking System - Implementation Specification
 
 ## Project Overview
-Implement a Universal Word Encoding System that can encode ANY data from network addresses (multiaddresses) up to 32-byte hashes into human-memorable word sequences, with 100% accurate encode/decode capability.
+Implement a Four-Word Networking System that converts IP addresses into human-memorable word sequences using a carefully curated 4,096-word dictionary, with 100% accurate encode/decode capability for IPv4 addresses.
 
 ## Core Requirements
 
@@ -23,13 +23,10 @@ pub enum EncodingStrategy {
 ```
 
 ### 3. Dictionary Requirements
-Create four specialized dictionaries with 4096 words each:
+Create a single high-quality dictionary with 4,096 words:
 ```rust
-pub struct Dictionaries {
-    actors: Vec<String>,    // Characters: falcon, wizard, knight, dragon
-    actions: Vec<String>,   // Verbs: crosses, guards, seeks, finds
-    objects: Vec<String>,   // Things: bridge, mountain, treasure, forest
-    modifiers: Vec<String>, // Adjectives: ancient, silver, hidden, northern
+pub struct Dictionary {
+    words: Vec<String>,     // 4,096 carefully curated English words
 }
 ```
 
@@ -44,41 +41,40 @@ pub struct Dictionaries {
 
 ### Phase 1: Core Encoding Engine
 ```rust
-pub struct UniversalEncoder {
-    dictionaries: Dictionaries,
-    simple_encoder: SimpleEncoder,
-    fractal_encoder: FractalEncoder,
-    holographic_encoder: HolographicEncoder,
+pub struct FourWordAdaptiveEncoder {
+    dictionary: Dictionary,
+    four_word_encoder: FourWordEncoder,
+    ipv6_encoder: FourWordIpv6Encoder,
 }
 
-impl UniversalEncoder {
-    pub fn encode(&self, data: &[u8]) -> Result<UniversalEncoding, EncodingError> {
-        // Determine strategy based on data length
+impl FourWordAdaptiveEncoder {
+    pub fn encode(&self, addr: &str) -> Result<String, FourWordError> {
+        // Determine if IPv4 or IPv6
         // Route to appropriate encoder
-        // Return unified encoding format
+        // Return space-separated words
     }
     
-    pub fn decode(&self, encoding: &UniversalEncoding) -> Result<Vec<u8>, DecodingError> {
-        // Parse encoding format
+    pub fn decode(&self, words: &str) -> Result<String, FourWordError> {
+        // Parse word format
         // Route to appropriate decoder
-        // Return original bytes
+        // Return original address
     }
 }
 ```
 
-### Phase 2: Simple Encoder (≤ 8 bytes)
-For network addresses and small data:
+### Phase 2: Four-Word Encoder (IPv4)
+For IPv4 addresses with perfect reconstruction:
 ```rust
-impl SimpleEncoder {
-    pub fn encode(&self, data: &[u8]) -> ThreeWords {
-        // Convert bytes to 3 word indices
-        // Each word from different dictionary
-        // Deterministic mapping
+impl FourWordEncoder {
+    pub fn encode(&self, addr: &SocketAddrV4) -> FourWordEncoding {
+        // Convert 48 bits to 4 word indices
+        // Each word uses 12 bits
+        // Feistel network for bit diffusion
     }
     
-    pub fn decode(&self, words: &ThreeWords) -> Vec<u8> {
-        // Reverse word indices to bytes
-        // Perfect reconstruction
+    pub fn decode(&self, words: &FourWordEncoding) -> SocketAddrV4 {
+        // Reverse word indices to 48 bits
+        // Perfect reconstruction guaranteed
     }
 }
 ```

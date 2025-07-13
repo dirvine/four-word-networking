@@ -1,15 +1,15 @@
 [workspace]
 
 [package]
-name = "three-word-networking"
+name = "four-word-networking"
 version = "2.3.0"
 edition = "2024"
 authors = ["David Irvine <david.irvine@autonomi.com>"]
-description = "Convert IP addresses to memorable, family-friendly word groups. IPv4 = 3 words, IPv6 = 6 or 9 words. Perfect reconstruction with human-readable vocabulary."
+description = "Convert IP addresses to memorable, family-friendly word groups. IPv4 = 4 words, IPv6 = 8 words. Perfect reconstruction with human-readable vocabulary."
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/dirvine/three-word-networking"
-documentation = "https://docs.rs/three-word-networking"
-homepage = "https://github.com/dirvine/three-word-networking"
+repository = "https://github.com/dirvine/four-word-networking"
+documentation = "https://docs.rs/four-word-networking"
+homepage = "https://github.com/dirvine/four-word-networking"
 readme = "README.md"
 keywords = ["networking", "ip-address", "human-readable", "encoding", "cli"]
 categories = ["network-programming", "command-line-utilities"]
@@ -65,15 +65,15 @@ temp-env = "0.3"
 tempfile = "3.8"
 
 [[bin]]
-name = "3wn"
-path = "src/bin/3wn.rs"
+name = "4wn"
+path = "src/bin/4wn.rs"
 
 [[bench]]
 name = "encoding_benchmarks"
 harness = false
 
 [lib]
-name = "three_word_networking"
+name = "four_word_networking"
 path = "src/lib.rs"
 
 [package.metadata.docs.rs]

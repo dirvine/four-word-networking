@@ -1,8 +1,8 @@
-# Three-Word Network Address System: Technical Report
+# Four-Word Network Address System: Technical Report
 
 ## Executive Summary
 
-This report analyzes the feasibility of encoding network addresses (IPv4+port and IPv6+port) into memorable word sequences, inspired by geolocation systems like What3Words. We examine entropy requirements, algorithm options, and implementation strategies for creating a human-readable networking address system.
+This report analyzes the implementation of encoding network addresses (IPv4+port and IPv6+port) into memorable four-word sequences. We examine entropy requirements, algorithm options, and implementation strategies for creating a human-readable networking address system using a 4,096-word dictionary.
 
 ## Problem Statement
 
@@ -30,20 +30,20 @@ Goal: Create a memorable word-based system that maintains the same information e
 |----------------|--------------|---------------|----------|
 | 16,384 (2^14) | 3 words | 42 bits | Too small for IPv4+port |
 | 32,768 (2^15) | 3 words | 45 bits | Too small for IPv4+port |
-| 65,536 (2^16) | 3 words | 48 bits | Perfect for IPv4+port |
-| 4,096 (2^12) | 4 words | 48 bits | Alternative for IPv4+port |
+| 65,536 (2^16) | 3 words | 48 bits | Impractical dictionary size |
+| 4,096 (2^12) | 4 words | 48 bits | **Perfect for IPv4+port** |
 | 8,192 (2^13) | 11 words | 143 bits | Close to IPv6+port needs |
 | 16,384 (2^14) | 10 words | 140 bits | Close to IPv6+port needs |
 
 ## Recommended Approach
 
-### For IPv4 + Port (3 words)
+### For IPv4 + Port (4 words)
 
-Use a **65,536-word dictionary** to achieve exactly 48 bits in 3 words.
+Use a **4,096-word dictionary** to achieve exactly 48 bits in 4 words.
 
 ```
-IPv4 + Port (48 bits) → 3 words of 16 bits each
-Example: 192.168.1.1:80 → "bridge.sunset.ocean"
+IPv4 + Port (48 bits) → 4 words of 12 bits each
+Example: 192.168.1.1:80 → "bridge sunset ocean river"
 ```
 
 ### For IPv6 + Port (Flexible approach)
@@ -112,11 +112,11 @@ fn round_function(input: u32, round: u32) -> u32 {
 
 ### 1. Dictionary Design
 
-**IPv4+Port Dictionary (65,536 words)**
-- Source from multiple languages for diversity
-- Length: 4-8 characters optimal
-- Phonetically distinct
-- Common words for memorability
+**IPv4+Port Dictionary (4,096 words)**
+- High-quality English words for maximum familiarity
+- Length: 3-7 characters optimal
+- Phonetically distinct and voice-friendly
+- Common words for memorability and professional use
 
 **Structure suggestion:**
 - 40% English common words
@@ -197,7 +197,7 @@ This allows variable-length encoding where common patterns use fewer words.
 
 ## Recommendations
 
-1. **Start with IPv4+Port** using 65,536-word dictionary for exact 3-word encoding
+1. **Start with IPv4+Port** using 4,096-word dictionary for exact 4-word encoding
 2. **Use Feistel network** for superior bit diffusion compared to linear congruence
 3. **Implement progressive enhancement** - basic system first, then optimize
 4. **Consider context** - internal tools vs. public-facing usage
@@ -206,6 +206,6 @@ This allows variable-length encoding where common patterns use fewer words.
 
 ## Conclusion
 
-A three-word system for IPv4+port is entirely feasible with a 65,536-word dictionary. IPv6 requires compromise between word count and dictionary size. The Feistel network approach provides superior security and distribution properties compared to simpler algorithms while maintaining perfect reversibility.
+A four-word system for IPv4+port is practical and proven with a 4,096-word dictionary. IPv6 uses adaptive compression with 6, 9, or 12 words. The Feistel network approach provides superior security and distribution properties compared to simpler algorithms while maintaining perfect reversibility.
 
 The key insight from What3Words' approach is that human memorability is worth the trade-off of slightly longer representations, and that careful algorithm design can ensure error resistance and security.

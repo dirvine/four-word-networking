@@ -12,7 +12,7 @@ use test_config::*;
 #[test]
 fn test_cli_basic_ipv4_encoding() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "192.168.1.1"])
+        .args(["run", "--bin", "4wn", "--", "192.168.1.1"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -25,21 +25,24 @@ fn test_cli_basic_ipv4_encoding() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let encoded = stdout.trim();
 
-    // Should produce 3 words separated by spaces
+    // Should produce 4 words separated by spaces
     let words: Vec<&str> = encoded.split(' ').collect();
-    assert_eq!(words.len(), 3, "Should produce exactly 3 words for IPv4");
+    assert_eq!(words.len(), 4, "Should produce exactly 4 words for IPv4");
 
     // Each word should be valid
     for word in words {
         assert!(!word.is_empty(), "Word should not be empty");
-        assert!(word.len() >= 1, "Word should be at least 1 character (GOLD wordlist includes single-character words)");
+        assert!(
+            word.len() >= 1,
+            "Word should be at least 1 character (GOLD wordlist includes single-character words)"
+        );
     }
 }
 
 #[test]
 fn test_cli_basic_ipv6_encoding() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "::1"])
+        .args(["run", "--bin", "4wn", "--", "::1"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -52,11 +55,11 @@ fn test_cli_basic_ipv6_encoding() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let encoded = stdout.trim();
 
-    // IPv6 should produce 6 or 9 words
+    // IPv6 should produce 6, 9, or 12 words
     let words: Vec<&str> = encoded.split(' ').collect();
     assert!(
-        words.len() == 6 || words.len() == 9,
-        "IPv6 should produce 6 or 9 words, got: {}",
+        words.len() == 6 || words.len() == 9 || words.len() == 12,
+        "IPv6 should produce 6, 9, or 12 words, got: {}",
         words.len()
     );
 }
@@ -72,7 +75,7 @@ fn test_cli_socket_address_encoding() {
 
     for addr in test_cases {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", addr])
+            .args(["run", "--bin", "4wn", "--", addr])
             .output()
             .expect("Failed to execute CLI");
 
@@ -93,15 +96,11 @@ fn test_cli_socket_address_encoding() {
         let word_count = encoded.split(' ').count();
         if addr.contains('[') {
             assert!(
-                word_count == 6 || word_count == 9,
-                "IPv6 should have 6 or 9 words for {addr}"
+                word_count == 6 || word_count == 9 || word_count == 12,
+                "IPv6 should have 6, 9, or 12 words for {addr}, got {word_count}"
             );
         } else {
-            assert_eq!(
-                word_count,
-                3,
-                "IPv4 should have exactly 3 words for {addr}"
-            );
+            assert_eq!(word_count, 4, "IPv4 should have exactly 4 words for {addr}");
         }
     }
 }
@@ -110,7 +109,7 @@ fn test_cli_socket_address_encoding() {
 fn test_cli_word_decoding() {
     // First encode an address
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "192.168.1.1"])
+        .args(["run", "--bin", "4wn", "--", "192.168.1.1"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -119,7 +118,7 @@ fn test_cli_word_decoding() {
 
     // Then decode it back
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", &encoded])
+        .args(["run", "--bin", "4wn", "--", &encoded])
         .output()
         .expect("Failed to execute CLI");
 
@@ -140,7 +139,7 @@ fn test_cli_word_decoding() {
 #[test]
 fn test_cli_verbose_output() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "-v", "192.168.1.1"])
+        .args(["run", "--bin", "4wn", "--", "-v", "192.168.1.1"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -154,7 +153,7 @@ fn test_cli_verbose_output() {
 #[test]
 fn test_cli_help_output() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "--help"])
+        .args(["run", "--bin", "4wn", "--", "--help"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -163,13 +162,13 @@ fn test_cli_help_output() {
 
     // Help output should contain usage information
     assert!(stdout.contains("Usage") || stdout.contains("USAGE"));
-    assert!(stdout.contains("3wn") || stdout.contains("three-word"));
+    assert!(stdout.contains("4wn") || stdout.contains("four-word"));
 }
 
 #[test]
 fn test_cli_version_output() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "--version"])
+        .args(["run", "--bin", "4wn", "--", "--version"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -177,26 +176,26 @@ fn test_cli_version_output() {
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // Version output should contain version information
-    assert!(stdout.contains("2.2.0") || stdout.contains("version"));
+    assert!(stdout.contains("2.3.0") || stdout.contains("version"));
 }
 
 #[test]
 fn test_cli_invalid_input_handling() {
     let invalid_inputs = vec![
-        "999.999.999.999",      // Invalid IP format
-        "xyz123.invalid",       // Not valid words
-        "",                     // Empty input
-        "192.168.1.1:99999",    // Port out of range
-        "::gg",                 // Invalid IPv6
-        "word1.word2",          // Only 2 words
-        "a.b.c.d",              // 4 words (not 3)
-        "one two three four",   // 4 space-separated words
-        "123.456.789",          // Numbers not words
+        "999.999.999.999",    // Invalid IP format
+        "xyz123.invalid",     // Not valid words
+        "",                   // Empty input
+        "192.168.1.1:99999",  // Port out of range
+        "::gg",               // Invalid IPv6
+        "word1.word2.word3",  // Only 3 words
+        "a.b.c",              // 3 words (not 4)
+        "one two three",     // 3 space-separated words
+        "123.456.789",        // Numbers not words
     ];
 
     for input in invalid_inputs {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", input])
+            .args(["run", "--bin", "4wn", "--", input])
             .output()
             .expect("Failed to execute CLI");
 
@@ -230,7 +229,7 @@ fn test_cli_batch_processing() {
         .args([
             "run",
             "--bin",
-            "3wn",
+            "4wn",
             "--",
             "--file",
             input_file.to_str().unwrap(),
@@ -265,7 +264,7 @@ fn test_cli_output_formats() {
 
     for (flag, format) in test_formats {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", flag, format, "192.168.1.1"])
+            .args(["run", "--bin", "4wn", "--", flag, format, "192.168.1.1"])
             .output()
             .expect("Failed to execute CLI");
 
@@ -285,7 +284,7 @@ fn test_cli_output_formats() {
 #[test]
 fn test_cli_performance_mode() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "--benchmark", "192.168.1.1"])
+        .args(["run", "--bin", "4wn", "--", "--benchmark", "192.168.1.1"])
         .output()
         .expect("Failed to execute CLI");
 
@@ -305,7 +304,7 @@ fn test_cli_performance_mode() {
 fn test_cli_error_recovery() {
     // Test that CLI can recover from errors and continue
     let mut child = Command::new("cargo")
-        .args(["run", "--bin", "3wn"])
+        .args(["run", "--bin", "4wn"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -353,7 +352,7 @@ fn test_cli_concurrent_access() {
         let handle = thread::spawn(move || {
             let addr = addresses[i];
             let output = Command::new("cargo")
-                .args(["run", "--bin", "3wn", "--", addr])
+                .args(["run", "--bin", "4wn", "--", addr])
                 .output()
                 .expect("Failed to execute CLI");
 
@@ -380,7 +379,7 @@ fn test_cli_memory_usage() {
     for i in 0..100 {
         let addr = format!("192.168.1.{i}");
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", &addr])
+            .args(["run", "--bin", "4wn", "--", &addr])
             .output()
             .expect("Failed to execute CLI");
 
@@ -399,7 +398,7 @@ fn test_cli_large_input_handling() {
     // Test with very long input
     let long_input = "a".repeat(1000);
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", &long_input])
+        .args(["run", "--bin", "4wn", "--", &long_input])
         .output()
         .expect("Failed to execute CLI");
 
@@ -422,7 +421,7 @@ fn test_cli_unicode_handling() {
 
     for input in unicode_inputs {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", input])
+            .args(["run", "--bin", "4wn", "--", input])
             .output()
             .expect("Failed to execute CLI");
 
@@ -441,7 +440,7 @@ fn test_cli_unicode_handling() {
 fn test_cli_signal_handling() {
     // Test that CLI handles interruption gracefully
     let mut child = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "--interactive"])
+        .args(["run", "--bin", "4wn", "--", "--interactive"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -482,7 +481,7 @@ dictionary = "16k"
         .args([
             "run",
             "--bin",
-            "3wn",
+            "4wn",
             "--",
             "--config",
             config_file.to_str().unwrap(),
@@ -507,7 +506,7 @@ dictionary = "16k"
 fn test_cli_environment_variables() {
     // Test with environment variables
     let output = Command::new("cargo")
-        .args(["run", "--bin", "3wn", "--", "192.168.1.1"])
+        .args(["run", "--bin", "4wn", "--", "192.168.1.1"])
         .env("FWN_VERBOSE", "true")
         .env("FWN_FORMAT", "json")
         .env("FWN_COMPRESSION", "high")
@@ -547,7 +546,7 @@ fn test_cli_workflow_integration() {
     // Encode all addresses
     for addr in &addresses {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", addr])
+            .args(["run", "--bin", "4wn", "--", addr])
             .output()
             .expect("Failed to execute CLI");
 
@@ -560,7 +559,7 @@ fn test_cli_workflow_integration() {
     // Decode all addresses
     for (i, encoded) in encoded_addresses.iter().enumerate() {
         let output = Command::new("cargo")
-            .args(["run", "--bin", "3wn", "--", encoded])
+            .args(["run", "--bin", "4wn", "--", encoded])
             .output()
             .expect("Failed to execute CLI");
 
