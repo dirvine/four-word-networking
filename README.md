@@ -203,7 +203,7 @@ This technical foundation ensures that four-word networking provides both the ma
 127.0.0.1:8080     →  lour pitfall strath ocean
 172.16.0.1:22      →  purdey defamed zola mountain
 
-# IPv6 addresses: 6, 9, or 12 words (groups of 3-4 words)
+# IPv6 addresses: 6, 9, or 12 words
 [::1]:443          →  sectorial supper ballparks consider tri gram
 [2001:db8::1]:8080 →  peroneal amici sharan ende wiry boun
 ```
