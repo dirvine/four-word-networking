@@ -52,12 +52,12 @@ cargo machete
 # Convert IPv4 to four words (perfect reconstruction)
 cargo run --bin 4wn -- 192.168.1.1:443
 
-# Convert IPv6 to 6 or 9 words (groups of 3)
+# Convert IPv6 to 6, 9, or 12 words
 cargo run --bin 4wn -- "[::1]:443"
 
 # Decode words back to IP addresses (dots or spaces)
-cargo run --bin 4wn -- beatniks.contrarily.stockholm
-cargo run --bin 4wn -- beatniks contrarily stockholm
+cargo run --bin 4wn -- beatniks.contrarily.stockholm.river
+cargo run --bin 4wn -- beatniks contrarily stockholm river
 
 # Decode IPv6 from words
 cargo run --bin 4wn -- sectorial supper ballparks consider tri gram
@@ -197,9 +197,9 @@ let parsed = parse_address(addr)?;
 
 ### Production Ready
 - Four-word IPv4 encoding with perfect reconstruction
-- IPv6 encoding in groups of 3 (6 or 9 or 12 words)
+- IPv6 encoding in groups of 4 (6, 9, or 12 words)
 - 4K word dictionary system
-- CLI with full feature set (`3wn`)
+- CLI with full feature set (`4wn`)
 - Space-separated word support
 - Comprehensive test coverage
 
